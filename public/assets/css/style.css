@@ -1,0 +1,179 @@
+.intent-popup{
+position:fixed;
+inset:0;
+display:none;
+align-items:center;
+justify-content:center;
+z-index:999999;
+padding:20px;
+background:rgba(5,20,40,.75); /* darker blue */
+backdrop-filter:blur(8px);
+}
+
+/* Modal */
+.intent-modal{
+width:100%;
+max-width:640px;
+background:rgba(255,255,255,.95);
+border-radius:22px;
+padding:42px;
+text-align:center;
+position:relative;
+box-shadow:0 35px 80px rgba(0,0,0,.35);
+animation:popupFade .35s ease;
+border:1px solid rgba(255,255,255,.4);
+}
+
+@keyframes popupFade{
+from{opacity:0; transform:translateY(30px)}
+to{opacity:1; transform:translateY(0)}
+}
+
+/* Close */
+
+.intent-close{
+position:absolute;
+top:14px;
+right:18px;
+border:none;
+background:none;
+font-size:20px;
+cursor:pointer;
+color:#9ca3af;
+transition:.2s;
+}
+
+.intent-close:hover{
+color:#111;
+}
+
+/* Header */
+
+.intent-header h2{
+font-size:28px;
+font-weight:700;
+margin-bottom:8px;
+
+background:linear-gradient(90deg,#2563eb,#1e40af);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.intent-header p{
+font-size:14px;
+color:#6b7280;
+}
+
+/* Cards container */
+
+.intent-options{
+display:flex;
+gap:22px;
+margin-top:34px;
+}
+
+/* Cards */
+
+.intent-card{
+flex:1;
+background:#ffffff;
+border-radius:16px;
+padding:28px;
+cursor:pointer;
+border:1px solid #e5e7eb;
+transition:.3s;
+position:relative;
+text-align:center;
+}
+
+.intent-card:hover{
+transform:translateY(-8px);
+box-shadow:0 25px 60px rgba(0,0,0,.15);
+}
+
+/* Icon circle */
+.intent-icon-wrap{
+width:60px;
+height:60px;
+border-radius:16px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:24px;
+margin:0 auto 16px;
+
+background:linear-gradient(135deg,#2563eb,#1e40af);
+color:#fff;
+
+box-shadow:0 10px 25px rgba(37,99,235,.35);
+}
+
+
+.intent-card.buyer .intent-icon-wrap{
+background:linear-gradient(135deg,#10b981,#059669);
+box-shadow:0 10px 25px rgba(16,185,129,.35);
+}
+/* Seller accent */
+
+.intent-card.seller:hover{
+border-color:#2563eb;
+}
+
+.intent-card.buyer:hover{
+border-color:#10b981;
+}
+
+/* Title */
+
+.intent-card h4{
+font-size:18px;
+font-weight:600;
+margin-bottom:6px;
+color:#111827;
+}
+
+/* Description */
+
+.intent-card p{
+font-size:13.5px;
+color:#6b7280;
+line-height:1.5;
+}
+
+/* Footer */
+
+.intent-footer{
+margin-top:32px;
+padding-top:18px;
+border-top:1px solid #eee;
+}
+
+.browse-btn{
+border:none;
+background:#f3f4f6;
+padding:10px 18px;
+border-radius:8px;
+font-size:14px;
+color:#374151;
+cursor:pointer;
+transition:.25s;
+}
+
+.browse-btn:hover{
+background:#e5e7eb;
+}
+
+/* Mobile */
+
+@media(max-width:640px){
+
+.intent-options{
+flex-direction:column;
+}
+
+.intent-modal{
+padding:32px 24px;
+}
+
+}
+

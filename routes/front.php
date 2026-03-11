@@ -102,6 +102,64 @@ Route::get('/seller/dashboard', function () {
     }
     return 'Dashboard coming soon — logged in as: ' . session('seller_email');
 })->name('seller.dashboard');
+
+
+
+// ── Buyer Landing Page ─────────────────────────────
+// Route::get('/start-buying', \App\Livewire\Front\BuyerLanding::class)
+//     ->name('start-buying');
+
+
+// ── Buyer Register ─────────────────────────────────
+Route::get('/buyer/register', \App\Livewire\Front\BuyerSignup::class)
+    ->name('buyer.register');
+
+
+// ── Buyer Email OTP Verification ───────────────────
+Route::get('/buyer/verify-email', \App\Livewire\Front\BuyerVerifyOtp::class)
+    ->name('buyer.verify.otp');
+
+
+// ── Buyer Login ────────────────────────────────────
+Route::get('/buyer/login', \App\Livewire\Front\BuyerLogin::class)
+    ->name('buyer.login');
+
+
+// ── Buyer Set Password ─────────────────────────────
+Route::get('/buyer/set-password', \App\Livewire\Front\BuyerSetPassword::class)
+    ->name('buyer.set-password');
+
+
+// ── Buyer Forgot Password ──────────────────────────
+Route::get('/buyer/forgot-password', \App\Livewire\Front\BuyerForgotPassword::class)
+    ->name('buyer.forgot-password');
+
+
+// ── Buyer Logout ───────────────────────────────────
+Route::get('/buyer/logout', function () {
+
+    session()->forget([
+        'buyer_id',
+        'buyer_email',
+        'buyer_name'
+    ]);
+
+    return redirect()->route('buyer.login')
+        ->with('login_success', 'You have been logged out successfully.');
+
+})->name('buyer.logout');
+
+
+// ── Buyer Dashboard (temporary placeholder) ────────
+Route::get('/buyer/dashboard', function () {
+
+    if (!session('buyer_id')) {
+        return redirect()->route('buyer.login');
+    }
+
+    return 'Buyer Dashboard coming soon — logged in as: ' . session('buyer_email');
+
+})->name('buyer.dashboard');
 // Route::get('/start-selling', \App\Livewire\Front\Sellerl::class)->name('start-selling');
 // Route::post('/seller/login', [SellerLoginController::class, 'login'])->name('seller.login.post');
 
