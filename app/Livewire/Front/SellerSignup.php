@@ -20,7 +20,7 @@ class SellerSignup extends Component
     public $phonenumber     = '';
     public $company         = '';
     public $company_website = '';
-    public $country         = '';
+    public $country         = '';   // stores Country.country_id
     public $countries       = [];
 
     public function mount()
@@ -30,7 +30,6 @@ class SellerSignup extends Component
 
     public function submit()
     {
-        // 1. Validate
         $this->validate([
             'name'            => 'required|string|max:255',
             'email'           => 'required|email|max:255',
@@ -45,50 +44,47 @@ class SellerSignup extends Component
 
         $emailLower = strtolower(trim($this->email));
 
-        // 2. Check if email already exists
+        // Look up the Country row by country_id (PK)
+        $countryRow = \App\Models\Country::find($this->country);
+
+        // Check existing email
         $existingSeller = Seller::where('email', $emailLower)->first();
 
         if ($existingSeller) {
-
-            // Already verified → tell them to login
             if ($existingSeller->email_verified == 1) {
                 $this->addError('email', 'This email is already registered. Please login instead.');
                 return;
             }
 
-            // Exists but NOT verified → generate new OTP + new password, resend
+            // Not verified yet — regenerate OTP + temp password
             $newTempPassword = $this->generateTempPassword();
             $existingSeller->password_hash        = Hash::make($newTempPassword);
             $existingSeller->must_change_password = 1;
             $existingSeller->save();
 
             $sellerName = $existingSeller->details?->legal_business_name ?? trim($this->name);
-
             $this->fireOtp($existingSeller->id, $emailLower, $sellerName, $newTempPassword);
-
             session(['seller_register_email' => $emailLower]);
 
             return redirect()->route('seller.verify.otp')
                 ->with('otp_success', 'Your account was not verified yet. A new code has been sent to ' . $emailLower);
         }
 
-        // 3. Brand new registration
-        $countryRow  = \App\Models\Country::find($this->country);
-        $countryCode = $countryRow ? strtoupper(substr($countryRow->short_name, 0, 2)) : 'XX';
-
+        // ── Brand new registration ──────────────────────────────
         $tempPassword = $this->generateTempPassword();
 
         $seller = Seller::create([
-            'id'                  => (string) Str::uuid(),
-            'email'               => $emailLower,
-            'phone'               => $this->phonenumber,
-            'password_hash'       => Hash::make($tempPassword),
-            'country_code'        => $countryCode,
-            'account_type'        => 'seller',
-            'email_verified'      => 0,
-            'status'              => 'pending',
-            'is_active'           => 1,
-            'must_change_password'=> 1,
+            'id'                   => (string) Str::uuid(),
+            'email'                => $emailLower,
+            'phone'                => $this->phonenumber,
+            'password_hash'        => Hash::make($tempPassword),
+            'country_id'           => $this->country,              // ✅ store Country.country_id
+            'country_code'         => $countryRow?->short_name ?? 'XX', // keep for legacy compatibility
+            'account_type'         => 'seller',
+            'email_verified'       => 0,
+            'status'               => 'pending',
+            'is_active'            => 1,
+            'must_change_password' => 1,
         ]);
 
         SellerDetail::create([
@@ -96,7 +92,7 @@ class SellerSignup extends Component
             'seller_id'           => $seller->id,
             'legal_business_name' => trim($this->company),
             'company_website'     => $this->company_website ?: null,
-            'onboarding_step'     => 3,
+            'onboarding_step'     => 1,   // start at step 1 (Basic Info) on first login
             'kyc_status'          => 'not_started',
             'is_locked'           => 0,
         ]);
@@ -109,23 +105,21 @@ class SellerSignup extends Component
         );
 
         $this->fireOtp($seller->id, $emailLower, trim($this->name), $tempPassword);
-
         session(['seller_register_email' => $emailLower]);
 
         return redirect()->route('seller.verify.otp')
             ->with('otp_success', 'A 6-digit code has been sent to ' . $emailLower . '. Please check your inbox.');
     }
 
-    // Store OTP in cache + send email
     private function fireOtp(string $sellerId, string $email, string $name, string $tempPassword): void
     {
         $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         Cache::put('seller_otp_' . md5($email), [
-            'otp_hash'     => bcrypt($otp),
-            'seller_name'  => $name,
-            'temp_password'=> $tempPassword,
-            'seller_id'    => $sellerId,
+            'otp_hash'      => bcrypt($otp),
+            'seller_name'   => $name,
+            'temp_password' => $tempPassword,
+            'seller_id'     => $sellerId,
         ], now()->addMinutes(10));
 
         Mail::to($email)->send(new SellerOtpMail($otp, $name, $email));
@@ -143,3 +137,5 @@ class SellerSignup extends Component
         return view('livewire.front.sellersignup');
     }
 }
+
+?>

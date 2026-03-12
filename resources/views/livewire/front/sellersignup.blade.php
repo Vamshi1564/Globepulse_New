@@ -77,7 +77,7 @@
                 <div class="sr-left-foot">
                     Already a seller?
                     {{-- Temporarily use # until seller.login route exists --}}
-                    <a href="#">Sign in →</a>
+                    <a href="{{ route('seller.login') }}">Sign in →</a>
                 </div>
             </div>
 
