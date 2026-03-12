@@ -236,185 +236,334 @@
                                         </div>
                                     </div>
                                 </li> --}}
-                                @if (!empty(session('id')))
-                                    <li class="nav-item dropdown">
-                                        <a class="nav-link px-2" id="navbarDropdownUser" href="#"
-                                            role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"
-                                            aria-haspopup="true" aria-expanded="false"><span
-                                                class="text-body-tertiary avatar avatar-xl "
-                                                style="height:40px;width:40px;">
-                                                @if (optional($customer)->profile_image)
-                                                    {{-- <img class="w-25 rounded-circle"
-                                                        src="{{ $profile_image->temporaryUrl() }}"> --}}
-                                                    <img class="rounded-circle w-100"
-                                                        src="{{ config('app.pub_aws_url') . $customer->profile_image }}"
-                                                        alt="" />
-                                                @else
-                                                    <img class="rounded-circle"
-                                                        src="../../../assets/img/team/72x72/57.webp" alt="" />
-                                                @endif
+                            
+@if(session()->has('buyer_id') || session()->has('seller_id') || session()->has('id'))
+<li class="nav-item dropdown">
 
-                                            </span></a>
-                                        <style>
-                                            .navbar .dropdown-menu.dropdown-menu-end.navbar-dropdown-caret {
-                                                left: auto !important;
-                                                right: 0.4375rem !important;
-                                            }
-                                        </style>
-                                        <div class="dropdown-menu dropdown-menu-end navbar-dropdown-caret py-0 dropdown-profile shadow border mt-2"
-                                            aria-labelledby="navbarDropdownUser">
-                                            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
-                                                <div class="card-body p-4 text-center">
-                                                    <div class="position-relative d-inline-block">
-                                                        <div
-                                                            class="avatar avatar-xl rounded-circle border border-2 border-primary overflow-hidden">
-                                                            @if ($customer->profile_image)
-                                                                <img class="w-100 h-100 object-fit-cover"
-                                                                    src="{{ config('app.pub_aws_url') . $customer->profile_image }}"
-                                                                    alt="Profile Image" />
-                                                            @else
-                                                                <img class="w-100 h-100 object-fit-cover"
-                                                                    src="../../../assets/img/team/72x72/57.webp"
-                                                                    alt="Default Avatar" />
-                                                            @endif
-                                                        </div>
-                                                    </div>
-                                                    <h6 class="mt-3 fw-semibold text-dark">{{ $customer->name }}</h6>
-                                                </div>
-                                                <div class="overflow-auto px-3" style="max-height: 6rem;">
-                                                    <ul class="nav flex-column gap-2">
-                                                        <li class="nav-item">
-                                                            <a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
-                                                                href="{{ route('profile') }}">
-                                                                <i class="fas fa-user me-2"></i> Profile
-                                                            </a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
-                                                                href="{{ route('seller') }}">
-                                                                <i class="fas fa-chart-line me-2"></i>
-                                                                Dashboard
-                                                            </a>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                                <div class="card-footer border-0 bg-white p-4 text-center">
-                                                    <button
-                                                        class="btn btn-danger w-100 d-flex align-items-center justify-content-center gap-2"
-                                                        wire:click="logout">
-                                                        <i class="fa-solid fa-arrow-right-from-bracket text-light"></i>
-                                                        Sign
-                                                        out
-                                                    </button>
-                                                    <div
-                                                        class="mt-3 text-muted small d-flex justify-content-center gap-2 align-items-center">
-                                                        <span>&bull;</span>
-                                                        <a href="{{ route('term-conditions') }}"
-                                                            class="text-decoration-none text-secondary">Privacy
-                                                            Policy</a>
-                                                        <span>&bull;</span>
-                                                        <a href="{{ route('term-conditions') }}"
-                                                            class="text-decoration-none text-secondary">Terms</a>
-                                                        <span>&bull;</span>
-                                                        <a href="#!"
-                                                            class="text-decoration-none text-secondary">Cookies</a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </li>
-                                @else
-                                    <li>
-                                        <div class="d-flex gap-2">
-                                            <!-- Sign-in Button -->
-                                            <a href="{{ route('login') }}"
-                                                class="btn-signin d-flex align-items-center me-1 mb-1  text-decoration-none rounded-pill">
-                                                <span class="me-2"><i class="fa-regular fa-user"></i></span>
-                                                <p class="mb-0 fw-bolder">Sign-in</p>
-                                            </a>
+<a class="nav-link px-2" id="navbarDropdownUser" href="#"
+role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+aria-haspopup="true" aria-expanded="false">
 
-                                            <!-- Sign-up Button -->
-                                            <a href="{{ route('signup') }}"
-                                                class="btn-signup d-md-flex  d-none align-items-center me-1 mb-1  rounded-pill text-white text-decoration-none">
-                                                <span class="me-2"><i class="fa-regular fa-user"></i></span>
-                                                <p class="mb-0 fw-bolder">Sign-up</p>
-                                            </a>
-                                        </div>
+<span class="text-body-tertiary avatar avatar-xl" style="height:40px;width:40px;">
 
-                                        <style>
-                                            /* Common Styles */
-                                            .btn-signin,
-                                            .btn-signup {
-                                                font-size: 14px;
-                                                /* font-weight: 500; */
-                                                padding: 8px 10px;
-                                                transition: all 0.3s ease;
-                                                display: inline-flex;
-                                                align-items: center;
-                                                justify-content: center;
-                                            }
+{{-- PROFILE IMAGE --}}
+@if(session()->has('id') && optional($customer)->profile_image)
 
-                                            /* ---------------- SIGN-IN BUTTON ---------------- */
-                                            .btn-signin {
-                                                background: #0d6efd;
-                                                border: 2px solid #0d6efd;
-                                                color: #ffffff;
-                                                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-                                            }
+<img class="rounded-circle w-100"
+src="{{ config('app.pub_aws_url') . $customer->profile_image }}"
+alt="" />
 
-                                            .btn-signin:hover {
-                                                background: #0d6efd;
-                                                color: #fff;
-                                                /* transform: translateY(-3px) scale(1.05); */
-                                                box-shadow: 0 8px 18px rgba(13, 110, 253, 0.4);
-                                            }
+@else
 
-                                            /* ---------------- SIGN-UP BUTTON (Shine Effect) ---------------- */
-                                            .btn-signup {
-                                                background: linear-gradient(45deg, #ff416c, #ff4b2b);
-                                                color: #fff;
-                                                border: none;
-                                                position: relative;
-                                                overflow: hidden;
-                                                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-                                            }
+<img class="rounded-circle"
+src="../../../assets/img/team/72x72/57.webp"
+alt="" />
 
-                                            .btn-signup::after {
-                                                content: "";
-                                                position: absolute;
-                                                top: 0;
-                                                left: -75%;
-                                                width: 50%;
-                                                height: 100%;
-                                                background: rgba(255, 255, 255, 0.5);
-                                                transform: skewX(-25deg);
-                                                animation: shine 2.5s infinite;
-                                            }
+@endif
 
-                                            @keyframes shine {
-                                                0% {
-                                                    left: -75%;
-                                                }
+</span>
+</a>
 
-                                                100% {
-                                                    left: 125%;
-                                                }
-                                            }
+<style>
+.navbar .dropdown-menu.dropdown-menu-end.navbar-dropdown-caret {
+left: auto !important;
+right: 0.4375rem !important;
+}
+</style>
 
-                                            .btn-signup:hover {
-                                                /* transform: scale(1.08); */
-                                                background: linear-gradient(45deg, #ff4b2b, #ff416c);
-                                                box-shadow: 0 0 20px rgba(255, 65, 108, 0.6);
-                                            }
-                                        </style>
+<div class="dropdown-menu dropdown-menu-end navbar-dropdown-caret py-0 dropdown-profile shadow border mt-2"
+aria-labelledby="navbarDropdownUser">
+
+<div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+
+<div class="card-body p-4 text-center">
+
+<div class="position-relative d-inline-block">
+
+<div class="avatar avatar-xl rounded-circle border border-2 border-primary overflow-hidden">
+
+@if(session()->has('id') && optional($customer)->profile_image)
+
+<img class="w-100 h-100 object-fit-cover"
+src="{{ config('app.pub_aws_url') . $customer->profile_image }}"
+alt="Profile Image" />
+
+@else
+
+<img class="w-100 h-100 object-fit-cover"
+src="../../../assets/img/team/72x72/57.webp"
+alt="Default Avatar" />
+
+@endif
+
+</div>
+</div>
+
+{{-- NAME --}}
+@if(session()->has('buyer_id'))
+
+<h6 class="mt-3 fw-semibold text-dark">
+{{ session('buyer_name') }}
+</h6>
+
+@elseif(session()->has('seller_id'))
+
+<h6 class="mt-3 fw-semibold text-dark">
+{{ session('seller_name') }}
+</h6>
+
+@elseif(session()->has('id'))
+
+<h6 class="mt-3 fw-semibold text-dark">
+{{ $customer->name }}
+</h6>
+
+@endif
+
+</div>
+
+<div class="overflow-auto px-3" style="max-height: 6rem;">
+
+<ul class="nav flex-column gap-2">
+
+<li class="nav-item">
+<a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
+href="{{ route('profile') }}">
+<i class="fas fa-user me-2"></i> Profile
+</a>
+</li>
+
+{{-- BUYER DASHBOARD --}}
+@if(session()->has('buyer_id'))
+
+<li class="nav-item">
+<a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
+href="{{ route('buyer.dashboard') }}">
+<i class="fas fa-chart-line me-2"></i>
+Dashboard
+</a>
+</li>
+
+@endif
+
+{{-- SELLER DASHBOARD --}}
+@if(session()->has('seller_id'))
+
+<li class="nav-item">
+<a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
+href="{{ route('seller.dashboard') }}">
+<i class="fas fa-chart-line me-2"></i>
+Dashboard
+</a>
+</li>
+
+@endif
+
+{{-- CUSTOMER DASHBOARD --}}
+@if(session()->has('id'))
+
+<li class="nav-item">
+<a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
+href="{{ route('seller') }}">
+<i class="fas fa-chart-line me-2"></i>
+Dashboard
+</a>
+</li>
+
+@endif
+
+</ul>
+
+</div>
+
+<div class="card-footer border-0 bg-white p-4 text-center">
+
+<button
+class="btn btn-danger w-100 d-flex align-items-center justify-content-center gap-2"
+wire:click="logout">
+
+<i class="fa-solid fa-arrow-right-from-bracket text-light"></i>
+Sign out
+
+</button>
+
+<div class="mt-3 text-muted small d-flex justify-content-center gap-2 align-items-center">
+
+<span>&bull;</span>
+
+<a href="{{ route('term-conditions') }}"
+class="text-decoration-none text-secondary">
+Privacy Policy
+</a>
+
+<span>&bull;</span>
+
+<a href="{{ route('term-conditions') }}"
+class="text-decoration-none text-secondary">
+Terms
+</a>
+
+<span>&bull;</span>
+
+<a href="#!"
+class="text-decoration-none text-secondary">
+Cookies
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</li>
+
+@else
+<li>
+<div class="d-flex gap-2">
+
+<!-- Sign-in Button -->
+<a href="{{ route('login') }}"
+class="btn-signin d-flex align-items-center me-1 mb-1 text-decoration-none rounded-pill">
+
+<span class="me-2">
+<i class="fa-regular fa-user"></i>
+</span>
+
+<p class="mb-0 fw-bolder">Sign-in</p>
+
+</a>
 
 
-                                        {{-- <div> --}}
-                                        {{-- <a href="" class="align-content-center text-black"> Become a
-                                                Supplier</a> --}}
-                                        {{-- </div> --}}
-                                    </li>
-                                @endif
+<!-- Sign-up Button -->
+<a href="{{ route('signup') }}"
+class="btn-signup d-md-flex d-none align-items-center me-1 mb-1 rounded-pill text-white text-decoration-none">
+
+<span class="me-2">
+<i class="fa-regular fa-user"></i>
+</span>
+
+<p class="mb-0 fw-bolder">Sign-up</p>
+
+</a>
+<!-- Start Selling -->
+<a href="{{ route('start-selling') }}"
+class="btn-start-selling d-md-flex d-none align-items-center me-1 mb-1 rounded-pill text-white text-decoration-none">
+
+<span class="me-2">
+<i class="fa-solid fa-store"></i>
+</span>
+
+<p class="mb-0 fw-bolder">Start Selling</p>
+
+</a>
+</div>
+
+
+<style>
+
+/* Common Styles */
+
+.btn-signin,
+.btn-signup,
+.btn-start-selling{
+font-size:14px;
+padding:8px 10px;
+transition:all .3s ease;
+display:inline-flex;
+align-items:center;
+justify-content:center;
+border-radius:999px;
+}
+
+
+/* SIGN-IN BUTTON */
+
+.btn-signin{
+background:#0d6efd;
+border:2px solid #0d6efd;
+color:#ffffff;
+box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+
+.btn-signin:hover{
+background:#0d6efd;
+color:#fff;
+box-shadow:0 8px 18px rgba(13,110,253,.4);
+}
+
+
+/* SIGN-UP BUTTON */
+
+.btn-signup{
+background:linear-gradient(45deg,#ff416c,#ff4b2b);
+color:#fff;
+border:none;
+position:relative;
+overflow:hidden;
+box-shadow:0 4px 12px rgba(0,0,0,.2);
+}
+
+.btn-signup::after{
+content:"";
+position:absolute;
+top:0;
+left:-75%;
+width:50%;
+height:100%;
+background:rgba(255,255,255,.5);
+transform:skewX(-25deg);
+animation:shine 2.5s infinite;
+}
+
+.btn-signup:hover{
+background:linear-gradient(45deg,#ff4b2b,#ff416c);
+box-shadow:0 0 20px rgba(255,65,108,.6);
+}
+
+
+/* START SELLING BUTTON */
+
+.btn-start-selling{
+background:linear-gradient(45deg,#22c55e,#16a34a);
+color:#fff;
+border:none;
+position:relative;
+overflow:hidden;
+box-shadow:0 4px 12px rgba(0,0,0,.2);
+}
+
+.btn-start-selling::after{
+content:"";
+position:absolute;
+top:0;
+left:-75%;
+width:50%;
+height:100%;
+background:rgba(255,255,255,.4);
+transform:skewX(-25deg);
+animation:shine 2.5s infinite;
+}
+
+.btn-start-selling:hover{
+background:linear-gradient(45deg,#16a34a,#22c55e);
+box-shadow:0 0 20px rgba(34,197,94,.6);
+}
+
+
+/* SHINE ANIMATION */
+
+@keyframes shine{
+0%{ left:-75%; }
+100%{ left:125%; }
+}
+
+</style>
+</li>
+
+@endif
 
                             </ul>
                         </div>

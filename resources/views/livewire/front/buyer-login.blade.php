@@ -185,7 +185,7 @@ Remember me on this device
 <button type="submit" class="btn-sl-submit" wire:loading.attr="disabled">
 
 <span wire:loading.remove wire:target="login">
-Sign In to Dashboard
+Sign In
 </span>
 
 <span wire:loading wire:target="login">

@@ -80,7 +80,7 @@ if ($buyer->must_change_password == 1) {
     return redirect()->route('buyer.set-password');
 }
 
-return redirect()->route('buyer.dashboard');
+return redirect()->route('home');
     }
 
     public function render()

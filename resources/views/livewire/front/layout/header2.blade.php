@@ -118,9 +118,16 @@
                                                 <p class="mb-0 fw-bolder">Sign-up</p>
                                             </a>
                                             
-    <a href="{{ route('start-selling') }}" class="btn btn-primary">
-        Start Selling
-    </a>
+  <a href="{{ route('start-selling') }}"
+class="btn-signup d-md-flex d-none align-items-center me-1 mb-1 rounded-pill text-white text-decoration-none">
+
+<span class="me-2">
+<i class="fa-solid fa-store"></i>
+</span>
+
+<p class="mb-0 fw-bolder">Start Selling</p>
+
+</a>
                                         </div>
 
                                         <style>

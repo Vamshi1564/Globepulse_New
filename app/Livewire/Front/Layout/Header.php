@@ -20,13 +20,23 @@ class Header extends Component
         session()->flush();
         return redirect()->route('login'); // redirect to login page
     }
-    public function logout()
-    {
-        // Auth::logout(); // Log out the user
-        Session::flush();
-        return redirect()->route('login'); // Redirect to the login page
-
+   public function logout()
+{
+    // Buyer logout
+    if(Session::has('buyer_id')){
+        Session::forget(['buyer_id','buyer_email','buyer_name']);
+        return redirect()->route('buyer.login');
     }
+
+    // Customer logout
+    if(Session::has('id')){
+        Session::forget(['id']);
+        return redirect()->route('login');
+    }
+
+    Session::flush();
+    return redirect()->route('login');
+}
 
 
     public function redirectToProductAdd()
