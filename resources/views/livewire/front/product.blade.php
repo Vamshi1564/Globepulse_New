@@ -1163,7 +1163,7 @@
 
                                             </div>
                                             <div class="px-2 py-3 d-flex flex-column">
-                                                <a class="text-decoration-none stretched-link"
+                                                <a class="text-decoration-none stretched-link intent-trigger"
                                                     href="{{ route('product-detail', ['slug' => $product->slug]) }}">
                                                     <h3 class="text-dark mb-2 fw-bold product-title"
                                                         style="display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; text-overflow: ellipsis; max-height: 3em; line-height: 1.5em; word-break: break-word;"

@@ -4,4 +4,4 @@
 require __DIR__ . '/auth.php';
 require __DIR__ . '/front.php';
 require __DIR__ . '/seller.php';
-
+require __DIR__ . '/buyer.php';

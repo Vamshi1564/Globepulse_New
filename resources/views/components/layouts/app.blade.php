@@ -21,7 +21,7 @@
         integrity="sha512-fnaIKCc5zGOLlOvY3QDkgHHDiDdb4GyMqn99gIRfN6G6NrgPCvZ8tNLMCPYgfHM3i3WeAU6u4Taf8Cuo0Y0IyQ=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-
+    <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <link rel="shortcut icon" href="{{ asset('assets/img/icons/globpluse.jpg') }}" type="image/x-icon">
 
 
@@ -110,7 +110,9 @@
 </head>
 
 <body>
-
+<script>
+window.isLoggedIn = @json(auth('customer')->check());
+</script>
     <div class="loading-overlay" id="loading-overlay">
         <div class="logo-container">
             <div class="main-logo">
@@ -574,6 +576,246 @@
             window.scrollTo(0, 0);
         }
     </script>
+    
+   <div id="intentPopup" class="intent-popup">
+
+<div class="intent-modal">
+
+<button class="intent-close" onclick="closeIntentPopup()">✕</button>
+
+<div class="intent-header">
+<h2>Welcome to GlobPulse</h2>
+<p>How would you like to use our global B2B marketplace?</p>
+</div>
+
+<div class="intent-options">
+
+<!-- SELLER -->
+<div class="intent-card seller" onclick="goSeller()">
+
+<div class="intent-icon-wrap">
+<i class="bi bi-shop"></i>
+</div>
+
+<h4>Become a Seller</h4>
+<p>Showcase products and reach global buyers instantly.</p>
+
+</div>
+
+<!-- BUYER -->
+<div class="intent-card buyer" onclick="goBuyer()">
+
+<div class="intent-icon-wrap">
+<i class="bi bi-cart"></i>
+</div>
+
+<h4>Become a Buyer</h4>
+<p>Find trusted suppliers and request quotes easily.</p>
+
+</div>
+
+</div>
+
+<div class="intent-footer">
+<button onclick="closeIntentPopup()" class="browse-btn">
+Continue Browsing
+</button>
+</div>
+
+</div>
+</div>
+
+<!-- @livewireScripts
+
+<script>
+window.isLoggedIn = {{ auth('customer')->check() ? 'true' : 'false' }} === 'true';
+
+if(!window.isLoggedIn){
+    sessionStorage.removeItem("intentDismissed");
+    sessionStorage.removeItem("intentPopupShown");
+}
+</script>
+<script>
+
+/* SHOW POPUP */
+function showPopup(){
+
+    // prevent showing multiple times in same session
+    // if(sessionStorage.getItem("intentPopupShown")) return;
+
+    const popup = document.getElementById("intentPopup");
+
+    if(popup){
+        popup.style.display = "flex";
+        sessionStorage.setItem("intentPopupShown","true");
+    }
+
+}
+
+/* CLOSE POPUP */
+function closeIntentPopup(){
+
+    const popup = document.getElementById("intentPopup");
+
+    if(popup){
+        popup.style.display = "none";
+    }
+
+    // mark popup as dismissed for this session
+    sessionStorage.setItem("intentDismissed", "true");
+
+}
+
+/* SELLER */
+function goSeller(){
+
+    localStorage.setItem("globpulseUserType","seller");
+
+    let redirect = localStorage.getItem("redirectAfterIntent");
+
+    if(redirect){
+        localStorage.removeItem("redirectAfterIntent");
+        window.location.href = redirect;
+    }else{
+        window.location.href = "/start-selling";
+    }
+
+}
+
+/* BUYER */
+function goBuyer(){
+
+    localStorage.setItem("globpulseUserType","buyer");
+
+    let redirect = localStorage.getItem("redirectAfterIntent");
+
+    if(redirect){
+        localStorage.removeItem("redirectAfterIntent");
+        window.location.href = redirect;
+    }else{
+        window.location.href = "/signup";
+    }
+
+}
+
+/* AUTO POPUP AFTER 12 SEC */
+window.addEventListener("load", function(){
+
+    setTimeout(function(){
+
+        // if user already selected buyer/seller don't show popup
+if(
+    !localStorage.getItem("globpulseUserType") &&
+    !window.isLoggedIn &&
+    !sessionStorage.getItem("intentDismissed")
+){
+    showPopup();
+}
+
+    },12000);
+
+});
+
+</script>
+
+
+<script>
+document.addEventListener("click", function(e){
+
+    let link = e.target.closest(".intent-trigger");
+
+    if(!link) return;
+
+    // stop popup if logged in
+    if(localStorage.getItem("globpulseUserType") || window.isLoggedIn) return;
+
+    if(sessionStorage.getItem("intentDismissed")) return;
+
+    e.preventDefault();
+
+    localStorage.setItem("redirectAfterIntent", link.href);
+
+    showPopup();
+
+});
+</script> -->
+
+
+
+
+<script>
+
+/* SHOW POPUP */
+function showPopup(){
+    const popup = document.getElementById("intentPopup");
+    if(popup){
+        popup.style.display = "flex";
+    }
+}
+
+/* CLOSE POPUP */
+function closeIntentPopup(){
+    const popup = document.getElementById("intentPopup");
+    if(popup){
+        popup.style.display = "none";
+    }
+}
+
+/* SELLER */
+function goSeller(){
+    localStorage.setItem("globpulseUserType","seller");
+    window.location.href = "/start-selling";
+}
+
+/* BUYER */
+function goBuyer() {
+
+    // Save user intent
+    localStorage.setItem("globpulseUserType", "buyer");
+
+    // Redirect to buyer registration
+    window.location.href = "{{ route('buyer.register') }}";
+
+}
+
+/* SHOW POPUP AFTER PAGE VISIBLE */
+window.addEventListener("load", function(){
+
+    setTimeout(function(){
+
+        // if(
+        //     !localStorage.getItem("globpulseUserType") &&
+        //     !window.isLoggedIn
+        // )
+        {
+            showPopup();
+        }
+
+    },5000); // show after 5 seconds
+
+});
+
+</script>
+
+
+<script>
+document.addEventListener("click", function(e){
+
+    let link = e.target.closest(".intent-trigger");
+
+    if(!link) return;
+
+    if(localStorage.getItem("globpulseUserType") || window.isLoggedIn) return;
+
+    e.preventDefault();
+
+    localStorage.setItem("redirectAfterIntent", link.href);
+
+    showPopup();
+
+});
+</script>
+
 </body>
 
 </html>

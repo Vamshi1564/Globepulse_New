@@ -459,7 +459,7 @@
                                 @if ($index < 7)
                                     <div class="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
                                         <a href="{{ route('products-category', ['categorySlug' => $item->slug]) }}"
-                                            class="b2b-category-card">
+                                            class="intent-trigger b2b-category-card">
 
                                             <div class="b2b-icon">
                                                 @if ($item->main_cat_img)
