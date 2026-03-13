@@ -95,7 +95,7 @@ class Header extends Component
 
     public function logout()
     {
-        Session::forget(['seller_id', 'seller_email', 'seller_name']);
+        Session::forget(['seller_id', 'id', 'seller_email', 'seller_name']);
         return redirect()->route('seller.login')
             ->with('login_success', 'You have been logged out successfully.');
     }
@@ -176,3 +176,5 @@ class Header extends Component
         return view('livewire.seller.layout.header', compact('seller'));
     }
 }
+
+?>

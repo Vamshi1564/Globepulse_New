@@ -2,6 +2,34 @@
     <livewire:seller.layout.header />
     <main class="main" id="top">
     <style>
+          .doc-card{border:1.5px dashed var(--bdr);border-radius:12px;padding:1.1rem 1.2rem;background:#fafbfe;transition:border .2s,background .2s;}
+            .doc-card.dc-ok{border-style:solid;border-color:var(--green);background:#f0fdf9;}
+            .doc-card.dc-warn{border-style:solid;border-color:#f59e0b;background:#fffbeb;}
+            .doc-card.dc-error{border-style:solid;border-color:#e02424;background:#fff5f5;}
+            .doc-card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem;}
+            .doc-card-title{display:flex;align-items:center;gap:.6rem;font-size:.86rem;font-weight:700;color:#1a1f36;}
+            .doc-guide{font-size:.74rem;background:#f0f4ff;border-radius:7px;padding:.35rem .65rem;color:#374151;margin-bottom:.7rem;line-height:1.5;}
+            .doc-result{display:flex;align-items:flex-start;gap:.5rem;border-radius:8px;padding:.45rem .75rem;font-size:.78rem;line-height:1.5;margin-bottom:.5rem;font-weight:500;}
+            .dr-ok{background:#d5f5ec;color:#065f46;}
+            .dr-warn{background:#fef3c7;color:#92400e;}
+            .dr-error{background:#fee2e2;color:#991b1b;}
+            .ul-btn{display:inline-flex;align-items:center;gap:5px;background:var(--blt);color:var(--blue);border:none;border-radius:8px;padding:.38rem .85rem;font-size:.79rem;font-weight:600;cursor:pointer;transition:background .2s;}
+            .ul-btn:hover{background:#c7d7fc;}
+            .doc-uploading{display:none;font-size:.76rem;color:var(--mu);align-items:center;gap:4px;}
+
+            /* File preview card */
+            .file-preview{border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;margin-bottom:.7rem;}
+            .file-preview-top{background:#f4f6fb;padding:1.2rem;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:110px;}
+            .file-preview-top img{max-height:90px;max-width:100%;border-radius:6px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.1);}
+            .file-preview-icon{font-size:2.8rem;margin-bottom:.3rem;}
+            .file-preview-label{font-size:.72rem;color:var(--mu);font-weight:600;margin-top:.2rem;letter-spacing:.03em;}
+            .file-preview-bottom{padding:.5rem .85rem;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:.5rem;border-top:1px solid var(--bdr);}
+            .file-preview-name{font-size:.76rem;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;display:flex;align-items:center;gap:5px;}
+            .file-preview-meta{font-size:.71rem;color:#9ca3af;white-space:nowrap;}
+            .new-sel-badge{background:var(--green);color:#fff;font-size:.65rem;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.04em;white-space:nowrap;}
+           
+    </style>
+    <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@600;700&display=swap');
         :root{--blue:#1a56db;--blt:#e8f0fe;--green:#0e9f6e;--glt:#d5f5ec;--red:#e02424;--warn:#f59e0b;--wlt:#fef3c7;--bg:#f4f6fb;--bdr:#e5e9f2;--tx:#1a1f36;--mu:#6b7280;--r:14px;}
         body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);}
@@ -476,89 +504,281 @@
 
             {{-- ── STEP 4: VERIFICATION ── --}}
             @elseif($activeStep===4)
-              <div class="stitle">Identity & Business Verification</div>
-              <div class="ssub">Required for seller badge activation · Documents encrypted & reviewed within 24–48 hrs</div>
+            <div class="stitle">Identity & Business Verification</div>
+            <div class="ssub">Upload clear scans or photos · PDF, JPG, PNG · max 5MB each</div>
 
-              @php
-              $docDefs = [
-                ['owner_id_passport', 'fas fa-passport',  'Owner ID or Passport',  'Government-issued photo ID (Aadhaar, Passport, Driving Licence, PAN)', true,
-                 'Examples: Aadhaar Card, Passport, Driving Licence, PAN Card, Voter ID'],
-                ['business_license',  'fas fa-award',     'Business License',       'Trade licence or business permit issued by your local authority', false,
-                 'Examples: Shop & Establishment Certificate, Municipal Trade Licence, FSSAI (for food)'],
-                ['tax_id',            'fas fa-receipt',   'Tax ID Document',        'Tax identification document (GST / PAN / TIN / EIN)', true,
-                 'Examples: GST Registration Certificate, PAN Card (business), TIN Certificate'],
-                ['selfie',            'fas fa-camera',    'Selfie with ID',         'Clear photo of yourself holding your government-issued ID', false,
-                 'Hold your ID next to your face · Make sure both face and ID text are visible'],
-              ];
-              @endphp
+            @php
+            $docDefs = [
+                ['type'=>'owner_id_passport', 'icon'=>'fas fa-id-card',  'label'=>'Owner ID or Passport',
+                'hint'=>'Government-issued personal photo ID',
+                'guide'=>'Accepted: Aadhaar Card, Passport, Driving Licence, PAN Card, Voter ID',
+                'accept'=>'.jpg,.jpeg,.png,.pdf', 'required'=>true],
+                ['type'=>'business_license',  'icon'=>'fas fa-award',    'label'=>'Business License',
+                'hint'=>'Trade licence or business permit',
+                'guide'=>'Accepted: Shop & Establishment Cert., Trade Licence, Municipal Permit, FSSAI',
+                'accept'=>'.jpg,.jpeg,.png,.pdf', 'required'=>false],
+                ['type'=>'tax_id',            'icon'=>'fas fa-receipt',  'label'=>'Tax ID Document',
+                'hint'=>'Tax identification certificate',
+                'guide'=>'Accepted: GST Certificate, PAN Card (business), TIN, VAT Registration',
+                'accept'=>'.jpg,.jpeg,.png,.pdf', 'required'=>true],
+                ['type'=>'selfie',            'icon'=>'fas fa-camera',   'label'=>'Selfie with ID',
+                'hint'=>'Photo of yourself holding your government ID',
+                'guide'=>'Your face AND the ID must both be visible · JPG or PNG only (no PDF)',
+                'accept'=>'.jpg,.jpeg,.png', 'required'=>false],
+            ];
+            @endphp
 
-              <div class="row g-3">
-                @foreach($docDefs as [$type,$icon,$label,$hint,$req,$guide])
-                  @php $doc=$documents->get($type); $fid='f_'.$type; @endphp
-                  <div class="col-12">
-                    <div class="duz {{ $doc?'up':'' }} {{ isset($docWarnings[$type])?'warn-zone':'' }}">
-                      <div class="duz-head">
-                        <div class="duz-lbl">
-                          <i class="{{ $icon }} text-primary"></i>
-                          {{ $label }}
-                          @if($req)<span style="color:var(--red);">*</span>@endif
-                          @if($doc)<span class="ds ds-{{ $doc->review_status }} ms-1">{{ ucfirst($doc->review_status) }}</span>@endif
-                        </div>
-                        @if(!$doc)<span style="font-size:.71rem;color:var(--mu);">PDF, JPG, PNG · max 5MB</span>@endif
-                      </div>
-                      <div class="duz-hint">{{ $hint }}</div>
+            <div class="row g-3">
+                @foreach($docDefs as $def)
+                @php
+                    $type      = $def['type'];
+                    $doc       = $documents->get($type);
+                    $ver       = $docVerification[$type] ?? null;
+                    $fid       = 'f_' . $type;
+                    $spinnerId = 'sp_' . $type;
+                    $prevId    = 'prev_' . $type;
 
-                      {{-- Guide --}}
-                      <div style="font-size:.73rem;background:#f0f4ff;border-radius:6px;padding:.35rem .6rem;color:#374151;margin-bottom:.5rem;line-height:1.5;">
-                        <i class="fas fa-info-circle me-1" style="color:var(--blue);"></i>{{ $guide }}
-                      </div>
+                    // Determine card state
+                    $cardClass = match($ver['status'] ?? ($doc ? 'ok' : '')) {
+                    'ok'    => 'dc-ok',
+                    'warn'  => 'dc-warn',
+                    'error' => 'dc-error',
+                    default => '',
+                    };
 
-                      @if($doc)
-                        <div class="file-accepted"><i class="fas fa-check-circle"></i>{{ $doc->file_name }} ({{ round($doc->file_size_bytes/1024) }} KB)</div>
-                        @if($doc->review_status==='rejected')
-                          <div style="background:#fee2e2;color:#991b1b;border-radius:8px;padding:.4rem .7rem;font-size:.76rem;margin-top:.4rem;display:flex;align-items:center;gap:6px;">
-                            <i class="fas fa-times-circle"></i> {{ $doc->rejection_reason ?? 'Document rejected — please re-upload.' }}
-                          </div>
+                    // Figure out stored file type from mime
+                    $isStoredImage = $doc && str_starts_with($doc->mime_type, 'image/');
+                    $isStoredPdf   = $doc && $doc->mime_type === 'application/pdf';
+                @endphp
+
+                <div class="col-md-6 col-12">
+                    <div class="doc-card {{ $cardClass }}">
+
+                    {{-- Card header --}}
+                    <div class="doc-card-head">
+                        <div class="doc-card-title">
+                        <i class="{{ $def['icon'] }}" style="color:var(--blue);font-size:1rem;"></i>
+                        {{ $def['label'] }}
+                        @if($def['required'])<span style="color:var(--red);">*</span>@endif
+                        @if($doc)
+                            <span class="ds ds-{{ $doc->review_status }}">{{ ucfirst($doc->review_status) }}</span>
                         @endif
-                      @endif
-
-                      {{-- Warning if wrong file detected --}}
-                      @if(isset($docWarnings[$type]))
-                        <div class="doc-warn">
-                          <i class="fas fa-exclamation-triangle mt-1"></i>
-                          <span><strong>Wrong document?</strong> {{ $docWarnings[$type] }}</span>
                         </div>
-                      @endif
-
-                      <div>
-                        <input type="file" wire:model="doc_{{ $type }}" id="{{ $fid }}"
-                          style="display:none;" accept=".pdf,.jpg,.jpeg,.png"
-                          x-on:change="$wire.checkDocFile('{{ $type }}', $event.target.files[0]?.name ?? '')">
-                        <label for="{{ $fid }}" class="ul-btn">
-                          <i class="fas fa-{{ $doc?'redo':'upload' }}"></i> {{ $doc?'Re-upload':'Upload' }}
-                        </label>
-                        <span wire:loading wire:target="doc_{{ $type }}" class="ms-2 text-muted" style="font-size:.76rem;">
-                          <span class="spinner-border spinner-border-sm"></span> Uploading...
-                        </span>
-                      </div>
-                      @error('doc_'.$type)<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                        <span style="font-size:.71rem;color:var(--mu);">{{ $def['hint'] }}</span>
                     </div>
-                  </div>
+
+                    {{-- Guide --}}
+                    <div class="doc-guide">
+                        <i class="fas fa-info-circle me-1" style="color:var(--blue);"></i>{{ $def['guide'] }}
+                    </div>
+
+                    {{-- ── FILE PREVIEW (shown after upload) ── --}}
+                    @if($doc && (!$ver || $ver['status'] !== 'error'))
+                        <div class="file-preview" id="{{ $prevId }}">
+
+                        {{-- Top preview area --}}
+                        <div class="file-preview-top">
+                            @if($isStoredImage)
+                            {{-- Show actual image thumbnail --}}
+                            <img
+                                src="{{ asset('storage/' . $doc->storage_url) }}"
+                                alt="{{ $doc->file_name }}"
+                                onerror="this.style.display='none';document.getElementById('icon_{{ $type }}').style.display='block';"
+                            >
+                            <div id="icon_{{ $type }}" style="display:none;text-align:center;">
+                                <div class="file-preview-icon" style="color:#0ea5e9;">
+                                <i class="fas fa-image"></i>
+                                </div>
+                                <div class="file-preview-label">IMAGE</div>
+                            </div>
+                            @elseif($isStoredPdf)
+                            {{-- PDF icon --}}
+                            <div class="file-preview-icon" style="color:#e02424;">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div class="file-preview-label">PDF DOCUMENT</div>
+                            @else
+                            {{-- Generic file --}}
+                            <div class="file-preview-icon" style="color:#6b7280;">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="file-preview-label">DOCUMENT</div>
+                            @endif
+                        </div>
+
+                        {{-- Bottom: filename + new selection badge --}}
+                        <div class="file-preview-bottom">
+                            <div class="file-preview-name">
+                            <i class="fas fa-paperclip" style="color:var(--blue);flex-shrink:0;font-size:.7rem;"></i>
+                            {{ $doc->file_name }}
+                            </div>
+                            <div style="display:flex;align-items:center;gap:.5rem;">
+                            <span class="file-preview-meta">{{ round($doc->file_size_bytes / 1024) }} KB</span>
+                            @if($ver && $ver['status'] === 'ok')
+                                <span class="new-sel-badge">UPLOADED</span>
+                            @endif
+                            </div>
+                        </div>
+
+                        </div>{{-- end file-preview --}}
+                    @endif
+
+                    {{-- ── CLIENT-SIDE PREVIEW (shown immediately after user picks file, before Livewire uploads) ── --}}
+                    {{-- This is shown by JS as soon as user selects a file --}}
+                    <div id="local_prev_{{ $type }}" style="display:none;" class="file-preview">
+                        <div class="file-preview-top" id="local_prev_top_{{ $type }}">
+                        {{-- JS fills this in --}}
+                        </div>
+                        <div class="file-preview-bottom">
+                        <div class="file-preview-name" id="local_prev_name_{{ $type }}">
+                            <i class="fas fa-paperclip" style="color:var(--blue);flex-shrink:0;font-size:.7rem;"></i>
+                            <span></span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:.5rem;">
+                            <span class="file-preview-meta" id="local_prev_size_{{ $type }}"></span>
+                            <span class="new-sel-badge" style="background:var(--blue);">NEW SELECTION</span>
+                        </div>
+                        </div>
+                    </div>
+
+                    {{-- Spinner (JS controlled) --}}
+                    <span id="{{ $spinnerId }}" class="doc-uploading" style="margin-bottom:.4rem;">
+                        <span class="spinner-border spinner-border-sm"></span> Uploading...
+                    </span>
+
+                    {{-- Validation result --}}
+                    @if($ver)
+                        <div class="doc-result dr-{{ $ver['status'] }}">
+                        <i class="fas fa-{{ $ver['status']==='ok' ? 'check-circle' : ($ver['status']==='warn' ? 'exclamation-triangle' : 'times-circle') }} mt-1" style="flex-shrink:0;"></i>
+                        <span>{{ $ver['message'] }}</span>
+                        </div>
+                    @endif
+
+                    {{-- Admin rejection note --}}
+                    @if($doc && $doc->review_status === 'rejected' && $doc->rejection_reason)
+                        <div class="doc-result dr-error">
+                        <i class="fas fa-times-circle mt-1" style="flex-shrink:0;"></i>
+                        <div><strong>Rejected:</strong> {{ $doc->rejection_reason }}</div>
+                        </div>
+                    @endif
+
+                    {{-- Upload / Replace button --}}
+                    <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.3rem;">
+                        <input
+                        type="file"
+                        wire:model="doc_{{ $type }}"
+                        id="{{ $fid }}"
+                        style="display:none;"
+                        accept="{{ $def['accept'] }}"
+                        onchange="handleDocSelect(this, '{{ $type }}')"
+                        >
+                        <label for="{{ $fid }}" class="ul-btn">
+                        <i class="fas fa-{{ $doc ? 'redo' : 'upload' }}"></i>
+                        {{ $doc ? 'Change Document' : 'Upload Document' }}
+                        </label>
+                    </div>
+
+                    @error('doc_'.$type)
+                        <small class="text-danger d-block mt-2">
+                        <i class="fas fa-exclamation-circle me-1"></i>{{ $message }}
+                        </small>
+                    @enderror
+
+                    </div>
+                </div>
                 @endforeach
-              </div>
+            </div>
 
-              <div class="gp-info mt-3">
+            {{-- JS: preview selected file immediately, then show spinner --}}
+            <script>
+                function handleDocSelect(input, type) {
+                if (!input.files || !input.files[0]) return;
+                var file = input.files[0];
+                var ext  = file.name.split('.').pop().toLowerCase();
+
+                // Show spinner
+                var spinner = document.getElementById('sp_' + type);
+                if (spinner) spinner.style.display = 'flex';
+
+                // Hide server-rendered preview (will be replaced after Livewire re-render)
+                var serverPrev = document.getElementById('prev_' + type);
+                if (serverPrev) serverPrev.style.display = 'none';
+
+                // Show local preview
+                var localPrev = document.getElementById('local_prev_' + type);
+                var localTop  = document.getElementById('local_prev_top_' + type);
+                var localName = document.getElementById('local_prev_name_' + type);
+                var localSize = document.getElementById('local_prev_size_' + type);
+
+                if (!localPrev) return;
+
+                // File name
+                if (localName) localName.querySelector('span').textContent = file.name;
+
+                // File size
+                var sizeKb = (file.size / 1024).toFixed(0);
+                if (localSize) localSize.textContent = sizeKb + ' KB';
+
+                // Preview content based on type
+                if (localTop) {
+                    if (['jpg','jpeg','png','webp','gif'].includes(ext)) {
+                    // Image: show actual thumbnail
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        localTop.innerHTML =
+                        '<img src="' + e.target.result + '" style="max-height:90px;max-width:100%;border-radius:6px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.1);">' ;
+                    };
+                    reader.readAsDataURL(file);
+                    } else if (ext === 'pdf') {
+                    localTop.innerHTML =
+                        '<div class="file-preview-icon" style="color:#e02424;"><i class="fas fa-file-pdf"></i></div>' +
+                        '<div class="file-preview-label">PDF DOCUMENT</div>';
+                    } else if (['doc','docx'].includes(ext)) {
+                    localTop.innerHTML =
+                        '<div class="file-preview-icon" style="color:#1a56db;"><i class="fas fa-file-word"></i></div>' +
+                        '<div class="file-preview-label">WORD DOCUMENT</div>';
+                    } else {
+                    localTop.innerHTML =
+                        '<div class="file-preview-icon" style="color:#6b7280;"><i class="fas fa-file-alt"></i></div>' +
+                        '<div class="file-preview-label">DOCUMENT</div>';
+                    }
+                }
+
+                localPrev.style.display = 'block';
+
+                // Safety: hide spinner after 30s if Livewire stalls
+                setTimeout(function() {
+                    if (spinner) spinner.style.display = 'none';
+                }, 30000);
+                }
+
+                // Hide all spinners and local previews when Livewire re-renders
+                // (server-side preview will now show instead)
+                document.addEventListener('livewire:update', function() {
+                document.querySelectorAll('.doc-uploading').forEach(function(el) {
+                    el.style.display = 'none';
+                });
+                document.querySelectorAll('[id^="local_prev_"]').forEach(function(el) {
+                    // Only hide the top-level local preview divs, not sub-elements
+                    if (el.id.split('_').length === 3) el.style.display = 'none';
+                });
+                });
+            </script>
+
+            <div style="background:var(--blt);border-radius:10px;padding:.65rem 1rem;font-size:.8rem;color:#1e40af;margin-top:.8rem;display:flex;align-items:center;gap:.6rem;">
                 <i class="fas fa-shield-alt"></i>
-                All documents are encrypted at rest. Our team reviews submissions within 24–48 hours.
-              </div>
+                Documents stored securely on our servers · Reviewed by our team within 24–48 hours
+            </div>
 
-              <div class="sfooter">
-                <button type="button" class="btn-o" wire:click="goToStep(3)"><i class="fas fa-arrow-left"></i> Back</button>
-                <button type="button" class="btn-p" wire:click="saveStep4" wire:loading.attr="disabled">
-                  <span wire:loading wire:target="saveStep4" class="spinner-border spinner-border-sm me-1"></span>
-                  Continue <i class="fas fa-arrow-right" wire:loading.remove wire:target="saveStep4"></i>
+            <div class="sfooter">
+                <button type="button" class="btn-o" wire:click="goToStep(3)">
+                <i class="fas fa-arrow-left"></i> Back
                 </button>
-              </div>
+                <button type="button" class="btn-p" wire:click="saveStep4" wire:loading.attr="disabled">
+                <span wire:loading wire:target="saveStep4" class="spinner-border spinner-border-sm me-1"></span>
+                Continue <i class="fas fa-arrow-right" wire:loading.remove wire:target="saveStep4"></i>
+                </button>
+            </div>
 
             {{-- ── STEP 5: PLAN (LAST) ── --}}
             @elseif($activeStep===5)
