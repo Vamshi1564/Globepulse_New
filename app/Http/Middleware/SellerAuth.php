@@ -14,6 +14,7 @@ class SellerAuth
     private const ALWAYS_ALLOWED = [
         'seller.set-password',
         'seller.logout',
+        'seller.profile', 
         'profile',            // profile completion page itself
         'seller.dashboard',   // dashboard always accessible (shows status banner)
     ];
@@ -61,7 +62,7 @@ class SellerAuth
                 && in_array($details->kyc_status, ['submitted', 'verified', 'approved']);
 
             if (!$profileComplete) {
-                return redirect()->route('profile')
+               return redirect()->route('seller.profile')
                     ->with('info', 'Please complete your profile before accessing the seller area.');
             }
         }

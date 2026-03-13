@@ -119,7 +119,7 @@ Route::middleware([SellerAuth::class])->group(function () {  // <-- CHANGED from
     Route::get('/seller/total_data', TotalData::class)->name('total_data');
     Route::get('/seller/total_product_view', TotalProductView::class)->name('total_product_view');
     Route::get('/seller/total_website', TotalWebsiteLinks::class)->name('total_website');
-    Route::get('/seller/profile', Profile::class)->name('profile');
+    Route::get('/seller/profile', Profile::class)->name('seller.profile');
     Route::get('/seller/product_enquiries', TotalEnquiries::class)->name('enquiries');
     Route::get('/seller/buylead_enquiries/{postrequirementID}', TotalBuyleadEnquiry::class)->name('buyleadenquiries');
     Route::get('/seller/primary_details', PrimaryDetails::class)->name('primary_details');

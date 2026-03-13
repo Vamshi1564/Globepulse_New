@@ -176,7 +176,7 @@
                                     <ul class="nav flex-column gap-2">
                                         <li class="nav-item">
                                             <a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
-                                                href="{{ route('profile') }}">
+                                                href="{{ route('seller.profile') }}">
                                                 <i class="fas fa-user me-2"></i> Profile
                                             </a>
                                         </li>

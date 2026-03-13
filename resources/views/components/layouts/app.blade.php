@@ -630,25 +630,15 @@ Continue Browsing
 <script>
 window.isLoggedIn = {{ auth('customer')->check() ? 'true' : 'false' }} === 'true';
 
-if(!window.isLoggedIn){
-    sessionStorage.removeItem("intentDismissed");
-    sessionStorage.removeItem("intentPopupShown");
-}
-</script>
-<script>
-
 /* SHOW POPUP */
 function showPopup(){
 
-    // prevent showing multiple times in same session
-    // if(sessionStorage.getItem("intentPopupShown")) return;
-
     const popup = document.getElementById("intentPopup");
+    if(!popup) return;
 
-    if(popup){
-        popup.style.display = "flex";
-        sessionStorage.setItem("intentPopupShown","true");
-    }
+    popup.style.display = "flex";
+
+    sessionStorage.setItem("intentPopupShown","true");
 
 }
 
@@ -656,13 +646,11 @@ function showPopup(){
 function closeIntentPopup(){
 
     const popup = document.getElementById("intentPopup");
+    if(!popup) return;
 
-    if(popup){
-        popup.style.display = "none";
-    }
+    popup.style.display = "none";
 
-    // mark popup as dismissed for this session
-    sessionStorage.setItem("intentDismissed", "true");
+    sessionStorage.setItem("intentDismissed","true");
 
 }
 
@@ -671,14 +659,7 @@ function goSeller(){
 
     localStorage.setItem("globpulseUserType","seller");
 
-    let redirect = localStorage.getItem("redirectAfterIntent");
-
-    if(redirect){
-        localStorage.removeItem("redirectAfterIntent");
-        window.location.href = redirect;
-    }else{
-        window.location.href = "/start-selling";
-    }
+    window.location.href = "/start-selling";
 
 }
 
@@ -687,14 +668,7 @@ function goBuyer(){
 
     localStorage.setItem("globpulseUserType","buyer");
 
-    let redirect = localStorage.getItem("redirectAfterIntent");
-
-    if(redirect){
-        localStorage.removeItem("redirectAfterIntent");
-        window.location.href = redirect;
-    }else{
-        window.location.href = "/signup";
-    }
+    window.location.href = "/signup";
 
 }
 
@@ -703,33 +677,26 @@ window.addEventListener("load", function(){
 
     setTimeout(function(){
 
-        // if user already selected buyer/seller don't show popup
-if(
-    !localStorage.getItem("globpulseUserType") &&
-    !window.isLoggedIn &&
-    !sessionStorage.getItem("intentDismissed")
-){
-    showPopup();
-}
+        if(
+            !window.isLoggedIn &&
+            !localStorage.getItem("globpulseUserType") &&
+            !sessionStorage.getItem("intentPopupShown")
+        ){
+            showPopup();
+        }
 
     },12000);
 
 });
 
-</script>
-
-
-<script>
+/* INTERCEPT LINK CLICK */
 document.addEventListener("click", function(e){
 
     let link = e.target.closest(".intent-trigger");
 
     if(!link) return;
 
-    // stop popup if logged in
-    if(localStorage.getItem("globpulseUserType") || window.isLoggedIn) return;
-
-    if(sessionStorage.getItem("intentDismissed")) return;
+    if(window.isLoggedIn || localStorage.getItem("globpulseUserType")) return;
 
     e.preventDefault();
 

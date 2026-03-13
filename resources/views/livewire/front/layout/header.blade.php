@@ -349,7 +349,7 @@ href="{{ route('seller.profile') }}">
 
 <li class="nav-item">
 <a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
-href="{{ route('profile') }}">
+href="{{ route('seller.profile') }}">
 <i class="fas fa-user me-2"></i> Profile
 </a>
 </li>
@@ -387,7 +387,7 @@ Dashboard
 
 <li class="nav-item">
 <a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
-href="{{ route('seller') }}">
+href="{{ route('buyer.dashboard') }}">
 <i class="fas fa-chart-line me-2"></i>
 Dashboard
 </a>
@@ -994,12 +994,25 @@ background:#f3f4f6;
                             <li><a class="dropdown-item" href="{{ route('hotdeal') }}">Hot Deals</a></li>
                             <li><a class="dropdown-item" href="{{ route('postbyrequirement') }}"
                                     wire:click.prevent="redirectToPostByRequirement">Post Buy Requirements</a></li>
-                            @if (!session('id'))
-                                <li><a class="dropdown-item" href="{{ route('signup') }}">Become Supplier</a></li>
-                            @else
-                                <li><a class="dropdown-item" href="{{ route('product_add') }}"
-                                        wire:click.prevent="redirectToProductAdd">Sell Now</a></li>
-                            @endif
+                         @if (!session('buyer_id') && !session('seller_id') && !session('id'))
+
+<li class="d-block d-md-none">
+<a class="dropdown-item" href="{{ route('signup') }}">
+Become Supplier
+</a>
+</li>
+
+@else
+
+<li class="d-block d-md-none">
+<a class="dropdown-item"
+href="{{ route('product_add') }}"
+wire:click.prevent="redirectToProductAdd">
+Sell Now
+</a>
+</li>
+
+@endif
 
                             <li><a class="dropdown-item" href="{{ route('trade-finance-solutions') }}">Trade
                                     Finance</a>
@@ -1030,17 +1043,25 @@ background:#f3f4f6;
                             <a class="nav-link text-dark" href="{{ route('postbyrequirement') }}"
                                 wire:click.prevent="redirectToPostByRequirement">Post Buy Requirements</a>
                         </li>
-                        @if (!session('id'))
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" href="{{ route('signup') }}">Become Supplier</a>
-                            </li>
-                        @else
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" href="{{ route('product_add') }}"
-                                    wire:click.prevent="redirectToProductAdd">Sell
-                                    Now</a>
-                            </li>
-                        @endif
+                       @if (!session('buyer_id') && !session('seller_id') && !session('id'))
+
+<li class="nav-item d-block d-md-none">
+<a class="nav-link text-white" href="{{ route('signup') }}">
+Become Supplier
+</a>
+</li>
+
+@else
+
+<li class="nav-item d-block d-md-none">
+<a class="nav-link text-white"
+href="{{ route('product_add') }}"
+wire:click.prevent="redirectToProductAdd">
+Sell Now
+</a>
+</li>
+
+@endif
 
                         <li class="nav-item">
                             <a class="nav-link text-dark" href="{{ route('trade-finance-solutions') }}">Trade
