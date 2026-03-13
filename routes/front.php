@@ -42,6 +42,8 @@ use App\Livewire\Front\BuyerLogin;
 use App\Livewire\Front\BuyerSignup;
 use App\Livewire\Front\SellerLogin;
 use App\Livewire\Front\SellerSignup;
+use App\Livewire\Front\BuyerProfile;
+// use App\Livewire\Seller\SellerProfile;
 // public website / front routes (preserved exactly)
 
 // service & homepage
@@ -71,6 +73,10 @@ Route::get('/buyer/signup', BuyerSignup::class)->name('buyer.signup');
 
 Route::get('/seller/login', SellerLogin::class)->name('seller.login');
 Route::get('/seller/signup', SellerSignup::class)->name('seller.signup');
+
+Route::get('/buyer/profile', BuyerProfile::class)->name('buyer.profile');
+
+// Route::get('/seller/profile', SellerProfile::class)->name('seller.profile');
 // Landing page
 Route::get('/start-selling', \App\Livewire\Front\Sellerl::class)->name('start-selling');
 

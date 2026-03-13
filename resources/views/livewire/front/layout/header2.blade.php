@@ -102,12 +102,35 @@ alt="Default Avatar" />
 
 <ul class="nav flex-column gap-2">
 
+{{-- PROFILE --}}
+@if(session()->has('buyer_id'))
+
+<li class="nav-item">
+<a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
+href="{{ route('buyer.profile') }}">
+<i class="fas fa-user me-2"></i> Profile
+</a>
+</li>
+
+@elseif(session()->has('seller_id'))
+
+<li class="nav-item">
+<a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
+href="{{ route('seller.profile') }}">
+<i class="fas fa-user me-2"></i> Profile
+</a>
+</li>
+
+@elseif(session()->has('id'))
+
 <li class="nav-item">
 <a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
 href="{{ route('profile') }}">
 <i class="fas fa-user me-2"></i> Profile
 </a>
 </li>
+
+@endif
 
 {{-- BUYER DASHBOARD --}}
 @if(session()->has('buyer_id'))
