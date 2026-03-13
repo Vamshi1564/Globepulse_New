@@ -20,12 +20,19 @@ class Header extends Component
         session()->flush();
         return redirect()->route('login'); // redirect to login page
     }
-   public function logout()
+  public function logout()
 {
     // Buyer logout
     if(Session::has('buyer_id')){
         Session::forget(['buyer_id','buyer_email','buyer_name']);
         return redirect()->route('buyer.login');
+    }
+
+    // Seller logout
+    if(Session::has('seller_id')){
+        Session::forget(['seller_id','seller_email','seller_name']);
+        return redirect()->route('seller.login')
+            ->with('login_success', 'You have been logged out successfully.');
     }
 
     // Customer logout
@@ -34,6 +41,7 @@ class Header extends Component
         return redirect()->route('login');
     }
 
+    // Fallback
     Session::flush();
     return redirect()->route('login');
 }

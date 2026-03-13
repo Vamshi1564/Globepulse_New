@@ -17,13 +17,31 @@ class Header2 extends Component
     public $subcategories;
 
 
-    public function logout()
-    {
-        // Auth::logout(); // Log out the user
-        Session::flush();
-        return redirect()->route('login'); // Redirect to the login page
-
+ public function logout()
+{
+    // Buyer logout
+    if(Session::has('buyer_id')){
+        Session::forget(['buyer_id','buyer_email','buyer_name']);
+        return redirect()->route('buyer.login');
     }
+
+    // Seller logout
+    if(Session::has('seller_id')){
+        Session::forget(['seller_id','seller_email','seller_name']);
+        return redirect()->route('seller.login')
+            ->with('login_success', 'You have been logged out successfully.');
+    }
+
+    // Customer logout
+    if(Session::has('id')){
+        Session::forget(['id']);
+        return redirect()->route('login');
+    }
+
+    // Fallback
+    Session::flush();
+    return redirect()->route('login');
+}
 
 
     public function redirectToProductAdd()
