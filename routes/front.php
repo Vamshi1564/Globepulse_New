@@ -38,7 +38,10 @@ use App\Livewire\Packages1;
 use App\Livewire\ProductsCategory;
 use App\Livewire\TradeFinanceSolutions;
 use Illuminate\Support\Facades\Route;
-
+use App\Livewire\Front\BuyerLogin;
+use App\Livewire\Front\BuyerSignup;
+use App\Livewire\Front\SellerLogin;
+use App\Livewire\Front\SellerSignup;
 // public website / front routes (preserved exactly)
 
 // service & homepage
@@ -63,6 +66,11 @@ Route::get('/product-inquiry/{customer_id}/{product_id}', ProductInquiry::class)
 Route::get('/buylead-inquiry/{customer_id}/{postbyrequirement_id}', BuyleadInquiry::class)->name('buylead-inquiry');
 Route::get('/product-detail/{slug}', ProductDetail::class)->name('product-detail');
 Route::get('/signup/{id?}', Signup::class)->name('signup');
+Route::get('/buyer/login', BuyerLogin::class)->name('buyer.login');
+Route::get('/buyer/signup', BuyerSignup::class)->name('buyer.signup');
+
+Route::get('/seller/login', SellerLogin::class)->name('seller.login');
+Route::get('/seller/signup', SellerSignup::class)->name('seller.signup');
 // Landing page
 Route::get('/start-selling', \App\Livewire\Front\Sellerl::class)->name('start-selling');
 

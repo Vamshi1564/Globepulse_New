@@ -425,8 +425,23 @@ Cookies
 <div class="d-flex gap-2">
 
 <!-- Sign-in Button -->
-<a href="{{ route('login') }}"
+<!-- <a href="{{ route('buyer.login') }}"
 class="btn-signin d-flex align-items-center me-1 mb-1 text-decoration-none rounded-pill">
+
+<span class="me-2">
+<i class="fa-regular fa-user"></i>
+</span>
+
+<p class="mb-0 fw-bolder">Sign-in</p>
+
+</a> -->
+<div class="dropdown me-1 mb-1">
+
+<a class="btn-signin dropdown-toggle d-flex align-items-center text-decoration-none rounded-pill"
+href="#"
+role="button"
+data-bs-toggle="dropdown"
+aria-expanded="false">
 
 <span class="me-2">
 <i class="fa-regular fa-user"></i>
@@ -436,9 +451,27 @@ class="btn-signin d-flex align-items-center me-1 mb-1 text-decoration-none round
 
 </a>
 
+<ul class="dropdown-menu">
+
+<li>
+<a class="dropdown-item" href="{{ route('buyer.login') }}">
+Buyer Login
+</a>
+</li>
+
+<li>
+<a class="dropdown-item" href="{{ route('seller.login') }}">
+Seller Login
+</a>
+</li>
+
+</ul>
+
+</div>
+
 
 <!-- Sign-up Button -->
-<a href="{{ route('signup') }}"
+<!-- <a href="{{ route('buyer.signup') }}"
 class="btn-signup d-md-flex d-none align-items-center me-1 mb-1 rounded-pill text-white text-decoration-none">
 
 <span class="me-2">
@@ -447,7 +480,40 @@ class="btn-signup d-md-flex d-none align-items-center me-1 mb-1 rounded-pill tex
 
 <p class="mb-0 fw-bolder">Sign-up</p>
 
+</a> -->
+<div class="dropdown me-1 mb-1">
+
+<a class="btn-signup dropdown-toggle d-md-flex d-none align-items-center text-white text-decoration-none rounded-pill"
+href="#"
+role="button"
+data-bs-toggle="dropdown"
+aria-expanded="false">
+
+<span class="me-2">
+<i class="fa-regular fa-user"></i>
+</span>
+
+<p class="mb-0 fw-bolder">Sign-up</p>
+
 </a>
+
+<ul class="dropdown-menu">
+
+<li>
+<a class="dropdown-item" href="{{ route('buyer.signup') }}">
+Buyer Signup
+</a>
+</li>
+
+<li>
+<a class="dropdown-item" href="{{ route('seller.signup') }}">
+Seller Signup
+</a>
+</li>
+
+</ul>
+
+</div>
 <!-- Start Selling -->
 <a href="{{ route('start-selling') }}"
 class="btn-start-selling d-md-flex d-none align-items-center me-1 mb-1 rounded-pill text-white text-decoration-none">
@@ -825,6 +891,23 @@ box-shadow:0 0 20px rgba(34,197,94,.6);
                 .dropdown-menu a:hover {
                     background-color: #f1f1f1;
                 }
+
+                /* .dropdown-menu{
+border-radius:10px;
+box-shadow:0 8px 25px rgba(0,0,0,0.12);
+border:none;
+padding:8px;
+}
+
+.dropdown-item{
+border-radius:6px;
+padding:8px 12px;
+font-size:14px;
+}
+
+.dropdown-item:hover{
+background:#f3f4f6;
+} */
             </style>
 
             <style>

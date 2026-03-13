@@ -625,7 +625,7 @@ Continue Browsing
 </div>
 </div>
 
-<!-- @livewireScripts
+<!-- @livewireScripts -->
 
 <script>
 window.isLoggedIn = {{ auth('customer')->check() ? 'true' : 'false' }} === 'true';
@@ -738,12 +738,12 @@ document.addEventListener("click", function(e){
     showPopup();
 
 });
-</script> -->
+</script>
 
 
 
 
-<script>
+<!-- <script>
 
 /* SHOW POPUP */
 function showPopup(){
@@ -814,7 +814,7 @@ document.addEventListener("click", function(e){
     showPopup();
 
 });
-</script>
+</script> -->
 
 </body>
 
