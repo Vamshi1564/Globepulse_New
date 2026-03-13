@@ -237,32 +237,16 @@ class="btn-signin d-flex align-items-center me-1 mb-1 text-decoration-none round
 <div class="dropdown me-1 mb-1">
 
 <a class="btn-signin dropdown-toggle d-flex align-items-center text-decoration-none rounded-pill"
-href="#"
-role="button"
-data-bs-toggle="dropdown"
-aria-expanded="false">
-
-<span class="me-2">
-<i class="fa-regular fa-user"></i>
-</span>
-
+href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+<span class="me-2"><i class="fa-regular fa-user"></i></span>
 <p class="mb-0 fw-bolder">Sign-in</p>
-
 </a>
 
 <ul class="dropdown-menu">
 
-<li>
-<a class="dropdown-item" href="{{ route('buyer.login') }}">
-Buyer Login
-</a>
-</li>
+<li><a class="dropdown-item" href="{{ route('buyer.login') }}">Buyer Login</a></li>
 
-<li>
-<a class="dropdown-item" href="{{ route('seller.login') }}">
-Seller Login
-</a>
-</li>
+<li><a class="dropdown-item" href="{{ route('seller.login') }}">Seller Login</a></li>
 
 </ul>
 
@@ -283,17 +267,9 @@ class="btn-signup d-md-flex d-none align-items-center me-1 mb-1 rounded-pill tex
 <div class="dropdown me-1 mb-1">
 
 <a class="btn-signup dropdown-toggle d-md-flex d-none align-items-center text-white text-decoration-none rounded-pill"
-href="#"
-role="button"
-data-bs-toggle="dropdown"
-aria-expanded="false">
-
-<span class="me-2">
-<i class="fa-regular fa-user"></i>
-</span>
-
+href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+<span class="me-2"><i class="fa-regular fa-user"></i></span>
 <p class="mb-0 fw-bolder">Sign-up</p>
-
 </a>
 
 <ul class="dropdown-menu">
@@ -334,8 +310,8 @@ class="btn-start-selling d-md-flex d-none align-items-center me-1 mb-1 rounded-p
 .btn-signin,
 .btn-signup,
 .btn-start-selling{
-font-size:14px;
-padding:8px 10px;
+font-size:13px;
+padding:6px 5px;
 transition:all .3s ease;
 display:inline-flex;
 align-items:center;
@@ -363,7 +339,7 @@ box-shadow:0 8px 18px rgba(13,110,253,.4);
 /* SIGN-UP BUTTON */
 
 .btn-signup{
-background:linear-gradient(45deg,#ff416c,#ff4b2b);
+background:linear-gradient(45deg,#120860,#120860);
 color:#fff;
 border:none;
 position:relative;
@@ -628,7 +604,7 @@ box-shadow:0 0 20px rgba(34,197,94,.6);
                          @if (!session('buyer_id') && !session('seller_id') && !session('id'))
 
 <li class="d-block d-md-none">
-<a class="dropdown-item" href="{{ route('signup') }}">
+<a class="dropdown-item" href="{{ route('buyer.signup') }}">
 Become Supplier
 </a>
 </li>

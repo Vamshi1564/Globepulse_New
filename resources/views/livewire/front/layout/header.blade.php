@@ -558,8 +558,10 @@ class="btn-start-selling d-md-flex d-none align-items-center me-1 mb-1 rounded-p
 .btn-signin,
 .btn-signup,
 .btn-start-selling{
-font-size:14px;
-padding:8px 10px;
+/* font-size:14px;
+padding:8px 10px; */
+font-size:13px;
+padding:6px 5px;
 transition:all .3s ease;
 display:inline-flex;
 align-items:center;
@@ -587,7 +589,7 @@ box-shadow:0 8px 18px rgba(13,110,253,.4);
 /* SIGN-UP BUTTON */
 
 .btn-signup{
-background:linear-gradient(45deg,#ff416c,#ff4b2b);
+background:linear-gradient(45deg,#120860,#120860);
 color:#fff;
 border:none;
 position:relative;
