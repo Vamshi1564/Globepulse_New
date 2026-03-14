@@ -628,7 +628,9 @@ Continue Browsing
 <!-- @livewireScripts -->
 
 <script>
-window.isLoggedIn = {{ auth('customer')->check() ? 'true' : 'false' }} === 'true';
+
+window.isLoggedIn =
+{{ session()->has('buyer_id') || session()->has('seller_id') || auth('customer')->check() ? 'true' : 'false' }} === 'true';
 
 /* SHOW POPUP */
 function showPopup(){
@@ -650,8 +652,6 @@ function closeIntentPopup(){
 
     popup.style.display = "none";
 
-    sessionStorage.setItem("intentDismissed","true");
-
 }
 
 /* SELLER */
@@ -659,7 +659,7 @@ function goSeller(){
 
     localStorage.setItem("globpulseUserType","seller");
 
-    window.location.href = "/start-selling";
+      window.location.href = "/start-selling";
 
 }
 
@@ -668,7 +668,16 @@ function goBuyer(){
 
     localStorage.setItem("globpulseUserType","buyer");
 
-    window.location.href = "/signup";
+    window.location.href = "{{ route('buyer.signup') }}";
+
+}
+
+/* CUSTOMER */
+function goCustomer(){
+
+    localStorage.setItem("globpulseUserType","customer");
+
+    window.location.href = "{{ route('login') }}";
 
 }
 
@@ -705,9 +714,70 @@ document.addEventListener("click", function(e){
     showPopup();
 
 });
+
 </script>
 
+<!-- <script>
 
+window.isLoggedIn =
+{{ session()->has('buyer_id') || session()->has('seller_id') || auth('customer')->check() ? 'true' : 'false' }} === 'true';
+
+/* SHOW POPUP */
+function showPopup(){
+
+    const popup = document.getElementById("intentPopup");
+    if(!popup) return;
+
+    popup.style.display = "flex";
+
+    // mark popup as shown permanently
+    localStorage.setItem("intentPopupShown","true");
+
+}
+
+/* CLOSE POPUP */
+function closeIntentPopup(){
+
+    const popup = document.getElementById("intentPopup");
+    if(!popup) return;
+
+    popup.style.display = "none";
+
+}
+
+/* SELLER */
+function goSeller(){
+
+    localStorage.setItem("globpulseUserType","seller");
+    window.location.href = "/start-selling";
+
+}
+
+/* BUYER */
+function goBuyer(){
+
+    localStorage.setItem("globpulseUserType","buyer");
+    window.location.href = "{{ route('buyer.register') }}";
+
+}
+
+/* AUTO POPUP AFTER 5 SEC */
+window.addEventListener("load", function(){
+
+    setTimeout(function(){
+
+        if(
+            !window.isLoggedIn &&
+            !localStorage.getItem("intentPopupShown")
+        ){
+            showPopup();
+        }
+
+    },5000);
+
+});
+
+</script> -->
 
 
 <!-- <script>
