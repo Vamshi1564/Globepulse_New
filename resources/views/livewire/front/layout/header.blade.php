@@ -362,34 +362,25 @@ href="{{ route('seller.profile') }}">
 <li class="nav-item">
 <a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
 href="{{ route('buyer.dashboard') }}">
-<i class="fas fa-chart-line me-2"></i>
-Dashboard
+<i class="fas fa-chart-line me-2"></i> Dashboard
 </a>
 </li>
 
-@endif
-
-{{-- SELLER DASHBOARD --}}
-@if(session()->has('seller_id'))
+@elseif(session()->has('seller_id'))
 
 <li class="nav-item">
 <a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
 href="{{ route('seller.dashboard') }}">
-<i class="fas fa-chart-line me-2"></i>
-Dashboard
+<i class="fas fa-chart-line me-2"></i> Dashboard
 </a>
 </li>
 
-@endif
-
-{{-- CUSTOMER DASHBOARD --}}
-@if(session()->has('id'))
+@elseif(session()->has('id'))
 
 <li class="nav-item">
 <a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
 href="{{ route('buyer.dashboard') }}">
-<i class="fas fa-chart-line me-2"></i>
-Dashboard
+<i class="fas fa-chart-line me-2"></i> Dashboard
 </a>
 </li>
 
