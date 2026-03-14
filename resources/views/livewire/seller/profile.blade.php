@@ -29,6 +29,7 @@
             .new-sel-badge{background:var(--green);color:#fff;font-size:.65rem;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.04em;white-space:nowrap;}
            
     </style>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@600;700&display=swap');
         :root{--blue:#1a56db;--blt:#e8f0fe;--green:#0e9f6e;--glt:#d5f5ec;--red:#e02424;--warn:#f59e0b;--wlt:#fef3c7;--bg:#f4f6fb;--bdr:#e5e9f2;--tx:#1a1f36;--mu:#6b7280;--r:14px;}
