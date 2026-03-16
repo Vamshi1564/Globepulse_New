@@ -38,6 +38,14 @@ use App\Livewire\Packages1;
 use App\Livewire\ProductsCategory;
 use App\Livewire\TradeFinanceSolutions;
 use Illuminate\Support\Facades\Route;
+use App\Livewire\Front\BuyerLogin;
+use App\Livewire\Front\BuyerSignup;
+use App\Livewire\Front\SellerLogin;
+use App\Livewire\Front\SellerSignup;
+
+use App\Livewire\Front\BuyerProfile;
+use App\Livewire\Front\BuyerDashboard;
+
 
 // public website / front routes (preserved exactly)
 
@@ -63,6 +71,16 @@ Route::get('/product-inquiry/{customer_id}/{product_id}', ProductInquiry::class)
 Route::get('/buylead-inquiry/{customer_id}/{postbyrequirement_id}', BuyleadInquiry::class)->name('buylead-inquiry');
 Route::get('/product-detail/{slug}', ProductDetail::class)->name('product-detail');
 Route::get('/signup/{id?}', Signup::class)->name('signup');
+Route::get('/buyer/login', BuyerLogin::class)->name('buyer.login');
+Route::get('/buyer/signup', BuyerSignup::class)->name('buyer.signup');
+
+Route::get('/seller/login', SellerLogin::class)->name('seller.login');
+Route::get('/seller/signup', SellerSignup::class)->name('seller.signup');
+// Route::get('/profile', Profile::class)->name('profile');
+Route::get('/buyer/profile', BuyerProfile::class)->name('buyer.profile');
+
+
+Route::get('/seller/profile', \App\Livewire\Seller\Profile::class)->name('seller.profile');
 // Landing page
 Route::get('/start-selling', \App\Livewire\Front\Sellerl::class)->name('start-selling');
 
@@ -74,8 +92,8 @@ Route::get('/seller/verify-email', \App\Livewire\Front\SellerVerifyOtp::class)
     ->name('seller.verify.otp');
 
 // Seller login — blank for now
-Route::get('/seller/login', \App\Livewire\Front\SellerLogin::class)
-    ->name('seller.login');
+// Route::get('/seller/login', \App\Livewire\Front\SellerLogin::class)
+//     ->name('seller.login');
 
 
 Route::get('/seller/set-password', \App\Livewire\Front\SellerSetPassword::class)
@@ -84,9 +102,7 @@ Route::get('/seller/set-password', \App\Livewire\Front\SellerSetPassword::class)
 Route::get('/seller/forgot-password', \App\Livewire\Front\SellerForgotPassword::class)
     ->name('seller.forgot-password');
 
-// Route::get('/seller/dashboard', function () {
-//     return 'Dashboard — coming soon';
-// })->name('seller.dashboard');
+
 
 // ── Seller Logout ─────────────────────────────────────────────
 Route::get('/seller/logout', function () {
@@ -96,12 +112,12 @@ Route::get('/seller/logout', function () {
 })->name('seller.logout');
 
 // ── Seller Dashboard (placeholder until built) ────────────────
-Route::get('/seller/dashboard', function () {
-    if (!session('seller_id')) {
-        return redirect()->route('seller.login');
-    }
-    return 'Dashboard coming soon — logged in as: ' . session('seller_email');
-})->name('seller.dashboard');
+// Route::get('/seller/dashboard', function () {
+//     if (!session('seller_id')) {
+//         return redirect()->route('seller.login');
+//     }
+//     return 'Dashboard coming soon — logged in as: ' . session('seller_email');
+// })->name('seller.dashboard');
 
 
 
@@ -121,8 +137,8 @@ Route::get('/buyer/verify-email', \App\Livewire\Front\BuyerVerifyOtp::class)
 
 
 // ── Buyer Login ────────────────────────────────────
-Route::get('/buyer/login', \App\Livewire\Front\BuyerLogin::class)
-    ->name('buyer.login');
+// Route::get('/buyer/login', \App\Livewire\Front\BuyerLogin::class)
+//     ->name('buyer.login');
 
 
 // ── Buyer Set Password ─────────────────────────────
@@ -148,18 +164,30 @@ Route::get('/buyer/logout', function () {
         ->with('login_success', 'You have been logged out successfully.');
 
 })->name('buyer.logout');
+Route::get('/buyer/dashboard', BuyerDashboard::class)->name('buyer.dashboard');
+Route::get('/profile', function () {
 
-
-// ── Buyer Dashboard (temporary placeholder) ────────
-Route::get('/buyer/dashboard', function () {
-
-    if (!session('buyer_id')) {
-        return redirect()->route('buyer.login');
+    if (session()->has('buyer_id')) {
+        return redirect('/buyer/profile');
     }
 
-    return 'Buyer Dashboard coming soon — logged in as: ' . session('buyer_email');
+    if (session()->has('seller_id')) {
+        return redirect('/seller/profile');
+    }
 
-})->name('buyer.dashboard');
+    return redirect('/');
+
+})->name('profile');
+// ── Buyer Dashboard (temporary placeholder) ────────
+// Route::get('/buyer/dashboard', function () {
+
+//     if (!session('buyer_id')) {
+//         return redirect()->route('buyer.login');
+//     }
+
+//     return 'Buyer Dashboard coming soon — logged in as: ' . session('buyer_email');
+
+// })->name('buyer.dashboard');
 // Route::get('/start-selling', \App\Livewire\Front\Sellerl::class)->name('start-selling');
 // Route::post('/seller/login', [SellerLoginController::class, 'login'])->name('seller.login.post');
 

@@ -1,6 +1,6 @@
 <div>
     <livewire:seller.layout.header />
-
+ 
     <style>
         .upload-animate {
             animation: pulse 1.2s infinite;

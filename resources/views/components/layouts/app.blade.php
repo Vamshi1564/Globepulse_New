@@ -625,30 +625,22 @@ Continue Browsing
 </div>
 </div>
 
-<!-- @livewireScripts
+<!-- @livewireScripts -->
 
 <script>
-window.isLoggedIn = {{ auth('customer')->check() ? 'true' : 'false' }} === 'true';
 
-if(!window.isLoggedIn){
-    sessionStorage.removeItem("intentDismissed");
-    sessionStorage.removeItem("intentPopupShown");
-}
-</script>
-<script>
+window.isLoggedIn =
+{{ session()->has('buyer_id') || session()->has('seller_id') || auth('customer')->check() ? 'true' : 'false' }} === 'true';
 
 /* SHOW POPUP */
 function showPopup(){
 
-    // prevent showing multiple times in same session
-    // if(sessionStorage.getItem("intentPopupShown")) return;
-
     const popup = document.getElementById("intentPopup");
+    if(!popup) return;
 
-    if(popup){
-        popup.style.display = "flex";
-        sessionStorage.setItem("intentPopupShown","true");
-    }
+    popup.style.display = "flex";
+
+    sessionStorage.setItem("intentPopupShown","true");
 
 }
 
@@ -656,13 +648,9 @@ function showPopup(){
 function closeIntentPopup(){
 
     const popup = document.getElementById("intentPopup");
+    if(!popup) return;
 
-    if(popup){
-        popup.style.display = "none";
-    }
-
-    // mark popup as dismissed for this session
-    sessionStorage.setItem("intentDismissed", "true");
+    popup.style.display = "none";
 
 }
 
@@ -671,14 +659,7 @@ function goSeller(){
 
     localStorage.setItem("globpulseUserType","seller");
 
-    let redirect = localStorage.getItem("redirectAfterIntent");
-
-    if(redirect){
-        localStorage.removeItem("redirectAfterIntent");
-        window.location.href = redirect;
-    }else{
-        window.location.href = "/start-selling";
-    }
+      window.location.href = "/start-selling";
 
 }
 
@@ -687,14 +668,16 @@ function goBuyer(){
 
     localStorage.setItem("globpulseUserType","buyer");
 
-    let redirect = localStorage.getItem("redirectAfterIntent");
+    window.location.href = "{{ route('buyer.signup') }}";
 
-    if(redirect){
-        localStorage.removeItem("redirectAfterIntent");
-        window.location.href = redirect;
-    }else{
-        window.location.href = "/signup";
-    }
+}
+
+/* CUSTOMER */
+function goCustomer(){
+
+    localStorage.setItem("globpulseUserType","customer");
+
+    window.location.href = "{{ route('login') }}";
 
 }
 
@@ -703,33 +686,26 @@ window.addEventListener("load", function(){
 
     setTimeout(function(){
 
-        // if user already selected buyer/seller don't show popup
-if(
-    !localStorage.getItem("globpulseUserType") &&
-    !window.isLoggedIn &&
-    !sessionStorage.getItem("intentDismissed")
-){
-    showPopup();
-}
+        if(
+            !window.isLoggedIn &&
+            !localStorage.getItem("globpulseUserType") &&
+            !sessionStorage.getItem("intentPopupShown")
+        ){
+            showPopup();
+        }
 
     },12000);
 
 });
 
-</script>
-
-
-<script>
+/* INTERCEPT LINK CLICK */
 document.addEventListener("click", function(e){
 
     let link = e.target.closest(".intent-trigger");
 
     if(!link) return;
 
-    // stop popup if logged in
-    if(localStorage.getItem("globpulseUserType") || window.isLoggedIn) return;
-
-    if(sessionStorage.getItem("intentDismissed")) return;
+    if(window.isLoggedIn || localStorage.getItem("globpulseUserType")) return;
 
     e.preventDefault();
 
@@ -738,12 +714,73 @@ document.addEventListener("click", function(e){
     showPopup();
 
 });
+
+</script>
+
+<!-- <script>
+
+window.isLoggedIn =
+{{ session()->has('buyer_id') || session()->has('seller_id') || auth('customer')->check() ? 'true' : 'false' }} === 'true';
+
+/* SHOW POPUP */
+function showPopup(){
+
+    const popup = document.getElementById("intentPopup");
+    if(!popup) return;
+
+    popup.style.display = "flex";
+
+    // mark popup as shown permanently
+    localStorage.setItem("intentPopupShown","true");
+
+}
+
+/* CLOSE POPUP */
+function closeIntentPopup(){
+
+    const popup = document.getElementById("intentPopup");
+    if(!popup) return;
+
+    popup.style.display = "none";
+
+}
+
+/* SELLER */
+function goSeller(){
+
+    localStorage.setItem("globpulseUserType","seller");
+    window.location.href = "/start-selling";
+
+}
+
+/* BUYER */
+function goBuyer(){
+
+    localStorage.setItem("globpulseUserType","buyer");
+    window.location.href = "{{ route('buyer.register') }}";
+
+}
+
+/* AUTO POPUP AFTER 5 SEC */
+window.addEventListener("load", function(){
+
+    setTimeout(function(){
+
+        if(
+            !window.isLoggedIn &&
+            !localStorage.getItem("intentPopupShown")
+        ){
+            showPopup();
+        }
+
+    },5000);
+
+});
+
 </script> -->
 
 
-
-
-<script>
+<!-- <script>
 
 /* SHOW POPUP */
 function showPopup(){
@@ -814,7 +851,7 @@ document.addEventListener("click", function(e){
     showPopup();
 
 });
-</script>
+</script> -->
 
 </body>
 

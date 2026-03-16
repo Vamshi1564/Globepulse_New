@@ -49,8 +49,8 @@
 
             <!-- LEFT PANEL -->
             <div class="sr-left">
-                <div style="position:relative;z-index:1">
-                    <img src="{{ asset('assets/img/icons/gfe.svg') }}" alt="GlobPulse" style="height:34px">
+               <div style="position:relative;z-index:1" class="mt-3">
+<img src="{{ asset('assets/img/logos/GFEPLUSE1.png') }}" style="height:58px">
                 </div>
                 <div class="sr-left-body">
                     <h2>Join <em>50,000+</em> sellers growing globally</h2>
@@ -77,7 +77,7 @@
                 <div class="sr-left-foot">
                     Already a seller?
                     {{-- Temporarily use # until seller.login route exists --}}
-                    <a href="#">Sign in →</a>
+                    <a href="{{ route('seller.login') }}">Sign in →</a>
                 </div>
             </div>
 

@@ -19,7 +19,7 @@
                             </a>
                         </div>
                         <div class="col-6 col-sm-2 col-md-3 col-lg-3 order-0 order-md-0 order-lg-1">
-                            <ul class="navbar-nav navbar-nav-icons justify-content-end align-items-center flex-row me-n2">
+                            <ul class="navbar-nav navbar-nav-icons justify-content-end flex-row me-n2">
                                 <li class="nav-item d-flex align-items-center">
                                     <!-- <div class="theme-control-toggle fa-icon-wait px-2">
                                         <input class="form-check-input ms-0 theme-control-toggle-input" type="checkbox"
@@ -362,25 +362,34 @@ href="{{ route('seller.profile') }}">
 <li class="nav-item">
 <a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
 href="{{ route('buyer.dashboard') }}">
-<i class="fas fa-chart-line me-2"></i> Dashboard
+<i class="fas fa-chart-line me-2"></i>
+Dashboard
 </a>
 </li>
 
-@elseif(session()->has('seller_id'))
+@endif
+
+{{-- SELLER DASHBOARD --}}
+@if(session()->has('seller_id'))
 
 <li class="nav-item">
 <a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
 href="{{ route('seller.dashboard') }}">
-<i class="fas fa-chart-line me-2"></i> Dashboard
+<i class="fas fa-chart-line me-2"></i>
+Dashboard
 </a>
 </li>
 
-@elseif(session()->has('id'))
+@endif
+
+{{-- CUSTOMER DASHBOARD --}}
+@if(session()->has('id'))
 
 <li class="nav-item">
 <a class="nav-link py-2 px-3 rounded bg-light text-dark d-flex align-items-center gap-2"
 href="{{ route('buyer.dashboard') }}">
-<i class="fas fa-chart-line me-2"></i> Dashboard
+<i class="fas fa-chart-line me-2"></i>
+Dashboard
 </a>
 </li>
 
@@ -436,7 +445,7 @@ Cookies
 
 @else
 <li>
-<div class="d-flex gap-2 align-items-center">
+<div class="d-flex gap-2">
 
 <!-- Sign-in Button -->
 <!-- <a href="{{ route('buyer.login') }}"
@@ -449,7 +458,7 @@ class="btn-signin d-flex align-items-center me-1 mb-1 text-decoration-none round
 <p class="mb-0 fw-bolder">Sign-in</p>
 
 </a> -->
-<div class="dropdown">
+<div class="dropdown me-1 mb-1">
 
 <a class="btn-signin dropdown-toggle d-flex align-items-center text-decoration-none rounded-pill"
 href="#"
@@ -461,7 +470,7 @@ aria-expanded="false">
 <i class="fa-regular fa-user"></i>
 </span>
 
-<span class="fw-bolder">Sign-in</span>
+<p class="mb-0 fw-bolder">Sign-in</p>
 
 </a>
 
@@ -495,7 +504,7 @@ class="btn-signup d-md-flex d-none align-items-center me-1 mb-1 rounded-pill tex
 <p class="mb-0 fw-bolder">Sign-up</p>
 
 </a> -->
-<div class="dropdown">
+<div class="dropdown me-1 mb-1">
 
 <a class="btn-signup dropdown-toggle d-md-flex d-none align-items-center text-white text-decoration-none rounded-pill"
 href="#"
@@ -507,7 +516,7 @@ aria-expanded="false">
 <i class="fa-regular fa-user"></i>
 </span>
 
-<span class="fw-bolder">Sign-up</span>
+<p class="mb-0 fw-bolder">Sign-up</p>
 
 </a>
 
@@ -530,13 +539,13 @@ Seller Signup
 </div>
 <!-- Start Selling -->
 <a href="{{ route('start-selling') }}"
-class="btn-start-selling d-md-flex d-none align-items-center rounded-pill text-white text-decoration-none">
+class="btn-start-selling d-md-flex d-none align-items-center me-1 mb-1 rounded-pill text-white text-decoration-none">
 
 <span class="me-2">
 <i class="fa-solid fa-store"></i>
 </span>
 
-<span class="fw-bolder">Start Selling</span>
+<p class="mb-0 fw-bolder">Start Selling</p>
 
 </a>
 </div>

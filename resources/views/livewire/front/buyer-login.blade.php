@@ -58,8 +58,8 @@ Route: GET /buyer/login → name('buyer.login')
 {{-- LEFT --}}
 <div class="sl-left">
 
-<div style="position:relative;z-index:1">
-<img src="{{ asset('assets/img/icons/gfe.svg') }}" style="height:34px">
+<div style="position:relative;z-index:1" class="mt-3">
+<img src="{{ asset('assets/img/logos/GFEPLUSE1.png') }}" style="height:58px">
 </div>
 
 <div class="sl-left-body">
@@ -185,7 +185,7 @@ Remember me on this device
 <button type="submit" class="btn-sl-submit" wire:loading.attr="disabled">
 
 <span wire:loading.remove wire:target="login">
-Sign In to Dashboard
+Sign In
 </span>
 
 <span wire:loading wire:target="login">
