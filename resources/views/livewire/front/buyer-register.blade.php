@@ -50,8 +50,8 @@ Route: GET /buyer/register → name('buyer.register')
 <!-- LEFT PANEL -->
 <div class="sr-left">
 
-<div style="position:relative;z-index:1">
-<img src="{{ asset('assets/img/icons/gfe.svg') }}" style="height:34px">
+<div style="position:relative;z-index:1" class="mt-3">
+<img src="{{ asset('assets/img/logos/GFEPLUSE1.png') }}" style="height:58px">
 </div>
 
 <div class="sr-left-body">

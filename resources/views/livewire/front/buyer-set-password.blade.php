@@ -98,7 +98,7 @@
                     </div>
 
                     <button type="submit" class="btn-sp" wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="save">🔒 Set Password & Go to Dashboard</span>
+                        <span wire:loading.remove wire:target="save">🔒 Set Password & Login</span>
                         <span wire:loading wire:target="save"><span class="spinner-border spinner-border-sm me-2"></span> Saving...</span>
                     </button>
                 </form>

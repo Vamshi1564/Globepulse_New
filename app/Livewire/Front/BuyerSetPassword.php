@@ -71,7 +71,7 @@ class BuyerSetPassword extends Component
                 'updated_at'=>now()
             ]);
 
-        return redirect()->route('buyer.dashboard')
+        return redirect()->route('home')
             ->with('dashboard_success','Password updated successfully!');
     }
 

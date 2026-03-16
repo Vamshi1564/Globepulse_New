@@ -57,8 +57,8 @@
 
             {{-- LEFT --}}
             <div class="sl-left">
-                <div style="position:relative;z-index:1">
-                    <img src="{{ asset('assets/img/icons/gfe.svg') }}" alt="GlobPulse" style="height:34px">
+               <div style="position:relative;z-index:1" class="mt-3">
+<img src="{{ asset('assets/img/logos/GFEPLUSE1.png') }}" style="height:58px">
                 </div>
                 <div class="sl-left-body">
                     <h3>Welcome back to<br><em>GlobPulse Seller</em></h3>

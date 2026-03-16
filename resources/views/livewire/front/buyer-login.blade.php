@@ -58,8 +58,8 @@ Route: GET /buyer/login → name('buyer.login')
 {{-- LEFT --}}
 <div class="sl-left">
 
-<div style="position:relative;z-index:1">
-<img src="{{ asset('assets/img/icons/gfe.svg') }}" style="height:34px">
+<div style="position:relative;z-index:1" class="mt-3">
+<img src="{{ asset('assets/img/logos/GFEPLUSE1.png') }}" style="height:58px">
 </div>
 
 <div class="sl-left-body">
