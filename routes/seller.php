@@ -105,6 +105,9 @@ use App\Livewire\Seller\DistributionInquiries;
 use App\Livewire\Seller\SellerQueryTickets;
 use App\Livewire\Seller\QueryTicketsDetails;
 use App\Livewire\Seller\DigitalInformationForm;
+use App\Http\Controllers\Seller\ProfileController;
+
+Route::get('/seller/profile', [ProfileController::class,'profile'])->name('seller.profile');
 
 Route::middleware([SellerAuth::class])->group(function () {  // <-- CHANGED from: Auth::class
 
