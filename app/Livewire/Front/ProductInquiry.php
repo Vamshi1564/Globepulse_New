@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductEnquiry;
 use Illuminate\Support\Facades\Session;
 use Livewire\Component;
+use App\Models\Buyer;
 
 class ProductInquiry extends Component
 {
@@ -26,12 +27,18 @@ class ProductInquiry extends Component
     public function mount($customer_id, $product_id)
     {
 
-        if (!Session::has('id')) {
-            return redirect()->route('login')
-                ->with('error', 'Access Denied. Please login first.');
-        }
+        // if (!Session::has('id')) {
+        //     return redirect()->route('login')
+        //         ->with('error', 'Access Denied. Please login first.');
+        // }
 
-        $this->buyer_id = Session::get('id');
+        // $this->buyer_id = Session::get('id');
+        if (!Session::has('buyer_id')) {
+    return redirect()->route('buyer.login')
+        ->with('error', 'Access Denied. Please login first.');
+}
+
+$this->buyer_id = Session::get('buyer_id');
         $this->customer_id = $customer_id;
         $this->product_id = $product_id;
 
@@ -48,13 +55,20 @@ class ProductInquiry extends Component
         }
 
         // buyer details
-        $customer = Customer::find($this->buyer_id);
+        // $customer = Customer::find($this->buyer_id);
+         $buyer = \App\Models\Buyer::find($this->buyer_id);
 
-        if ($customer) {
-            $this->email = $customer->email;
-            $this->phonenumber = $customer->phonenumber;
-            $this->company_name = $customer->company;
-        }
+        if ($buyer) {
+    $this->email = $buyer->email;
+    $this->phonenumber = $buyer->phone;
+    $this->company_name = $buyer->company_name;
+}
+
+        // if ($customer) {
+        //     $this->email = $customer->email;
+        //     $this->phonenumber = $customer->phonenumber;
+        //     $this->company_name = $customer->company;
+        // }
     }
 
     public function submit()
