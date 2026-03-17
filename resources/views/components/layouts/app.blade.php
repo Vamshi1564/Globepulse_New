@@ -625,7 +625,7 @@ Continue Browsing
 </div>
 </div>
 
-<!-- @livewireScripts -->
+{{-- @livewireScripts --}}
 
 <script>
 

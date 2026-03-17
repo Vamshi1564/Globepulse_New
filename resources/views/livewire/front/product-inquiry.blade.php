@@ -32,6 +32,20 @@
                                 {{ $message }}
                             @enderror
                         </p>
+
+                       <div class="form-group">
+<label>Quantity</label>
+
+<input type="number"
+wire:model="quantity"
+min="{{ $product->min_order }}"
+class="form-control">
+
+<small class="text-muted">
+Minimum order: {{ $product->min_order }}
+</small>
+
+</div>
                         <div class="mb-6">
                             <h4 class="mb-3">Email</h4>
                             <input class="form-control mb-2" wire:model="email" type="email"
