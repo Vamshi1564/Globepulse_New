@@ -9,6 +9,11 @@ use App\Models\Product;
 use App\Models\Productgallery;
 use Illuminate\Support\Facades\Session;
 use Livewire\Component;
+use App\Models\RFQ;
+use App\Mail\RFQMail;
+use Illuminate\Support\Facades\Mail;
+use App\Models\Buyer;
+
 
 class ProductDetail extends Component
 {
@@ -31,6 +36,14 @@ class ProductDetail extends Component
     public $email;
     public $name;
     public $productGalleries;
+    public $rfq_quantity;
+public $rfq_target_price;
+public $rfq_shipping_terms;
+public $rfq_delivery_time;
+public $rfq_message;
+public $rfq_destination_port;
+public $rfq_payment_terms;
+public $rfq_attachment;
 
 
     // public function copyProductLink()
@@ -155,4 +168,81 @@ class ProductDetail extends Component
             'productGalleries' => $this->productGalleries,
         ]);
     }
+
+   public function submitRFQ()
+{
+    try {
+        // ✅ SAME AS ProductInquiry
+        $buyerId = Session::get('buyer_id');
+
+        if (!$buyerId) {
+            return redirect()->route('buyer.login')
+                ->with('error', 'Please login to send RFQ');
+        }
+
+        $buyer = Buyer::find($buyerId);
+
+        // ✅ VALIDATION
+        $this->validate([
+            'rfq_quantity' => 'required|string|max:50',
+            'rfq_message' => 'required|min:10',
+        ]);
+
+        // ✅ SAVE RFQ
+      $rfq = RFQ::create([
+    'product_id'   => $this->product->id,
+    'supplier_id'  => $this->product->customer_id,
+    'buyer_id'     => $buyerId,
+
+    'quantity'        => $this->rfq_quantity,
+    'target_price'    => $this->rfq_target_price,
+    'delivery_time'   => $this->rfq_delivery_time,
+    'shipping_terms'  => $this->rfq_shipping_terms,
+    'destination_port'=> $this->rfq_destination_port,
+    'payment_terms'   => $this->rfq_payment_terms,
+    'message'         => $this->rfq_message,
+
+    'name'          => $buyer->name ?? null,
+    'email'         => $buyer->email ?? null,
+    'phone'         => $buyer->phone ?? null,
+    'company_name'  => $buyer->company_name ?? null,
+    'status' => 'pending',
+]);
+
+        // ✅ TEMP: disable mail (test DB first)
+        /*
+        $supplier = Customer::find($this->product->customer_id);
+
+        if ($supplier?->email) {
+            Mail::to($supplier->email)->send(
+                new RFQMail($rfq, $buyer, $supplier, 'supplier')
+            );
+        }
+
+        if ($buyer?->email) {
+            Mail::to($buyer->email)->send(
+                new RFQMail($rfq, $buyer, $supplier, 'buyer')
+            );
+        }
+        */
+
+        // ✅ RESET
+        $this->reset([
+            'rfq_quantity',
+            'rfq_target_price',
+            'rfq_shipping_terms',
+            'rfq_delivery_time',
+            'rfq_message'
+        ]);
+
+        // ✅ CLOSE POPUP
+        $this->dispatch('closeRFQModal');
+
+        // ✅ SUCCESS MESSAGE
+        session()->flash('message', 'RFQ sent successfully!');
+
+    } catch (\Exception $e) {
+        session()->flash('message', 'Error: ' . $e->getMessage());
+    }
+}
 }

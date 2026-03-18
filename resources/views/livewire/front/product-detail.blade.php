@@ -353,6 +353,7 @@
                                                         alt="">
                                                     <span class=" fw-bolder">Contact
                                                         Supplier</span>
+                                                        
                                                 </td>
                                             </tr>
                                             <tr>
@@ -485,7 +486,10 @@
                                                     class="fas fa-comments me-2"></i>
                                                 Contact
                                                 Supplier</button></a>
+                                                
                                     @endif
+
+                                    
                                     <a href="{{ route('portfolio', $product->customer->id) }}"><button
                                             class="btn btn-outline-success btn-custom mt-2"><span
                                                 class="fas fa-shopping-cart me-2"></span>Supplier
@@ -505,6 +509,9 @@
                                                 <i class="fas fa-comments me-2"></i> Contact Supplier
                                             </button>
                                         </a>
+<button onclick="openRFQ()" class="btn btn-outline-success btn-custom mt-2">
+    <i class="fas fa-file-invoice me-2"></i> Request For Quote (RFQ)
+</button>
                                     @endif
 
                                     @if ($product->customer)
@@ -604,6 +611,185 @@
                                             </div>
                                         </div>
                                     </div>
+<script>
+function openRFQ() {
+    document.getElementById("rfqPopup").style.display = "flex";
+}
+
+function closeRFQ() {
+    document.getElementById("rfqPopup").style.display = "none";
+}
+
+// Close when clicking outside
+function closeRFQOutside(e) {
+    if (e.target.id === "rfqPopup") {
+        closeRFQ();
+    }
+}
+</script>
+<script>
+document.addEventListener('livewire:init', () => {
+    Livewire.on('closeRFQModal', () => {
+        document.getElementById("rfqPopup").style.display = "none";
+    });
+});
+</script>
+<style>
+.rfq-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.rfq-box {
+    max-width: 700px;
+    width: 95%;
+    background: #fff;
+    border-radius: 10px;
+    padding: 25px;
+    position: relative;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+                                    <!-- RFQ POPUP -->
+<!-- RFQ POPUP -->
+<div id="rfqPopup" class="rfq-overlay" onclick="closeRFQOutside(event)">
+    <div class="rfq-box">
+
+        <!-- Close Button -->
+        <button type="button"
+            class="btn-close position-absolute top-0 end-0 m-3"
+            onclick="closeRFQ()"></button>
+
+        <h4 class="fw-bold mb-4 text-center">Request For Quotation (RFQ)</h4>
+
+        <form wire:submit.prevent="submitRFQ" class="row g-3">
+
+            <!-- Product -->
+            <div class="col-12">
+                <label class="form-label fw-semibold text-start">
+                    <i class="fas fa-box me-2"></i> Product
+                </label>
+                <input type="text"
+                    class="form-control"
+                    value="{{ $product->title }}"
+                    readonly>
+            </div>
+
+            <!-- Quantity -->
+            <div class="col-md-6">
+                <label class="form-label fw-semibold text-start">Quantity</label>
+                <input type="text"
+                    wire:model="rfq_quantity"
+                    min="{{ $product->min_order }}"
+                    class="form-control"
+                    placeholder="e.g. 50 kg / 100 pcs">
+
+                <small class="text-muted">
+                    MOQ: {{ $product->min_order }}
+                </small>
+                @error('rfq_quantity') <small class="text-danger">{{ $message }}</small> @enderror
+
+            </div>
+
+            <!-- Target Price -->
+            <div class="col-md-6">
+                <label class="form-label fw-semibold text-start">Target Price</label>
+                <input type="text"
+                    wire:model="rfq_target_price"
+                    class="form-control"
+                    placeholder="e.g. $5/unit">
+            </div>
+
+            <!-- Shipping -->
+            <div class="col-md-6">
+                <label class="form-label fw-semibold text-start">
+                    <i class="fas fa-ship me-2"></i> Shipping Terms
+                </label>
+
+                <select wire:model="rfq_shipping_terms" class="form-select">
+                    <option value="">Select Shipping Term</option>
+                    <option value="FOB">FOB (Free On Board)</option>
+                    <option value="CIF">CIF (Cost, Insurance & Freight)</option>
+                    <option value="EXW">EXW (Ex Works)</option>
+                </select>
+                <small class="text-muted">
+                Choose based on who handles shipping responsibility
+            </small>
+            </div>
+
+                        <!-- Delivery -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-start">Delivery Time</label>
+                            <input type="text"
+                                wire:model="rfq_delivery_time"
+                                class="form-control"
+                                placeholder="e.g. 7 days">
+                        </div>
+
+                        <div class="col-md-6">
+                <label class="form-label fw-semibold">Destination Port</label>
+                <input type="text"
+                    wire:model="rfq_destination_port"
+                    class="form-control"
+                    placeholder="e.g. Mumbai Port / Dubai Port">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Payment Terms</label>
+                <select wire:model="rfq_payment_terms" class="form-select">
+                    <option value="">Select Payment Terms</option>
+                    <option value="Advance">Advance</option>
+                    <option value="LC">Letter of Credit (LC)</option>
+                    <option value="Net 30">Net 30</option>
+                    <option value="Net 60">Net 60</option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label fw-semibold">Attachment (Optional)</label>
+                <input type="file" wire:model="rfq_attachment" class="form-control">
+            </div>
+
+            <!-- Message -->
+            <div class="col-12">
+                <label class="form-label fw-semibold text-start">Requirement</label>
+                <textarea wire:model="rfq_message"
+                    class="form-control"
+                    rows="3"
+                    placeholder="Describe your requirement..."></textarea>
+                    @error('rfq_message') <small class="text-danger">{{ $message }}</small> @enderror
+            </div>
+
+            <!-- Submit -->
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary px-4" wire:loading.attr="disabled">
+                    <i class="fas fa-paper-plane me-2"></i> <span wire:loading.remove>Send RFQ</span>
+                     <span wire:loading>Sending...</span>
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
                                     <style>
                                         .popup-overlay {
                                             display: none;
