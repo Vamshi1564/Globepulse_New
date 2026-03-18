@@ -43,10 +43,6 @@ class BuyerSignup extends Component
             ->where('email', $emailLower)
             ->first();
 
-        $existingBuyer = DB::table('buyers')
-    ->where('email', $emailLower)
-    ->first();
-
 if ($existingBuyer) {
 
     // Already verified account
@@ -136,23 +132,24 @@ if ($existingBuyer) {
         session(['buyer_register_email' => $emailLower]);
 
         return redirect()->route('buyer.verify.otp')
-            ->with('otp_success', 'A 6-digit code has been sent to ' . $emailLower);
+            ->with('otp_success', 'A 4-digit code has been sent to ' . $emailLower);
     }
 
     // Generate OTP + send email
-    private function fireOtp(string $buyerId, string $email, string $name, string $tempPassword)
-    {
-        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+ private function fireOtp(string $buyerId, string $email, string $name, string $tempPassword)
+{
+    // Generate 4 digit OTP
+    $otp = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
 
-        Cache::put('buyer_otp_' . md5($email), [
-            'otp_hash' => bcrypt($otp),
-            'buyer_name' => $name,
-            'temp_password' => $tempPassword,
-            'buyer_id' => $buyerId,
-        ], now()->addMinutes(10));
+    Cache::put('buyer_otp_' . md5($email), [
+        'otp_hash' => bcrypt($otp),
+        'buyer_name' => $name,
+        'temp_password' => $tempPassword,
+        'buyer_id' => $buyerId,
+    ], now()->addMinutes(10));
 
-        Mail::to($email)->send(new BuyerOtpMail($otp, $name, $email));
-    }
+    Mail::to($email)->send(new BuyerOtpMail($otp, $name, $email));
+}
 
     private function generateTempPassword(): string
     {

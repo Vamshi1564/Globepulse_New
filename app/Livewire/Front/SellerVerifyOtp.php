@@ -1,5 +1,6 @@
 <?php
 // FILE: app/Livewire/Front/SellerVerifyOtp.php
+// CHANGE: 4-digit OTP validation, WhatsApp welcome on successful verify
 
 namespace App\Livewire\Front;
 
@@ -7,14 +8,14 @@ use Livewire\Component;
 use App\Models\Seller;
 use App\Models\AuditLog;
 use App\Mail\SellerCredentialsMail;
+use App\Services\SellerSmsService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 
 class SellerVerifyOtp extends Component
 {
-    public $d1=''; public $d2=''; public $d3='';
-    public $d4=''; public $d5=''; public $d6='';
+    public $d1=''; public $d2=''; public $d3=''; public $d4='';
 
     public $email      = '';
     public $errorMsg   = '';
@@ -23,26 +24,24 @@ class SellerVerifyOtp extends Component
     public function mount()
     {
         $this->email = session('seller_register_email', '');
-
         if (empty($this->email)) {
             return redirect()->route('seller.register')
                 ->with('error', 'Session expired. Please register again.');
         }
-
         if (session('otp_success')) {
             $this->successMsg = session('otp_success');
         }
     }
 
-    // ── Verify OTP ────────────────────────────────────────────────────────────
     public function verifyOtp()
     {
         $this->errorMsg = $this->successMsg = '';
 
-        $entered = $this->d1.$this->d2.$this->d3.$this->d4.$this->d5.$this->d6;
+        // ── 4-digit validation ────────────────────────────────
+        $entered = $this->d1.$this->d2.$this->d3.$this->d4;
 
-        if (strlen($entered) < 6 || !ctype_digit($entered)) {
-            $this->errorMsg = 'Please enter all 6 digits.';
+        if (strlen($entered) < 4 || !ctype_digit($entered)) {
+            $this->errorMsg = 'Please enter all 4 digits.';
             return;
         }
 
@@ -59,7 +58,6 @@ class SellerVerifyOtp extends Component
             return;
         }
 
-        // ✅ OTP correct
         $seller = Seller::find($cached['seller_id']);
         if (!$seller) {
             $this->errorMsg = 'Account not found. Please register again.';
@@ -70,12 +68,12 @@ class SellerVerifyOtp extends Component
         $seller->save();
 
         AuditLog::record(
-            action:    'EMAIL_VERIFIED',
-            entityType:'sellers',
-            entityId:  $seller->id,
-            newValue:  ['email' => $this->email],
-            actorId:   $seller->id,
-            actorType: 'seller'
+            action:     'EMAIL_VERIFIED',
+            entityType: 'sellers',
+            entityId:   $seller->id,
+            newValue:   ['email' => $this->email],
+            actorId:    $seller->id,
+            actorType:  'seller'
         );
 
         // Send credentials email
@@ -87,6 +85,18 @@ class SellerVerifyOtp extends Component
             )
         );
 
+        // Send welcome WhatsApp + SMS
+        try {
+            app(SellerSmsService::class)->sendWelcomeWhatsApp(
+                $seller->phone,
+                $cached['seller_name'],
+                $this->email,
+                $cached['temp_password']
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('SellerVerifyOtp: WhatsApp failed — ' . $e->getMessage());
+        }
+
         Cache::forget($cacheKey);
         session()->forget('seller_register_email');
 
@@ -94,7 +104,6 @@ class SellerVerifyOtp extends Component
             ->with('login_success', '✅ Email verified! Your login credentials have been sent to ' . $this->email . '. Please check your inbox.');
     }
 
-    // ── Resend OTP ─────────────────────────────────────────────────────────────
     public function resendOtp()
     {
         $this->errorMsg = $this->successMsg = '';
@@ -107,34 +116,27 @@ class SellerVerifyOtp extends Component
         $cacheKey = 'seller_otp_' . md5($this->email);
         $cached   = Cache::get($cacheKey);
 
-        // If cache expired, rebuild from DB
         if (!$cached) {
-            $seller = Seller::where('email', $this->email)
-                            ->where('email_verified', 0)
-                            ->first();
-
+            $seller = Seller::where('email', $this->email)->where('email_verified', 0)->first();
             if (!$seller) {
                 $this->errorMsg = 'Account not found or already verified. Please login or register again.';
                 return;
             }
-
-            // Generate new temp password since old one is lost (cache expired)
             $newTempPassword = $this->generateTempPassword($seller);
             $seller->password_hash        = Hash::make($newTempPassword);
             $seller->must_change_password = 1;
             $seller->save();
 
             $sellerName = $seller->details?->legal_business_name ?? 'Seller';
-
             $cached = [
-                'seller_name'  => $sellerName,
-                'temp_password'=> $newTempPassword,
-                'seller_id'    => $seller->id,
+                'seller_name'   => $sellerName,
+                'temp_password' => $newTempPassword,
+                'seller_id'     => $seller->id,
             ];
         }
 
-        // New OTP
-        $newOtp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        // 4-digit OTP
+        $newOtp = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
 
         Cache::put($cacheKey, array_merge($cached, [
             'otp_hash' => bcrypt($newOtp),
@@ -144,7 +146,15 @@ class SellerVerifyOtp extends Component
             new \App\Mail\SellerOtpMail($newOtp, $cached['seller_name'], $this->email)
         );
 
-        $this->d1=$this->d2=$this->d3=$this->d4=$this->d5=$this->d6='';
+        // Resend SMS too
+        try {
+            $seller = $seller ?? Seller::find($cached['seller_id']);
+            if ($seller?->phone) {
+                app(SellerSmsService::class)->sendOtpSms($seller->phone, $newOtp, $cached['seller_name']);
+            }
+        } catch (\Exception $e) {}
+
+        $this->d1=$this->d2=$this->d3=$this->d4='';
         $this->successMsg = 'A new code has been sent to ' . $this->email;
         $this->dispatch('otp-resent');
     }

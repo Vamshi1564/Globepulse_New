@@ -22,44 +22,41 @@ class SellerOtpMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your GlobPulse Email Verification Code',
+            subject: '🔐 ' . $this->otp . ' — Your GlobPulse Verification Code',
         );
     }
 
     public function content(): Content
     {
-        return new Content(
-            htmlString: $this->buildHtml(),
-        );
+        return new Content(htmlString: $this->buildHtml());
     }
 
     private function buildHtml(): string
     {
-        $year      = date('Y');
-        $name      = htmlspecialchars($this->sellerName);
-        $email     = htmlspecialchars($this->sellerEmail);
+        $year  = date('Y');
+        $name  = htmlspecialchars($this->sellerName);
+        $email = htmlspecialchars($this->sellerEmail);
+        $otp   = $this->otp;
 
-        // Build 6 individual digit boxes
-        $boxes = '';
-        foreach (str_split($this->otp) as $digit) {
-            $boxes .= "
-            <td style='padding:0 6px'>
-              <table cellpadding='0' cellspacing='0'>
-                <tr>
-                  <td style='
-                    width:52px;height:64px;
-                    background:#EFF6FF;
-                    border:2.5px solid #93C5FD;
-                    border-radius:12px;
-                    font-size:32px;font-weight:900;
-                    color:#1D4ED8;
-                    text-align:center;
-                    vertical-align:middle;
-                    font-family:Courier New,Courier,monospace;
-                    line-height:64px;
-                  '>{$digit}</td>
-                </tr>
-              </table>
+        // 4 digit boxes — white cards on dark navy bg
+        $digitCells = '';
+        foreach (str_split($otp) as $digit) {
+            $digitCells .= "
+            <td style='padding:0 8px;'>
+              <div style='
+                width:72px;
+                height:88px;
+                background:#ffffff;
+                border-radius:16px;
+                font-size:48px;
+                font-weight:900;
+                color:#1a3c6e;
+                text-align:center;
+                line-height:88px;
+                font-family:Georgia,serif;
+                box-shadow:0 4px 20px rgba(0,0,0,0.2);
+                display:inline-block;
+              '>{$digit}</div>
             </td>";
         }
 
@@ -67,136 +64,176 @@ class SellerOtpMail extends Mailable
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>GlobPulse — Email Verification</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 </head>
-<body style="margin:0;padding:0;background-color:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+<body style="margin:0;padding:0;background:#f4f6fb;font-family:'Segoe UI',Arial,Helvetica,sans-serif;">
 
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F1F5F9;padding:48px 16px;">
-    <tr>
-      <td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;padding:36px 16px;">
+<tr><td align="center">
 
-        <!-- CARD -->
-        <table width="580" cellpadding="0" cellspacing="0" border="0"
-          style="max-width:580px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 40px rgba(15,23,42,0.12);">
+<table width="580" cellpadding="0" cellspacing="0"
+  style="max-width:580px;width:100%;border-radius:20px;overflow:hidden;box-shadow:0 4px 32px rgba(15,23,42,0.10);background:#ffffff;">
 
-          <!-- ═══ HEADER ═══ -->
-          <tr>
-            <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 55%,#2563eb 100%);padding:40px 48px;text-align:center;">
-              <img src="https://www.globpulse.com/assets/img/icons/gfe.svg"
-                   alt="GlobPulse" height="44"
-                   style="display:block;margin:0 auto 16px;max-width:160px;">
-              <div style="display:inline-block;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:30px;padding:6px 20px;">
-                <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.9);letter-spacing:2.5px;text-transform:uppercase;">
-                  Email Verification
-                </span>
-              </div>
-            </td>
-          </tr>
+  <!-- ══ TOP LOGO HEADER (light bg, gray text) ══ -->
+  <tr>
+    <td style="background:#132d7c;padding:28px 40px 20px;border-bottom:1px solid #e8ecf4;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="vertical-align:middle;">
+            <!-- Logo image — large and prominent -->
+            <img src="https://www.globpulse.com/assets/img/logos/GFEPLUSE1.png"
+                 alt="GlobPulse" height="52"
+                 style="display:block;height:52px;max-width:220px;object-fit:contain;">
+            <div style="font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:2.5px;text-transform:uppercase;margin-top:4px;">
+              THE PULSE OF GLOBAL TRADE
+            </div>
+          </td>
+          <td style="text-align:right;vertical-align:middle;">
+            <div style="display:inline-flex;align-items:center;gap:6px;border:1px solid #e2e8f0;border-radius:20px;padding:6px 14px;">
+              <span style="font-size:14px;">✉️</span>
+              <span style="font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1.5px;text-transform:uppercase;">VERIFICATION</span>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
 
-          <!-- ═══ BODY ═══ -->
-          <tr>
-            <td style="padding:44px 48px 36px;">
+  <!-- ══ BODY ══ -->
+  <tr>
+    <td style="background:#ffffff;padding:36px 40px 12px;">
 
-              <!-- Greeting -->
-              <p style="font-size:24px;font-weight:800;color:#0F172A;margin:0 0 10px;line-height:1.3;">
-                Hello, {$name}! 👋
-              </p>
-              <p style="font-size:15px;color:#64748B;line-height:1.75;margin:0 0 36px;">
-                Thank you for registering on <strong style="color:#1D4ED8;">GlobPulse</strong>.
-                Use the verification code below to confirm your email address.
-              </p>
+      <!-- Title -->
+      <h2 style="font-size:26px;font-weight:800;color:#111827;margin:0 0 10px;line-height:1.3;">
+        Verify your email
+      </h2>
+      <p style="font-size:15px;color:#6b7280;line-height:1.8;margin:0 0 30px;">
+        Hi <strong style="color:#111827;">{$name}</strong>,
+        thank you for registering on <strong style="color:#1d4ed8;">GlobPulse</strong>.
+        Use the code below to confirm your email address.
+      </p>
 
-              <!-- OTP Label -->
-              <p style="font-size:11px;font-weight:800;color:#94A3B8;text-align:center;letter-spacing:2px;text-transform:uppercase;margin:0 0 14px;">
-                Your verification code
-              </p>
+    </td>
+  </tr>
 
-              <!-- OTP DIGIT BOXES -->
-              <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 10px;">
-                <tr>{$boxes}</tr>
-              </table>
+  <!-- ══ OTP DARK CARD ══ -->
+  <tr>
+    <td style="background:#ffffff;padding:0 40px 32px;">
 
-              <!-- Expiry note -->
-              <p style="text-align:center;font-size:13px;color:#94A3B8;margin:0 0 36px;">
-                ⏱ &nbsp;This code expires in&nbsp;
-                <strong style="color:#EF4444;">10 minutes</strong>
-              </p>
+      <table width="100%" cellpadding="0" cellspacing="0"
+        style="background:#1a2d5a;border-radius:18px;overflow:hidden;">
+        <tr>
+          <td style="padding:32px 24px;text-align:center;">
 
-              <!-- DIVIDER -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
-                <tr>
-                  <td style="border-top:1px solid #E2E8F0;height:1px;"></td>
-                </tr>
-              </table>
+            <p style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:3px;text-transform:uppercase;margin:0 0 24px;">
+              YOUR ONE-TIME VERIFICATION CODE
+            </p>
 
-              <!-- WHAT HAPPENS NEXT -->
-              <p style="font-size:11px;font-weight:800;color:#374151;margin:0 0 18px;text-transform:uppercase;letter-spacing:1.5px;">
-                What happens next
-              </p>
+            <!-- 4 white digit boxes -->
+            <table cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
+              <tr>{$digitCells}</tr>
+            </table>
 
-              <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td width="36" valign="top" style="padding-bottom:14px;">
-                    <div style="width:28px;height:28px;border-radius:50%;background:#DBEAFE;text-align:center;line-height:28px;font-size:12px;font-weight:800;color:#1D4ED8;">1</div>
-                  </td>
-                  <td style="font-size:14px;color:#475569;padding-bottom:14px;padding-left:8px;line-height:1.6;">
-                    Enter this OTP on the verification page
-                  </td>
-                </tr>
-                <tr>
-                  <td width="36" valign="top" style="padding-bottom:14px;">
-                    <div style="width:28px;height:28px;border-radius:50%;background:#DBEAFE;text-align:center;line-height:28px;font-size:12px;font-weight:800;color:#1D4ED8;">2</div>
-                  </td>
-                  <td style="font-size:14px;color:#475569;padding-bottom:14px;padding-left:8px;line-height:1.6;">
-                    Your login credentials (email + password) will be emailed to you instantly
-                  </td>
-                </tr>
-                <tr>
-                  <td width="36" valign="top">
-                    <div style="width:28px;height:28px;border-radius:50%;background:#DBEAFE;text-align:center;line-height:28px;font-size:12px;font-weight:800;color:#1D4ED8;">3</div>
-                  </td>
-                  <td style="font-size:14px;color:#475569;padding-left:8px;line-height:1.6;">
-                    Login and complete your seller profile to start receiving buyer inquiries
-                  </td>
-                </tr>
-              </table>
+            <!-- Expiry pill -->
+            <div style="display:inline-block;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:7px 20px;">
+              <span style="font-size:13px;color:rgba(255,255,255,0.8);font-weight:600;">
+                ⏱ Expires in <strong style="color:#f59e0b;">10 minutes</strong>
+              </span>
+            </div>
 
-              <!-- Security warning -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:28px;">
-                <tr>
-                  <td style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;padding:16px 20px;">
-                    <p style="font-size:13px;color:#92400E;margin:0;line-height:1.6;">
-                      🔒 <strong>Security notice:</strong> GlobPulse will never ask you for this code over the phone or chat.
-                      If you did not create an account, you can safely ignore this email.
-                    </p>
-                  </td>
-                </tr>
-              </table>
+          </td>
+        </tr>
+      </table>
 
-            </td>
-          </tr>
+    </td>
+  </tr>
 
-          <!-- ═══ FOOTER ═══ -->
-          <tr>
-            <td style="background:#F8FAFC;border-top:1px solid #E2E8F0;padding:24px 48px;text-align:center;">
-              <p style="font-size:13px;color:#94A3B8;margin:0 0 6px;">
-                This email was sent to <strong style="color:#64748B;">{$email}</strong>
-              </p>
-              <p style="font-size:12px;color:#CBD5E1;margin:0;">
-                © {$year} GlobPulse &nbsp;·&nbsp; All rights reserved
-              </p>
-            </td>
-          </tr>
+  <!-- ══ STEPS ══ -->
+  <tr>
+    <td style="background:#ffffff;padding:0 40px 32px;">
 
-        </table>
-        <!-- END CARD -->
+      <!-- Step 1 -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+        <tr>
+          <td style="width:50px;vertical-align:top;">
+            <div style="width:40px;height:40px;border-radius:12px;background:#1d4ed8;text-align:center;line-height:40px;font-size:16px;font-weight:900;color:#fff;">1</div>
+          </td>
+          <td style="padding-left:14px;vertical-align:middle;">
+            <div style="font-size:15px;font-weight:700;color:#111827;">Enter this code → verify email</div>
+            <div style="font-size:13px;color:#9ca3af;margin-top:2px;">Your account gets activated instantly</div>
+          </td>
+          <td style="width:40px;text-align:right;vertical-align:middle;font-size:20px;">📨</td>
+        </tr>
+      </table>
 
-      </td>
-    </tr>
-  </table>
+      <!-- Step 2 -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+        <tr>
+          <td style="width:50px;vertical-align:top;">
+            <div style="width:40px;height:40px;border-radius:12px;background:#0891b2;text-align:center;line-height:40px;font-size:16px;font-weight:900;color:#fff;">2</div>
+          </td>
+          <td style="padding-left:14px;vertical-align:middle;">
+            <div style="font-size:15px;font-weight:700;color:#111827;">Receive login credentials by email</div>
+            <div style="font-size:13px;color:#9ca3af;margin-top:2px;">Email + password sent instantly</div>
+          </td>
+          <td style="width:40px;text-align:right;vertical-align:middle;font-size:20px;">🔑</td>
+        </tr>
+      </table>
 
+      <!-- Step 3 -->
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width:50px;vertical-align:top;">
+            <div style="width:40px;height:40px;border-radius:12px;background:#059669;text-align:center;line-height:40px;font-size:16px;font-weight:900;color:#fff;">3</div>
+          </td>
+          <td style="padding-left:14px;vertical-align:middle;">
+            <div style="font-size:15px;font-weight:700;color:#111827;">Complete profile → reach global buyers</div>
+            <div style="font-size:13px;color:#9ca3af;margin-top:2px;">180+ countries · B2B verified buyers</div>
+          </td>
+          <td style="width:40px;text-align:right;vertical-align:middle;font-size:20px;">🌍</td>
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+
+  <!-- ══ SECURITY NOTICE ══ -->
+  <tr>
+    <td style="background:#fffbeb;padding:16px 40px;border-top:1px solid #fde68a;border-bottom:1px solid #fde68a;">
+      <p style="font-size:13px;color:#78350f;margin:0;line-height:1.7;">
+        🔒 <strong>Never share this code.</strong> GlobPulse will never ask for it via phone or WhatsApp.
+        If you didn't register, ignore this email.
+      </p>
+    </td>
+  </tr>
+
+  <!-- ══ FOOTER (dark navy) ══ -->
+  <tr>
+    <td style="background:#1a2d5a;padding:24px 40px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="vertical-align:middle;">
+            <div style="font-size:20px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;font-family:'Segoe UI',Arial,sans-serif;">
+              Glob<span style="color:#38bdf8;">Pulse</span>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:2.5px;text-transform:uppercase;margin-top:3px;">
+              B2B GLOBAL TRADE PLATFORM
+            </div>
+          </td>
+          <td style="text-align:right;vertical-align:middle;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);">Sent to</div>
+            <div style="font-size:12px;color:#93c5fd;font-weight:600;">{$email}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:3px;">© {$year} GlobPulse</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
 </body>
 </html>
 HTML;

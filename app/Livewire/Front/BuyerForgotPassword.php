@@ -15,8 +15,10 @@ class BuyerForgotPassword extends Component
 
     public $email = '';
 
-    public $d1=''; public $d2=''; public $d3='';
-    public $d4=''; public $d5=''; public $d6='';
+   public $d1=''; 
+public $d2=''; 
+public $d3='';
+public $d4='';
 
     public $password = '';
     public $password_confirm = '';
@@ -59,7 +61,7 @@ class BuyerForgotPassword extends Component
             return;
         }
 
-        $otp = str_pad(random_int(0,999999),6,'0',STR_PAD_LEFT);
+        $otp = str_pad(random_int(0,9999),4,'0',STR_PAD_LEFT);
 
         Cache::put('buyer_reset_'.md5($emailLower),[
             'otp_hash' => bcrypt($otp),
@@ -73,7 +75,7 @@ class BuyerForgotPassword extends Component
         $this->step = 2;
 
         $this->successMsg =
-        'A 6-digit reset code has been sent to '.$emailLower;
+        'A 4-digit reset code has been sent to '.$emailLower;
     }
 
     /*
@@ -100,12 +102,12 @@ class BuyerForgotPassword extends Component
             'password_confirm.same'=>'Passwords do not match.'
         ]);
 
-        $entered = $this->d1.$this->d2.$this->d3.$this->d4.$this->d5.$this->d6;
+        $entered = $this->d1.$this->d2.$this->d3.$this->d4;
 
         $emailLower = strtolower(trim($this->email));
 
-        if(strlen($entered) < 6 || !ctype_digit($entered)){
-            $this->errorMsg = 'Please enter the full 6 digit code.';
+        if(strlen($entered) < 4 || !ctype_digit($entered)){
+            $this->errorMsg = 'Please enter the full 4 digit code.';
             return;
         }
 
@@ -169,7 +171,7 @@ class BuyerForgotPassword extends Component
             return;
         }
 
-        $otp = str_pad(random_int(0,999999),6,'0',STR_PAD_LEFT);
+        $otp = str_pad(random_int(0,9999),4,'0',STR_PAD_LEFT);
 
         Cache::put('buyer_reset_'.md5($emailLower),[
             'otp_hash'=>bcrypt($otp),
@@ -180,7 +182,7 @@ class BuyerForgotPassword extends Component
             new BuyerOtpMail($otp,$buyer->full_name,$emailLower)
         );
 
-        $this->d1=$this->d2=$this->d3=$this->d4=$this->d5=$this->d6='';
+        $this->d1 = $this->d2 = $this->d3 = $this->d4 = '';
 
         $this->successMsg = 'A new reset code has been sent.';
     }
@@ -192,7 +194,7 @@ class BuyerForgotPassword extends Component
         $this->errorMsg = '';
         $this->successMsg = '';
 
-        $this->d1=$this->d2=$this->d3=$this->d4=$this->d5=$this->d6='';
+        $this->d1 = $this->d2 = $this->d3 = $this->d4 = '';
     }
 
     public function render()

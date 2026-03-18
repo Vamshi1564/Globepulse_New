@@ -7,90 +7,102 @@ use App\Models\Product;
 use App\Models\ProductEnquiry;
 use Illuminate\Support\Facades\Session;
 use Livewire\Component;
+use App\Models\Buyer;
 
 class ProductInquiry extends Component
 {
     public $buyer_id;
     public $supplier_id;
     public $product_id;
+    public $quantity;
     public $customer_id;
-    public $title;
+
     public $email;
     public $phonenumber;
     public $company_name;
     public $product_name;
 
+    public $product; // 🔹 store product
+
     public function mount($customer_id, $product_id)
     {
 
+        // if (!Session::has('id')) {
+        //     return redirect()->route('login')
+        //         ->with('error', 'Access Denied. Please login first.');
+        // }
 
-        if (!Session::has('id')) {
-            // Redirect to login page if the session ID is missing
-            return redirect()->route('login')->with('error', 'Access Denied , You must be logged in to access');
-        }
+        // $this->buyer_id = Session::get('id');
+        if (!Session::has('buyer_id')) {
+    return redirect()->route('buyer.login')
+        ->with('error', 'Access Denied. Please login first.');
+}
 
-
-        // Get sender_id (logged-in customer) from session
-        $this->buyer_id = Session::get('id');
-
-        // Set the customer_id from the parameter
+$this->buyer_id = Session::get('buyer_id');
         $this->customer_id = $customer_id;
+        $this->product_id = $product_id;
 
+        // 🔹 load product
+        $this->product = Product::find($product_id);
 
-        // Get product details
-        $product = Product::find($product_id);
+        if ($this->product) {
 
-        if ($product) {
-            $this->product_name = $product->title;
-            $this->supplier_id = $product->customer_id; // Assuming product has a seller_id field
+            $this->product_name = $this->product->title;
+            $this->supplier_id = $this->product->customer_id;
+
+            // MOQ default quantity
+            $this->quantity = $this->product->min_order;
         }
 
-        // Get customer details for sender 
-        if ($this->buyer_id) {
-            $customer = Customer::find($this->buyer_id);
-            if ($customer) {
-                $this->email = $customer->email;
-                $this->phonenumber = $customer->phonenumber;
-                $this->company_name = $customer->company;
-            }
-        }
+        // buyer details
+        // $customer = Customer::find($this->buyer_id);
+         $buyer = \App\Models\Buyer::find($this->buyer_id);
+
+        if ($buyer) {
+    $this->email = $buyer->email;
+    $this->phonenumber = $buyer->phone;
+    $this->company_name = $buyer->company_name;
+}
+
+        // if ($customer) {
+        //     $this->email = $customer->email;
+        //     $this->phonenumber = $customer->phonenumber;
+        //     $this->company_name = $customer->company;
+        // }
     }
 
     public function submit()
     {
-        // Validate form data
+        $product = Product::find($this->product_id);
+
         $this->validate([
             'email' => 'required|email',
             'phonenumber' => 'required|numeric',
             'company_name' => 'required',
             'product_name' => 'required',
+            'quantity' => 'required|integer|min:' . $product->min_order,
         ]);
 
-        $product = Product::find($this->product_id);
-
-        // Store inquiry with sender_id (from session) and receiver_id (product's owner)
         ProductEnquiry::create([
-            'buyer_id'  => $this->buyer_id,   // Sender's customer_id (the one making the inquiry)
-            'customer_id'  => $this->customer_id,   // Sender's customer_id (the one making the inquiry)
-            'supplier_id' => $this->supplier_id,  // Receiver's customer_id (product's owner/seller)
-            'product_id' => $this->product_id,   // The product the inquiry is about
-            'email' => $this->email,      // The inquiry message
-            'phonenumber' => $this->phonenumber,      // The inquiry message
-            'company_name' => $this->company_name,      // The inquiry message
-            'product_name' => $this->product_name,      // The inquiry message
+            'buyer_id' => $this->buyer_id,
+            'customer_id' => $this->customer_id,
+            'supplier_id' => $this->supplier_id,
+            'product_id' => $this->product_id,
+            'email' => $this->email,
+            'phonenumber' => $this->phonenumber,
+            'company_name' => $this->company_name,
+            'product_name' => $this->product_name,
+            'quantity' => $this->quantity,
         ]);
 
-        $this->reset();
-
-        // After storing, you can show a success message or redirect the user
         return redirect()->route('product-detail', ['slug' => $product->slug])
             ->with('message', 'Your inquiry has been sent successfully!');
-
-        // session()->flash('message', 'Your inquiry has been sent successfully!');
     }
 
     public function render()
     {
-        return view('livewire.front.product-inquiry');
+        return view('livewire.front.product-inquiry', [
+            'product' => $this->product
+        ]);
     }
 }

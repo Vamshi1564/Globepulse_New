@@ -69,8 +69,13 @@ class BuyerOtpMail extends Mailable
 <table width="580" align="center" style="background:#fff;border-radius:16px;padding:40px">
 
 <tr>
-<td style="text-align:center">
-<img src="https://www.globpulse.com/assets/img/icons/gfe.svg" height="40">
+<td align="center" style="background:#222; padding:20px;">
+  <img 
+    src="https://www.globpulse.com/assets/img/logos/GFEPLUSE1.png"
+    width="260"
+    alt="GlobPulse"
+    style="display:block; margin:auto; max-width:100%; height:auto;"
+  >
 </td>
 </tr>
 

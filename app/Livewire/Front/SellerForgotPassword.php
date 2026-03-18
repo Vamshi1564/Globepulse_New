@@ -22,7 +22,7 @@ class SellerForgotPassword extends Component
 
     // Step 2
     public $d1=''; public $d2=''; public $d3='';
-    public $d4=''; public $d5=''; public $d6='';
+    public $d4=''; 
     public $password         = '';
     public $password_confirm = '';
 
@@ -55,8 +55,8 @@ class SellerForgotPassword extends Component
             return;
         }
 
-        // Generate 6-digit OTP
-        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        // Generate 4-digit OTP
+        $otp = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
 
         // Store in cache (TTL 10 min)
         Cache::put('seller_reset_' . md5($emailLower), [
@@ -69,7 +69,7 @@ class SellerForgotPassword extends Component
         Mail::to($emailLower)->send(new SellerOtpMail($otp, $name, $emailLower));
 
         $this->step       = 2;
-        $this->successMsg = 'A 6-digit reset code has been sent to ' . $emailLower . '. Check your inbox.';
+        $this->successMsg = 'A 4-digit reset code has been sent to ' . $emailLower . '. Check your inbox.';
     }
 
     // ── STEP 2: Verify OTP + Set New Password ────────────────────────────────
@@ -92,11 +92,11 @@ class SellerForgotPassword extends Component
             'password_confirm.same' => 'Passwords do not match.',
         ]);
 
-        $entered  = $this->d1.$this->d2.$this->d3.$this->d4.$this->d5.$this->d6;
+        $entered  = $this->d1.$this->d2.$this->d3.$this->d4;
         $emailLower = strtolower(trim($this->email));
 
-        if (strlen($entered) < 6 || !ctype_digit($entered)) {
-            $this->errorMsg = 'Please enter all 6 digits of the reset code.';
+        if (strlen($entered) < 4 || !ctype_digit($entered)) {
+            $this->errorMsg = 'Please enter all 4 digits of the reset code.';
             return;
         }
 
@@ -139,7 +139,7 @@ class SellerForgotPassword extends Component
         $seller = Seller::where('email', $emailLower)->where('email_verified', 1)->first();
         if (!$seller) { $this->errorMsg = 'Account not found.'; return; }
 
-        $otp  = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $otp  = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
         $name = $seller->details?->legal_business_name ?? 'Seller';
 
         Cache::put('seller_reset_' . md5($emailLower), [
@@ -149,7 +149,7 @@ class SellerForgotPassword extends Component
 
         Mail::to($emailLower)->send(new SellerOtpMail($otp, $name, $emailLower));
 
-        $this->d1=$this->d2=$this->d3=$this->d4=$this->d5=$this->d6='';
+        $this->d1=$this->d2=$this->d3=$this->d4='';
         $this->successMsg = 'A new code has been sent to ' . $emailLower;
         $this->dispatch('otp-resent');
     }
@@ -159,7 +159,7 @@ class SellerForgotPassword extends Component
         $this->step       = 1;
         $this->errorMsg   = '';
         $this->successMsg = '';
-        $this->d1=$this->d2=$this->d3=$this->d4=$this->d5=$this->d6='';
+        $this->d1=$this->d2=$this->d3=$this->d4='';
     }
 
     public function render()

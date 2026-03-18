@@ -142,7 +142,7 @@ Sending...
 <div class="fp-fg">
 
 <label style="text-align:center;display:block">
-Enter 6-digit reset code
+Enter 4-digit reset code
 </label>
 
 <div class="fp-otp-row">
@@ -150,9 +150,7 @@ Enter 6-digit reset code
 <input type="text" maxlength="1" class="fp-otp-box" wire:model="d1" id="fp-d1" oninput="fpNext(this,'fp-d2')" onkeydown="fpBack(event,this,null)">
 <input type="text" maxlength="1" class="fp-otp-box" wire:model="d2" id="fp-d2" oninput="fpNext(this,'fp-d3')" onkeydown="fpBack(event,this,'fp-d1')">
 <input type="text" maxlength="1" class="fp-otp-box" wire:model="d3" id="fp-d3" oninput="fpNext(this,'fp-d4')" onkeydown="fpBack(event,this,'fp-d2')">
-<input type="text" maxlength="1" class="fp-otp-box" wire:model="d4" id="fp-d4" oninput="fpNext(this,'fp-d5')" onkeydown="fpBack(event,this,'fp-d3')">
-<input type="text" maxlength="1" class="fp-otp-box" wire:model="d5" id="fp-d5" oninput="fpNext(this,'fp-d6')" onkeydown="fpBack(event,this,'fp-d4')">
-<input type="text" maxlength="1" class="fp-otp-box" wire:model="d6" id="fp-d6" oninput="fpNext(this,null)" onkeydown="fpBack(event,this,'fp-d5')">
+<input type="text" maxlength="1" class="fp-otp-box" wire:model="d4" id="fp-d4" oninput="fpNext(this,null)" onkeydown="fpBack(event,this,'fp-d3')">
 
 </div>
 

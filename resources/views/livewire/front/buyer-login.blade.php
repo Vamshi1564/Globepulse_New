@@ -110,7 +110,12 @@ New to GlobPulse?
 <span>{{ session('login_success') }}</span>
 </div>
 @endif
-
+@if($errorMsg)
+<div class="sl-alert error">
+<span>❌</span>
+<span>{{ $errorMsg }}</span>
+</div>
+@endif
 <div class="sl-head">
 <h2>Sign in to your account</h2>
 <p>Enter your credentials to access your buyer dashboard</p>

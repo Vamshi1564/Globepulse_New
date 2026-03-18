@@ -123,7 +123,7 @@ Route: GET /buyer/verify-email → name('buyer.verify.otp')
                 </div>
                 <div class="otp-left-body">
                     <h3>Almost there!<br>Verify your <em>email</em></h3>
-                    <p>A 6-digit code was sent to your inbox. This code expires in 10 minutes.</p>
+                    <p>A 4-digit code was sent to your inbox. This code expires in 10 minutes.</p>
 
                     <div class="otp-step done">
                         <div class="otp-step-icon">✓</div>
@@ -150,7 +150,7 @@ Route: GET /buyer/verify-email → name('buyer.verify.otp')
                 {{-- Email chip --}}
                 <div>
                     <h2 style="font-size:22px;font-weight:900;color:#0f172a;margin:0 0 6px">Check your inbox</h2>
-                    <p style="font-size:14px;color:#64748b;margin:0 0 16px">We sent a 6-digit code to:</p>
+                    <p style="font-size:14px;color:#64748b;margin:0 0 16px">We sent a 4-digit code to:</p>
                     <div class="otp-email-chip">
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                         {{ $email }}
@@ -173,7 +173,7 @@ Route: GET /buyer/verify-email → name('buyer.verify.otp')
                 <form wire:submit.prevent="verifyOtp">
                     <p style="font-size:12px;font-weight:700;color:#94a3b8;text-align:center;letter-spacing:1px;text-transform:uppercase;margin:0">Enter verification code</p>
 
-                    <div class="otp-boxes">
+                    <!-- <div class="otp-boxes">
                         <input type="number" class="otp-box" wire:model="d1" maxlength="1" min="0" max="9"
                             id="otp1" oninput="otpMove(this,'otp2')" onkeydown="otpBack(event,this,'')">
                         <input type="number" class="otp-box" wire:model="d2" maxlength="1" min="0" max="9"
@@ -186,7 +186,14 @@ Route: GET /buyer/verify-email → name('buyer.verify.otp')
                             id="otp5" oninput="otpMove(this,'otp6')" onkeydown="otpBack(event,this,'otp4')">
                         <input type="number" class="otp-box" wire:model="d6" maxlength="1" min="0" max="9"
                             id="otp6" oninput="otpMove(this,'')"    onkeydown="otpBack(event,this,'otp5')">
-                    </div>
+                    </div> -->
+
+                    <div class="otp-boxes">
+    <input type="number" class="otp-box" wire:model="d1" id="otp1" oninput="otpMove(this,'otp2')" onkeydown="otpBack(event,this,'')">
+    <input type="number" class="otp-box" wire:model="d2" id="otp2" oninput="otpMove(this,'otp3')" onkeydown="otpBack(event,this,'otp1')">
+    <input type="number" class="otp-box" wire:model="d3" id="otp3" oninput="otpMove(this,'otp4')" onkeydown="otpBack(event,this,'otp2')">
+    <input type="number" class="otp-box" wire:model="d4" id="otp4" oninput="otpMove(this,'')"    onkeydown="otpBack(event,this,'otp3')">
+</div>
 
                     {{-- Countdown timer --}}
                     <div class="otp-timer">
@@ -242,7 +249,8 @@ Route: GET /buyer/verify-email → name('buyer.verify.otp')
     // ── Paste support: paste "123456" → fills all 6 boxes ──────────────────
     document.querySelector('.otp-boxes').addEventListener('paste', function(e) {
         e.preventDefault();
-        const digits = e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);
+        // const digits = e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);
+        const digits = e.clipboardData.getData('text').replace(/\D/g,'').slice(0,4);
         const boxes  = document.querySelectorAll('.otp-box');
         digits.split('').forEach((d, i) => {
             if (boxes[i]) {
@@ -252,7 +260,8 @@ Route: GET /buyer/verify-email → name('buyer.verify.otp')
                 boxes[i].dispatchEvent(new Event('input'));
             }
         });
-        if (digits.length === 6) boxes[5].focus();
+        // if (digits.length === 6) boxes[5].focus();
+        if (digits.length === 4) boxes[4].focus();
     });
 
     // ── 10 minute countdown timer ───────────────────────────────────────────

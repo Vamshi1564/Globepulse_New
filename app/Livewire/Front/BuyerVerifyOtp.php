@@ -12,8 +12,13 @@ use Illuminate\Support\Facades\Mail;
 
 class BuyerVerifyOtp extends Component
 {
-    public $d1=''; public $d2=''; public $d3='';
-    public $d4=''; public $d5=''; public $d6='';
+    // public $d1=''; public $d2=''; public $d3='';
+    // public $d4=''; public $d5=''; public $d6='';
+
+    public $d1=''; 
+    public $d2=''; 
+    public $d3='';
+    public $d4='';
 
     public $email      = '';
     public $errorMsg   = '';
@@ -38,10 +43,16 @@ class BuyerVerifyOtp extends Component
     {
         $this->errorMsg = $this->successMsg = '';
 
-        $entered = $this->d1.$this->d2.$this->d3.$this->d4.$this->d5.$this->d6;
+        // $entered = $this->d1.$this->d2.$this->d3.$this->d4.$this->d5.$this->d6;
+        $entered = $this->d1.$this->d2.$this->d3.$this->d4;
 
-        if (strlen($entered) < 6 || !ctype_digit($entered)) {
-            $this->errorMsg = 'Please enter all 6 digits.';
+        // if (strlen($entered) < 6 || !ctype_digit($entered)) {
+        //     $this->errorMsg = 'Please enter all 6 digits.';
+        //     return;
+        // }
+
+        if (strlen($entered) < 4 || !ctype_digit($entered)) {
+            $this->errorMsg = 'Please enter all 4 digits.';
             return;
         }
 
@@ -142,7 +153,7 @@ class BuyerVerifyOtp extends Component
             new \App\Mail\BuyerOtpMail($newOtp, $cached['buyer_name'], $this->email)
         );
 
-        $this->d1=$this->d2=$this->d3=$this->d4=$this->d5=$this->d6='';
+        $this->d1 = $this->d2 = $this->d3 = $this->d4 = '';
 
         $this->successMsg = 'A new code has been sent to '.$this->email;
 
