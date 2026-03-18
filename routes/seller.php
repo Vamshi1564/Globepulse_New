@@ -105,6 +105,11 @@ use App\Livewire\Seller\DistributionInquiries;
 use App\Livewire\Seller\SellerQueryTickets;
 use App\Livewire\Seller\QueryTicketsDetails;
 use App\Livewire\Seller\DigitalInformationForm;
+use App\Livewire\Seller\MyListings;
+use App\Livewire\Seller\ServiceAdd;
+ 
+
+ 
 
 Route::middleware([SellerAuth::class])->group(function () {  // <-- CHANGED from: Auth::class
 
@@ -218,4 +223,7 @@ Route::middleware([SellerAuth::class])->group(function () {  // <-- CHANGED from
     Route::get('/seller/seller-query-tickets', SellerQueryTickets::class)->name('QueryTickets');
     Route::get('/seller/query-tickets-details/{id}', QueryTicketsDetails::class)->name('QueryTicketsDetails');
     Route::get('/seller/digital-information', DigitalInformationForm::class)->name('digital-information');
+    // ── Combined listings page (replaces separate product/service list pages)
+    Route::get('/seller/my-listings', MyListings::class)->name('my-listings');
+    Route::get('/seller/service-add', ServiceAdd::class)->name('service_add');
 });

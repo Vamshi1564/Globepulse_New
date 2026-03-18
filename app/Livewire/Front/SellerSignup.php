@@ -1,5 +1,6 @@
 <?php
 // FILE: app/Livewire/Front/SellerSignup.php
+// CHANGE: 4-digit OTP (999 → 9999), added SMS notification on signup
 
 namespace App\Livewire\Front;
 
@@ -8,6 +9,7 @@ use App\Models\Seller;
 use App\Models\SellerDetail;
 use App\Models\AuditLog;
 use App\Mail\SellerOtpMail;
+use App\Services\SellerSmsService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
@@ -20,7 +22,7 @@ class SellerSignup extends Component
     public $phonenumber     = '';
     public $company         = '';
     public $company_website = '';
-    public $country         = '';   // stores Country.country_id
+    public $country         = '';
     public $countries       = [];
 
     public function mount()
@@ -43,11 +45,7 @@ class SellerSignup extends Component
         ]);
 
         $emailLower = strtolower(trim($this->email));
-
-        // Look up the Country row by country_id (PK)
         $countryRow = \App\Models\Country::find($this->country);
-
-        // Check existing email
         $existingSeller = Seller::where('email', $emailLower)->first();
 
         if ($existingSeller) {
@@ -55,22 +53,19 @@ class SellerSignup extends Component
                 $this->addError('email', 'This email is already registered. Please login instead.');
                 return;
             }
-
-            // Not verified yet — regenerate OTP + temp password
             $newTempPassword = $this->generateTempPassword();
             $existingSeller->password_hash        = Hash::make($newTempPassword);
             $existingSeller->must_change_password = 1;
             $existingSeller->save();
 
             $sellerName = $existingSeller->details?->legal_business_name ?? trim($this->name);
-            $this->fireOtp($existingSeller->id, $emailLower, $sellerName, $newTempPassword);
+            $this->fireOtp($existingSeller->id, $emailLower, $this->phonenumber, $sellerName, $newTempPassword);
             session(['seller_register_email' => $emailLower]);
 
             return redirect()->route('seller.verify.otp')
                 ->with('otp_success', 'Your account was not verified yet. A new code has been sent to ' . $emailLower);
         }
 
-        // ── Brand new registration ──────────────────────────────
         $tempPassword = $this->generateTempPassword();
 
         $seller = Seller::create([
@@ -78,8 +73,8 @@ class SellerSignup extends Component
             'email'                => $emailLower,
             'phone'                => $this->phonenumber,
             'password_hash'        => Hash::make($tempPassword),
-            'country_id'           => $this->country,              // ✅ store Country.country_id
-            'country_code'         => $countryRow?->short_name ?? 'XX', // keep for legacy compatibility
+            'country_id'           => $this->country,
+            'country_code'         => $countryRow?->short_name ?? 'XX',
             'account_type'         => 'seller',
             'email_verified'       => 0,
             'status'               => 'pending',
@@ -92,7 +87,7 @@ class SellerSignup extends Component
             'seller_id'           => $seller->id,
             'legal_business_name' => trim($this->company),
             'company_website'     => $this->company_website ?: null,
-            'onboarding_step'     => 1,   // start at step 1 (Basic Info) on first login
+            'onboarding_step'     => 1,
             'kyc_status'          => 'not_started',
             'is_locked'           => 0,
         ]);
@@ -104,16 +99,17 @@ class SellerSignup extends Component
             newValue:   ['email' => $seller->email, 'company' => $this->company]
         );
 
-        $this->fireOtp($seller->id, $emailLower, trim($this->name), $tempPassword);
+        $this->fireOtp($seller->id, $emailLower, $this->phonenumber, trim($this->name), $tempPassword);
         session(['seller_register_email' => $emailLower]);
 
         return redirect()->route('seller.verify.otp')
-            ->with('otp_success', 'A 6-digit code has been sent to ' . $emailLower . '. Please check your inbox.');
+            ->with('otp_success', 'A 4-digit code has been sent to ' . $emailLower . '. Please check your inbox.');
     }
 
-    private function fireOtp(string $sellerId, string $email, string $name, string $tempPassword): void
+    private function fireOtp(string $sellerId, string $email, string $phone, string $name, string $tempPassword): void
     {
-        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        // ── 4-digit OTP ──────────────────────────────────────
+        $otp = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
 
         Cache::put('seller_otp_' . md5($email), [
             'otp_hash'      => bcrypt($otp),
@@ -122,7 +118,15 @@ class SellerSignup extends Component
             'seller_id'     => $sellerId,
         ], now()->addMinutes(10));
 
+        // Email OTP
         Mail::to($email)->send(new SellerOtpMail($otp, $name, $email));
+
+        // SMS OTP (non-blocking — failures logged, don't stop registration)
+        try {
+            app(SellerSmsService::class)->sendOtpSms($phone, $otp, $name);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('SellerSignup: SMS failed — ' . $e->getMessage());
+        }
     }
 
     private function generateTempPassword(): string
@@ -137,5 +141,4 @@ class SellerSignup extends Component
         return view('livewire.front.sellersignup');
     }
 }
-
 ?>

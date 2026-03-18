@@ -1,4 +1,7 @@
 <?php
+// FILE: app/Models/Product.php
+// CHANGES: Added new B2B fields to $fillable only
+// Everything else (booted, relationships) is UNCHANGED
 
 namespace App\Models;
 
@@ -11,7 +14,10 @@ class Product extends Model
 {
     use HasFactory;
 
+    protected $table = 'tbl_products';
+
     protected $fillable = [
+        // ── Existing fields (unchanged) ──
         'title',
         'description',
         'product_img',
@@ -30,84 +36,63 @@ class Product extends Model
         'seo_title',
         'seo_description',
         'seo_keywords',
+        // ── NEW B2B fields (added via migration) ──
+        'unit',
+        'supply_ability',
+        'lead_time',
+        'packaging_details',
+        'certifications',
+        'sample_available',
+        'sample_price',
+        'payment_terms',
+        'port_of_dispatch',
+        'country_of_origin',
+        'product_video_url',
+        'keywords',
+        // ── GlobPulse seller fields ──
+        'seller_id',
+        'rejection_reason',
     ];
-
-    protected $table = 'tbl_products';
-
-
 
     protected static function booted()
     {
-
         static::created(function ($product) {
             Sitemap::create([
-                'slug' => $product->slug,
-                'url' => url('product-detail/' . $product->slug), // The product's URL
+                'slug'       => $product->slug,
+                'url'        => url('product-detail/' . $product->slug),
                 'created_at' => Carbon::now('Asia/Kolkata')->toDateTimeString(),
                 'updated_at' => Carbon::now('Asia/Kolkata')->toDateTimeString(),
             ]);
         });
 
-        // static::updated(function ($product) {
-        //     // Handle both create and update using the `saved` event
-        //     // $newSlug = str_replace(' ', '-', strtolower($product->title));
-        //     // if (!$product->slug) {
-        //     //     return;
-        //     // }
-
-        //     // // Extract the random number from the existing slug
-        //     // preg_match('/-(\d+)$/', $product->slug, $matches);
-        //     // $randomNumber = $matches[1] ?? rand(100, 99999);
-        //     // $newSlug = str_replace(' ', '-', strtolower($product->title)) . '-' . $randomNumber;
-
-        //     // if ($product->slug !== $newSlug) {
-        //     //     $product->slug = $newSlug;
-        //     //     $product->save(); // Save without triggering another update event
-        //     // }
-
-        //     // Sitemap::updateOrCreate(
-        //     //     ['slug' => $product->getOriginal('slug')], // Look for an existing record with the same slug
-        //     //     [
-        //     //         'slug' => $newSlug,
-        //     //         'url' => url('product-detail/' . $newSlug), // The product's URL
-        //     //         'updated_at' => Carbon::now('Asia/Kolkata')->toDateTimeString(), // Set the last modified timestamp
-        //     //     ]
-        //     // );
-
-        //     Sitemap::where('slug', $product->getOriginal('slug')) // Find the existing entry by old slug
-        //         ->update([
-        //             'slug' => $product->slug, // Update to the new slug entered in form
-        //             'url' => url('products-detail/' . $product->slug),
-        //             'updated_at' => Carbon::now('Asia/Kolkata')->toDateTimeString(),
-        //         ]);
-        // });
-
         static::updated(function ($product) {
-            if ($product->isDirty('slug')) { // Check if slug is being updated
-                $oldSlug = $product->getOriginal('slug'); // Get the old slug
-
-                // Update the sitemap entry
+            if ($product->isDirty('slug')) {
+                $oldSlug = $product->getOriginal('slug');
                 Sitemap::where('slug', $oldSlug)->update([
-                    'slug' => $product->slug,
-                    'url' => url('product-detail/' . $product->slug),
+                    'slug'       => $product->slug,
+                    'url'        => url('product-detail/' . $product->slug),
                     'updated_at' => Carbon::now('Asia/Kolkata')->toDateTimeString(),
                 ]);
             }
         });
     }
 
+    // ── Relationships (unchanged) ─────────────────────────
     public function category()
     {
         return $this->belongsTo(Category::class);
     }
+
     public function galleryimages()
     {
         return $this->hasMany(Productgallery::class);
     }
+
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
+
     public function subcategory()
     {
         return $this->belongsTo(Subcategory::class, 'subcategory_id');
@@ -117,20 +102,30 @@ class Product extends Model
     {
         return $this->belongsTo(SubSubCategory::class, 'sub_subcategory_id');
     }
+
     public function country()
     {
-        return $this->belongsTo(Country::class, 'country_id'); // Adjust the foreign key if necessary
+        return $this->belongsTo(Country::class, 'country_id');
     }
+
     public function enquiries()
     {
         return $this->hasMany(ProductEnquiry::class);
     }
+
     public function hotdeal()
     {
-        return $this->hasMany(HotDealModal::class , 'product_id');
+        return $this->hasMany(HotDealModal::class, 'product_id');
     }
+
     public function distribution()
     {
-        return $this->hasMany(Distribution::class , 'product_id');
+        return $this->hasMany(Distribution::class, 'product_id');
+    }
+
+    // ── NEW: GlobPulse seller relationship ───────────────
+    public function seller()
+    {
+        return $this->belongsTo(\App\Models\Seller::class, 'seller_id');
     }
 }
