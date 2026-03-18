@@ -98,7 +98,8 @@ margin-bottom:4px;
 <ul class="nav flex-column sidebar-menu">
 
 <li class="nav-item">
-<a class="nav-link active" href="{{ route('buyer.dashboard') }}">
+<a class="nav-link {{ request()->routeIs('buyer.dashboard') ? 'active' : '' }}"
+   href="{{ route('buyer.dashboard') }}">
 <i class="fas fa-chart-line"></i> Dashboard
 </a>
 </li>
@@ -110,7 +111,8 @@ margin-bottom:4px;
 </li>
 
 <li class="nav-item">
-<a class="nav-link" href="#">
+<a class="nav-link {{ request()->routeIs('buyer.myrfqs') ? 'active' : '' }}"
+   href="{{ route('buyer.myrfqs') }}">
 <i class="fas fa-list"></i> My RFQs
 </a>
 </li>
