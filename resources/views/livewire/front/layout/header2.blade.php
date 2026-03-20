@@ -23,7 +23,7 @@ aria-haspopup="true" aria-expanded="false">
 <span class="text-body-tertiary avatar avatar-xl" style="height:40px;width:40px;">
 
 {{-- PROFILE IMAGE --}}
-@if(session()->has('id') && optional($customer)->profile_image)
+{{--  @if(session()->has('id') && optional($customer)->profile_image)
 
 <img class="rounded-circle w-100"
 src="{{ config('app.pub_aws_url') . $customer->profile_image }}"
@@ -35,8 +35,10 @@ alt="" />
 src="../../../assets/img/team/72x72/57.webp"
 alt="" />
 
-@endif
-
+@endif --}}
+<span class="d-flex align-items-center justify-content-center rounded-circle bg-white shadow border"
+      style="height:40px;width:40px;">
+    <i class="fa-solid fa-user text-dark"></i>
 </span>
 </a>
 
@@ -58,7 +60,7 @@ aria-labelledby="navbarDropdownUser">
 
 <div class="avatar avatar-xl rounded-circle border border-2 border-primary overflow-hidden">
 
-@if(session()->has('id') && optional($customer)->profile_image)
+{{-- @if(session()->has('id') && optional($customer)->profile_image)
 
 <img class="w-100 h-100 object-fit-cover"
 src="{{ config('app.pub_aws_url') . $customer->profile_image }}"
@@ -70,7 +72,13 @@ alt="Profile Image" />
 src="../../../assets/img/team/72x72/57.webp"
 alt="Default Avatar" />
 
-@endif
+@endif --}}
+
+
+     <span class="d-flex align-items-center justify-content-center rounded-circle bg-white shadow border w-100 h-100 object-fit-cover"
+      >
+    <i class="fa-solid fa-user text-dark"></i>
+</span>
 
 </div>
 </div>
