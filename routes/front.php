@@ -25,6 +25,7 @@ use App\Livewire\Front\Portfolio;
 use App\Livewire\Front\Product;
 use App\Livewire\Front\ProductDetail;
 use App\Livewire\Front\ProductInquiry;
+use App\Livewire\Front\RfqComponent;
 use App\Livewire\Front\Signup;
 use App\Livewire\Front\TermsConditions;
 use App\Livewire\Postbyrequirement;
@@ -45,7 +46,8 @@ use App\Livewire\Front\SellerSignup;
 
 use App\Livewire\Front\BuyerProfile;
 use App\Livewire\Front\BuyerDashboard;
-
+use App\Livewire\Front\MyRFQs;
+use App\Livewire\Front\ViewRFQ;
 
 // public website / front routes (preserved exactly)
 
@@ -69,6 +71,9 @@ Route::get('/awards', Awards::class)->name('awards');
 Route::get('/products', Product::class)->name('product');
 Route::get('/product-inquiry/{customer_id}/{product_id}', ProductInquiry::class)->name('product-inquiry');
 Route::get('/buylead-inquiry/{customer_id}/{postbyrequirement_id}', BuyleadInquiry::class)->name('buylead-inquiry');
+Route::get('/rfq/{product_id}/{supplier_id}', function ($product_id, $supplier_id) {
+    return view('rfq-page', compact('product_id', 'supplier_id'));
+})->name('rfq.create');
 Route::get('/product-detail/{slug}', ProductDetail::class)->name('product-detail');
 Route::get('/signup/{id?}', Signup::class)->name('signup');
 Route::get('/buyer/login', BuyerLogin::class)->name('buyer.login');
@@ -178,6 +183,11 @@ Route::get('/profile', function () {
     return redirect('/');
 
 })->name('profile');
+
+Route::get('/buyer/rfqs', MyRFQs::class)
+    ->name('buyer.myrfqs');
+    Route::get('/buyer/rfq/{id}', ViewRFQ::class)
+    ->name('buyer.rfq.view');
 // ── Buyer Dashboard (temporary placeholder) ────────
 // Route::get('/buyer/dashboard', function () {
 

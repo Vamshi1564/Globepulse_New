@@ -1,0 +1,53 @@
+.profile-progress{
+position:relative;
+width:120px;
+height:120px;
+margin:auto;
+}
+
+.profile-avatar{
+width:100px;
+height:100px;
+border-radius:50%;
+position:absolute;
+top:10px;
+left:10px;
+z-index:2;
+}
+
+.progress-ring{
+width:120px;
+height:120px;
+border-radius:50%;
+}
+
+.progress-text{
+position:absolute;
+bottom:-10px;
+left:50%;
+transform:translateX(-50%);
+background:#fff;
+padding:4px 10px;
+border-radius:20px;
+font-weight:600;
+color:#f59e0b;
+border:1px solid #eee;
+}
+
+.missing-card{
+background:#f7e8d5;
+border-radius:12px;
+}
+
+.missing-item{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:12px 0;
+border-bottom:1px solid #eee;
+}
+
+.missing-item i{
+width:25px;
+color:#555;
+}

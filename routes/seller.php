@@ -110,6 +110,9 @@ use App\Livewire\Seller\ServiceAdd;
  
 
  
+use App\Http\Controllers\Seller\ProfileController;
+
+Route::get('/seller/profile', [ProfileController::class,'profile'])->name('seller.profile');
 
 Route::middleware([SellerAuth::class])->group(function () {  // <-- CHANGED from: Auth::class
 
