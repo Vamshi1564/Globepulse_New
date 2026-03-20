@@ -1,6 +1,5 @@
 <?php
 // FILE: app/Livewire/Front/SellerSignup.php
-// CHANGE: 4-digit OTP (999 → 9999), added SMS notification on signup
 
 namespace App\Livewire\Front;
 
@@ -10,9 +9,11 @@ use App\Models\SellerDetail;
 use App\Models\AuditLog;
 use App\Mail\SellerOtpMail;
 use App\Services\SellerSmsService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SellerSignup extends Component
@@ -22,12 +23,16 @@ class SellerSignup extends Component
     public $phonenumber     = '';
     public $company         = '';
     public $company_website = '';
-    public $country         = '';
+    public $country         = '';   // stores tblcountries.country_id
     public $countries       = [];
 
     public function mount()
     {
-        $this->countries = \App\Models\Country::orderBy('short_name')->get();
+        // Use DB::table directly — Country model uses 'id' PK but tblcountries uses 'country_id'
+        $this->countries = DB::table('tblcountries')
+            ->select('country_id', 'short_name', 'long_name', 'iso2', 'calling_code')
+            ->orderBy('short_name')
+            ->get();
     }
 
     public function submit()
@@ -45,7 +50,25 @@ class SellerSignup extends Component
         ]);
 
         $emailLower = strtolower(trim($this->email));
-        $countryRow = \App\Models\Country::find($this->country);
+
+        // ── Lookup country from tblcountries using country_id ──
+        $countryRow = DB::table('tblcountries')
+            ->where('country_id', $this->country)
+            ->first();
+
+        Log::info("SellerSignup: country input=[{$this->country}] found=" . ($countryRow ? $countryRow->short_name : 'NULL'));
+
+        // Extract values to store
+        // country_code = full country name  e.g. "India"
+        // country_id   = calling code       e.g. "91"
+        // long_name is empty in tblcountries — use short_name
+        $countryName    = (!empty($countryRow?->long_name) ? $countryRow->long_name : ($countryRow?->short_name ?? 'Unknown'));
+        $callingCode    = $countryRow
+            ? preg_replace('/[^0-9]/', '', explode(',', $countryRow->calling_code ?? '91')[0]) ?: '91'
+            : '91';
+        $tblCountryId   = $countryRow?->country_id; // actual tblcountries PK for SMS service
+
+        // ── Check existing email ───────────────────────────────
         $existingSeller = Seller::where('email', $emailLower)->first();
 
         if ($existingSeller) {
@@ -59,13 +82,14 @@ class SellerSignup extends Component
             $existingSeller->save();
 
             $sellerName = $existingSeller->details?->legal_business_name ?? trim($this->name);
-            $this->fireOtp($existingSeller->id, $emailLower, $this->phonenumber, $sellerName, $newTempPassword);
+            $this->fireOtp($existingSeller->id, $emailLower, $this->phonenumber, $sellerName, $newTempPassword, $tblCountryId);
             session(['seller_register_email' => $emailLower]);
 
             return redirect()->route('seller.verify.otp')
-                ->with('otp_success', 'Your account was not verified yet. A new code has been sent to ' . $emailLower);
+                ->with('otp_success', 'OTP sent to your Email, SMS & WhatsApp (' . $emailLower . '). Enter the 4-digit code below.');
         }
 
+        // ── New registration ───────────────────────────────────
         $tempPassword = $this->generateTempPassword();
 
         $seller = Seller::create([
@@ -73,8 +97,8 @@ class SellerSignup extends Component
             'email'                => $emailLower,
             'phone'                => $this->phonenumber,
             'password_hash'        => Hash::make($tempPassword),
-            'country_id'           => $this->country,
-            'country_code'         => $countryRow?->short_name ?? 'XX',
+            'country_id'           => $tblCountryId,   // tblcountries.country_id integer (101 for India)
+            'country_code'         => $countryName,    // e.g. "India" — full country name
             'account_type'         => 'seller',
             'email_verified'       => 0,
             'status'               => 'pending',
@@ -99,16 +123,16 @@ class SellerSignup extends Component
             newValue:   ['email' => $seller->email, 'company' => $this->company]
         );
 
-        $this->fireOtp($seller->id, $emailLower, $this->phonenumber, trim($this->name), $tempPassword);
+        $this->fireOtp($seller->id, $emailLower, $this->phonenumber, trim($this->name), $tempPassword, $tblCountryId);
         session(['seller_register_email' => $emailLower]);
 
         return redirect()->route('seller.verify.otp')
-            ->with('otp_success', 'A 4-digit code has been sent to ' . $emailLower . '. Please check your inbox.');
+            ->with('otp_success', 'OTP sent to your Email, SMS & WhatsApp (' . $emailLower . '). Enter the 4-digit code below.');
     }
 
-    private function fireOtp(string $sellerId, string $email, string $phone, string $name, string $tempPassword): void
+    private function fireOtp(string $sellerId, string $email, string $phone, string $name, string $tempPassword, mixed $tblCountryId = null): void
     {
-        // ── 4-digit OTP ──────────────────────────────────────
+        // 4-digit OTP
         $otp = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
 
         Cache::put('seller_otp_' . md5($email), [
@@ -119,13 +143,17 @@ class SellerSignup extends Component
         ], now()->addMinutes(10));
 
         // Email OTP
-        Mail::to($email)->send(new SellerOtpMail($otp, $name, $email));
-
-        // SMS OTP (non-blocking — failures logged, don't stop registration)
         try {
-            app(SellerSmsService::class)->sendOtpSms($phone, $otp, $name);
+            Mail::to($email)->send(new SellerOtpMail($otp, $name, $email));
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('SellerSignup: SMS failed — ' . $e->getMessage());
+            Log::error("SellerSignup: Email OTP failed — " . $e->getMessage());
+        }
+
+        // SMS + WhatsApp OTP
+        try {
+            app(SellerSmsService::class)->sendOtpSms($phone, $otp, $name, $tblCountryId);
+        } catch (\Exception $e) {
+            Log::error("SellerSignup: SMS/WA OTP failed — " . $e->getMessage());
         }
     }
 
@@ -141,4 +169,3 @@ class SellerSignup extends Component
         return view('livewire.front.sellersignup');
     }
 }
-?>

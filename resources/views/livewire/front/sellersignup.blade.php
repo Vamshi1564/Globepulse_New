@@ -148,18 +148,18 @@
                     </div>
 
                     <div class="sr-fg">
-                        <div wire:ignore>
-                            <label class="form-label">Country *</label>
-                            <select class="form-select" wire:model="country" id="sr-country" style="width:100%">
-                                <option value="">-- Select Country --</option>
-                                @foreach($countries as $countr)
-                                    <option value="{{ $countr->country_id }}"
-                                        {{ $countr->country_id == $country ? 'selected' : '' }}>
-                                        {{ $countr->short_name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                        <label class="form-label">Country *</label>
+                        {{-- Plain native select — no jQuery/select2 needed, works perfectly with Livewire --}}
+                        <select class="form-select @error('country') is-invalid @enderror"
+                            wire:model="country"
+                            style="height:46px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#fafafa;">
+                            <option value="">-- Select Country --</option>
+                            @foreach($countries as $countr)
+                                <option value="{{ $countr->country_id }}">
+                                    {{ $countr->short_name }}
+                                </option>
+                            @endforeach
+                        </select>
                         @error('country')<small class="text-danger">{{ $message }}</small>@enderror
                     </div>
 
@@ -192,11 +192,6 @@
     <livewire:front.layout.footer />
 
     <script>
-    $(document).ready(function() {
-        $('#sr-country').select2();
-        $('#sr-country').on('change', function() {
-            @this.set('country', $(this).val());
-        });
-    });
+    {{-- select2 removed — using native Livewire select --}}
     </script>
 </div>

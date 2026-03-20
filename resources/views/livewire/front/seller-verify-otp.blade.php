@@ -122,8 +122,8 @@
                     <img src="{{ asset('assets/img/icons/gfe.svg') }}" alt="GlobPulse" style="height:32px">
                 </div>
                 <div class="otp-left-body">
-                    <h3>Almost there!<br>Verify your <em>email</em></h3>
-                    <p>A 4-digit code was sent to your inbox. This code expires in 10 minutes.</p>
+                    <h3>Almost there!<br>Verify your account</h3>
+                    <p>A 4-digit code was sent to your <strong>Email</strong>, <strong>SMS</strong> & <strong>WhatsApp</strong>. Expires in 10 minutes.</p>
 
                     <div class="otp-step done">
                         <div class="otp-step-icon">✓</div>
@@ -131,7 +131,7 @@
                     </div>
                     <div class="otp-step active">
                         <div class="otp-step-icon">2</div>
-                        <div class="otp-step-text"><h5>Verify Email</h5><p>Enter the OTP from your inbox</p></div>
+                        <div class="otp-step-text"><h5>Verify Account</h5><p>Enter OTP from Email / SMS / WhatsApp</p></div>
                     </div>
                     <div class="otp-step next">
                         <div class="otp-step-icon">3</div>
@@ -149,12 +149,31 @@
 
                 {{-- Email chip --}}
                 <div>
-                    <h2 style="font-size:22px;font-weight:900;color:#0f172a;margin:0 0 6px">Check your inbox</h2>
+                    <h2 style="font-size:22px;font-weight:900;color:#0f172a;margin:0 0 6px">OTP sent via 3 channels</h2>
                     <p style="font-size:14px;color:#64748b;margin:0 0 16px">We sent a 4-digit code to:</p>
                     <div class="otp-email-chip">
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                         {{ $email }}
                     </div>
+
+                    {{-- 3-channel delivery indicators --}}
+                    <div style="display:flex;justify-content:center;gap:6px;margin:14px 0 6px;flex-wrap:wrap;">
+                        <div style="display:flex;align-items:center;gap:4px;background:#f0fdf4;border:1.5px solid #86efac;
+                            border-radius:20px;padding:5px 12px;font-size:.73rem;font-weight:700;color:#059669;">
+                            ✉️ Email
+                        </div>
+                        <div style="display:flex;align-items:center;gap:4px;background:#eff6ff;border:1.5px solid #93c5fd;
+                            border-radius:20px;padding:5px 12px;font-size:.73rem;font-weight:700;color:#1d4ed8;">
+                            📱 SMS
+                        </div>
+                        <div style="display:flex;align-items:center;gap:4px;background:#f0fdf4;border:1.5px solid #4ade80;
+                            border-radius:20px;padding:5px 12px;font-size:.73rem;font-weight:700;color:#16a34a;">
+                            💬 WhatsApp
+                        </div>
+                    </div>
+                    <p style="font-size:.71rem;color:#94a3b8;text-align:center;margin:2px 0 4px;line-height:1.5;">
+                        Didn't receive? Check SMS or WhatsApp inbox, or click Resend.
+                    </p>
                 </div>
 
                 {{-- Alerts --}}
