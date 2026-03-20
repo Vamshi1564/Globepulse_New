@@ -11,14 +11,14 @@ class ProfileController extends Controller
     public function profile()
     {
 
-        $customer = auth()->user();
+        $seller = auth()->user();
 
         $profilePercentage = 0;
         $missingDetails = [];
 
         /* MOBILE VERIFICATION */
 
-        if($customer->mobile_verified){
+        if($seller->mobile_verified){
             $profilePercentage += 15;
         }else{
             $missingDetails[] = [
@@ -29,7 +29,7 @@ class ProfileController extends Controller
 
         /* EMAIL VERIFICATION */
 
-        if($customer->email_verified){
+        if($seller->email_verified){
             $profilePercentage += 15;
         }else{
             $missingDetails[] = [
@@ -40,7 +40,7 @@ class ProfileController extends Controller
 
         /* PROFILE PHOTO */
 
-        if($customer->profile_image){
+        if($seller->profile_image){
             $profilePercentage += 10;
         }else{
             $missingDetails[] = [
@@ -51,7 +51,7 @@ class ProfileController extends Controller
 
         /* GST */
 
-        if($customer->gst_no){
+        if($seller->gst_no){
             $profilePercentage += 15;
         }else{
             $missingDetails[] = [
@@ -62,7 +62,7 @@ class ProfileController extends Controller
 
         /* COMPANY */
 
-        if($customer->company){
+        if($seller->company){
             $profilePercentage += 15;
         }else{
             $missingDetails[] = [
@@ -73,7 +73,7 @@ class ProfileController extends Controller
 
         /* DOCUMENT */
 
-        if($customer->document){
+        if($seller->document){
             $profilePercentage += 30;
         }else{
             $missingDetails[] = [

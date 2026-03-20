@@ -33,11 +33,31 @@ $rfqs = collect([
 @endphp
 
 <style>
+    html, body {
+    height: 100%;
+}
+
+.page-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-content {
+    flex: 1;
+}
+.dashboard-title {
+    font-size: 22px;
+    color: #1f2937;
+}
+
+/* Hover */
 .rfq-row:hover {
     background: #f9fafb;
     transition: 0.2s ease;
 }
 
+/* Icon */
 .rfq-icon {
     width: 42px;
     height: 42px;
@@ -52,150 +72,151 @@ $rfqs = collect([
 
 <div>
 
-    <livewire:seller.layout.header />
+<livewire:seller.layout.header />
 
-    <div class="container">
-        <div class="content">
+<div class="container-fluid dashboard-layout">
+<div class="row">
 
-            <!-- Header -->
-            <div class="row gx-3 flex-between-end mb-4">
-                <div class="col-auto">
-                    <h2 class="mb-2">📩 RFQs</h2>
-                </div>
-
-                <div class="col-auto">
-                    <button onclick="history.back()" class="btn btn-phoenix-secondary">
-                        <i class="fas fa-arrow-left me-1"></i> Back
-                    </button>
-                </div>
-            </div>
-
-            @if($rfqs->isEmpty())
-
-                <div class="alert alert-info text-center">
-                    No RFQs found
-                </div>
-
-            @else
-
-            <!-- Table -->
-            <div class="table-responsive scrollbar">
-                <table class="table fs-9 mb-0">
-
-                    <thead>
-                        <tr>
-                            <th class="sort align-middle" style="min-width:220px;">PRODUCT</th>
-                            <th class="sort align-middle">BUYER</th>
-                            <th class="sort align-middle">QUANTITY</th>
-                            <th class="sort align-middle">PRICE</th>
-                            <th class="sort align-middle">STATUS</th>
-                            <th class="sort text-end align-middle">DATE</th>
-                            <th class="text-end"></th>
-                        </tr>
-                    </thead>
-
-                    <tbody class="list">
-
-                        @foreach($rfqs as $rfq)
-                        <tr class="hover-actions-trigger position-static">
-
-                            <!-- Product -->
-                            <td class="align-middle product">
-                                <a class="fw-semibold line-clamp-1"
-                                   href="{{ route('seller.rfq.view', $rfq->id) }}">
-                                    {{ $rfq->product->title ?? 'Product' }}
-                                </a>
-                            </td>
-
-                            <!-- Buyer -->
-                            <td class="align-middle">
-                                {{ $rfq->name ?? '-' }}
-                            </td>
-
-                            <!-- Quantity -->
-                            <td class="align-middle fw-semibold">
-                                {{ $rfq->quantity }}
-                            </td>
-
-                            <!-- Price -->
-                            <td class="align-middle">
-                                {{ $rfq->target_price ?? '-' }}
-                            </td>
-
-                            <!-- Status -->
-                            <td class="align-middle">
-                                @if($rfq->status == 0)
-                                    <span class="badge badge-phoenix fs-10 badge-phoenix-warning">
-                                        Pending
-                                    </span>
-                                @elseif($rfq->status == 1)
-                                    <span class="badge badge-phoenix fs-10 badge-phoenix-success">
-                                        Quoted
-                                    </span>
-                                @else
-                                    <span class="badge badge-phoenix fs-10 badge-phoenix-secondary">
-                                        Closed
-                                    </span>
-                                @endif
-                            </td>
-
-                            <!-- Date -->
-                            <td class="align-middle text-end">
-                                <p class="text-body-tertiary mb-0">
-                                    {{ $rfq->created_at->format('d M Y') }}
-                                </p>
-                            </td>
-
-                            <!-- Actions -->
-                            <td class="align-middle text-end pe-0">
-
-                                <div class="btn-reveal-trigger position-static">
-                                    <button class="btn btn-sm dropdown-toggle dropdown-caret-none btn-reveal"
-                                        type="button" data-bs-toggle="dropdown">
-
-                                        <span class="fas fa-ellipsis-h fs-10"></span>
-                                    </button>
-
-                                    <div class="dropdown-menu dropdown-menu-end py-2">
-
-                                        <a class="dropdown-item"
-                                           href="{{ route('seller.rfq.view', $rfq->id) }}">
-                                            View
-                                        </a>
-
-                                        <a class="dropdown-item"
-                                           href="{{ route('seller.rfq.quote', $rfq->id) }}">
-                                            Send Quote
-                                        </a>
-
-                                        <div class="dropdown-divider"></div>
-
-                                        <a class="dropdown-item text-danger"
-                                           href="#">
-                                            Close RFQ
-                                        </a>
-
-                                    </div>
-                                </div>
-
-                            </td>
-
-                        </tr>
-                        @endforeach
-
-                    </tbody>
-                </table>
-            </div>
-
-            @endif
-
-        </div>
-    </div>
-
-    <livewire:seller.layout.footer />
+<!-- OPTIONAL SIDEBAR -->
+<div class="col-md-2">
+    {{-- Seller sidebar if exists --}}
 </div>
 
- <!-- <a class="dropdown-item"
-                                           href="{{ route('seller.rfq.view', $rfq->id) }}">
-                                            View
-                                        </a> -->
+<!-- MAIN -->
+<div class="col-md-12">
+
+<div class="container py-4">
+
+<!-- TITLE + BACK -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h3 class="dashboard-title fw-bold mb-0">
+        📩 RFQs
+    </h3>
+
+    <button onclick="history.back()" class="btn btn-outline-primary btn-sm px-3">
+        <i class="fas fa-arrow-left me-1"></i> Back
+    </button>
+
+</div>
+
+@if($rfqs->isEmpty())
+
+    <div class="alert alert-info text-center p-4">
+        No RFQs found
+    </div>
+
+@else
+
+<!-- CARD TABLE -->
+<div class="card shadow-sm border-0 rounded-4">
+<div class="card-body p-0">
+
+<div class="table-responsive">
+<table class="table align-middle mb-0">
+
+<thead class="table-light">
+<tr>
+    <th>Product</th>
+    <th>Buyer</th>
+    <th>Quantity</th>
+    <th>Target Price</th>
+    <th>Status</th>
+    <th>Date</th>
+    <th class="text-end">Action</th>
+</tr>
+</thead>
+
+<tbody>
+
+@foreach($rfqs as $rfq)
+<tr class="rfq-row">
+
+<!-- PRODUCT -->
+<td>
+    <div class="d-flex align-items-center gap-3">
+
+        <div class="rfq-icon">
+            📦
+        </div>
+
+        <div>
+            <div class="fw-semibold">
+                {{ $rfq->product->title ?? 'Product' }}
+            </div>
+
+            <small class="text-muted">
+                RFQ #{{ $rfq->id }}
+            </small>
+        </div>
+
+    </div>
+</td>
+
+<!-- BUYER -->
+<td class="fw-medium">
+    {{ $rfq->name ?? '-' }}
+</td>
+
+<!-- QUANTITY -->
+<td class="fw-semibold">
+    {{ $rfq->quantity }}
+</td>
+
+<!-- PRICE -->
+<td class="text-primary fw-bold">
+    {{ $rfq->target_price ?? '-' }}
+</td>
+
+<!-- STATUS -->
+<td>
+    @if($rfq->status == 0)
+        <span class="badge bg-warning text-dark">Pending</span>
+    @elseif($rfq->status == 1)
+        <span class="badge bg-success">Quoted</span>
+    @else
+        <span class="badge bg-secondary">Closed</span>
+    @endif
+</td>
+
+<!-- DATE -->
+<td>
+    {{ $rfq->created_at->format('d M Y') }}
+</td>
+
+<!-- ACTION -->
+<td class="text-end">
+
+    <a href="{{ route('seller.rfq.view', $rfq->id) }}"
+       class="btn btn-sm btn-outline-primary me-2">
+        View
+    </a>
+
+    <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
+       class="btn btn-sm btn-success">
+        Quote
+    </a>
+
+</td>
+
+</tr>
+@endforeach
+
+</tbody>
+</table>
+</div>
+
+</div>
+</div>
+
+@endif
+
+</div>
+</div>
+</div>
+
+</div>
+
+<livewire:seller.layout.footer />
+
+</div>
