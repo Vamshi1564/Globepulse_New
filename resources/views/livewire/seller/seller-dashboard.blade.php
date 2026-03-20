@@ -96,6 +96,27 @@
                     transition: transform 0.4s ease-in-out, box-shadow 0.3s ease-in-out;
                 }
             }
+
+            .rfq-table {
+    background: #fff;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+}
+
+.rfq-table table {
+    margin-bottom: 0;
+}
+
+.rfq-table thead th {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.rfq-table tbody tr:hover {
+    background: #f8fafc;
+}
         </style>
 
 
@@ -1091,6 +1112,83 @@
                 </div>
             @endif
         </div>
+
+        <div class="mt-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold">📩 Recent RFQs</h5>
+
+        <a href="{{ route('seller.rfqs') }}" class="btn btn-sm btn-outline-primary">
+            View All
+        </a>
+    </div>
+
+    @if($rfqs->isEmpty())
+        <div class="alert alert-light border text-center">
+            No RFQs received yet
+        </div>
+    @else
+
+    <div class="rfq-table">
+
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach($rfqs as $rfq)
+                <tr>
+
+                    <td>
+                        <div class="fw-semibold">
+                            {{ $rfq->product->title ?? 'Product' }}
+                        </div>
+                    </td>
+
+                    <td>{{ $rfq->quantity }}</td>
+
+                    <td class="text-primary fw-bold">
+                        {{ $rfq->target_price ?? '-' }}
+                    </td>
+
+                    <td>
+                        @if($rfq->status == 0)
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        @elseif($rfq->status == 1)
+                            <span class="badge bg-success">Quoted</span>
+                        @else
+                            <span class="badge bg-secondary">Closed</span>
+                        @endif
+                    </td>
+
+                    <td>{{ $rfq->created_at->format('d M Y') }}</td>
+
+                    <td>
+                        <a href="{{ route('seller.rfq.view', $rfq->id) }}"
+                           class="btn btn-sm btn-primary">
+                            View
+                        </a>
+                    </td>
+
+                </tr>
+                @endforeach
+            </tbody>
+
+        </table>
+
+    </div>
+
+    @endif
+
+</div>
     </main>
 
     {{-- <script>

@@ -328,6 +328,48 @@
         </div>
         @endif
 
+        <div class="mt-4">
+<h6 class="section-title">💰 Quotations</h6>
+
+@foreach($rfq->quotations as $quote)
+<div class="card mb-3 border">
+
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between">
+            <strong>₹ {{ $quote->price }}</strong>
+
+            @if($quote->status == 0)
+                <span class="badge bg-warning">Pending</span>
+            @elseif($quote->status == 1)
+                <span class="badge bg-success">Accepted</span>
+            @else
+                <span class="badge bg-danger">Rejected</span>
+            @endif
+        </div>
+
+        <p class="mt-2 mb-1">{{ $quote->message }}</p>
+
+        <small>Delivery: {{ $quote->delivery_time }}</small>
+
+        <!-- ACTION -->
+        @if($quote->status == 0)
+        <div class="mt-3">
+            <button wire:click="acceptQuote({{ $quote->id }})"
+                class="btn btn-success btn-sm">Accept</button>
+
+            <button wire:click="rejectQuote({{ $quote->id }})"
+                class="btn btn-danger btn-sm">Reject</button>
+        </div>
+        @endif
+
+    </div>
+
+</div>
+@endforeach
+
+</div>
+
     </div>
 
 </div>

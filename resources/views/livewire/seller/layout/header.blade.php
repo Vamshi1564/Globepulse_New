@@ -41,6 +41,7 @@
                             @endif
                         </a>
                     </li>
+                    
 
                     <li class="nav-item dropdown align-content-center">
                         <a class="nav-link d-flex align-items-center justify-content-center rounded-circle shadow-sm"
@@ -194,6 +195,61 @@
                     <li class="nav-item" data-nav-item="data-nav-item">
                         <a class="nav-link active" href="{{ route('seller.dashboard') }}">Dashboard</a>
                     </li>
+                    <li class="nav-item dropdown">
+
+    <a class="nav-link dropdown-toggle position-relative" href="#!" role="button"
+        data-bs-toggle="dropdown" data-bs-auto-close="outside">
+
+        📩 RFQs
+
+        @if($rfqCount > 0)
+            <span class="badge bg-danger ms-1" style="font-size:10px;">
+                {{ $rfqCount }}
+            </span>
+        @endif
+
+        <i class="fa-solid fa-angle-down ms-2"></i>
+    </a>
+
+    <ul class="dropdown-menu navbar-dropdown-caret p-2" style="min-width: 300px;">
+
+        <li class="px-2 py-1 fw-bold text-dark">
+            Recent RFQs
+        </li>
+
+        @forelse($recentRfqs as $rfq)
+
+            <li>
+                <a class="dropdown-item small py-2 border-bottom"
+                   href="{{ route('seller.rfq.view', $rfq->id) }}">
+
+                    <div class="fw-semibold">
+                        {{ $rfq->product->title ?? 'Product' }}
+                    </div>
+
+                    <div class="text-muted small">
+                        Qty: {{ $rfq->quantity }}
+                    </div>
+
+                </a>
+            </li>
+
+        @empty
+            <li class="text-center text-muted small py-3">
+                No RFQs found
+            </li>
+        @endforelse
+
+        <li class="mt-2 px-2">
+            <a href="{{ route('seller.rfqs') }}"
+               class="btn btn-sm btn-outline-primary w-100">
+                View All RFQs
+            </a>
+        </li>
+
+    </ul>
+
+</li>
                     <li class="nav-item" data-nav-item="data-nav-item">
                         <a class="nav-link active" href="{{ route('postbyrequirement') }}">Post Buy Requirements</a>
                     </li>

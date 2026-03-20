@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Livewire\Component;
-
+use App\Models\RFQ;
 class Header extends Component
 {
     public $clientId;
@@ -45,6 +45,8 @@ class Header extends Component
     public $whatsappNumber;
     public $emailAddress;
     public $client_id;
+     public $rfqCount = 0;
+    public $recentRfqs = [];
 
     public function mount()
     {
@@ -91,6 +93,18 @@ class Header extends Component
         $this->contactNumber  = '6353702511';
         $this->whatsappNumber = '916353702511';
         $this->emailAddress   = 'care@globpulse.com';
+
+
+        $this->recentRfqs = RFQ::with('product')
+            ->where('supplier_id', $sellerId)
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $this->rfqCount = RFQ::where('supplier_id', $sellerId)
+            ->where('status', 0)
+            ->count();
+    
     }
 
     public function logout()
@@ -174,6 +188,7 @@ class Header extends Component
         $sellerId = Session::get('seller_id');
         $seller   = Seller::find($sellerId);
         return view('livewire.seller.layout.header', compact('seller'));
+         
     }
 }
 

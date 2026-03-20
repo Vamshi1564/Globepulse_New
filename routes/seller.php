@@ -107,7 +107,7 @@ use App\Livewire\Seller\QueryTicketsDetails;
 use App\Livewire\Seller\DigitalInformationForm;
 use App\Livewire\Seller\MyListings;
 use App\Livewire\Seller\ServiceAdd;
- 
+use App\Livewire\Seller\RFQList;
 
  
 use App\Http\Controllers\Seller\ProfileController;
@@ -229,4 +229,11 @@ Route::middleware([SellerAuth::class])->group(function () {  // <-- CHANGED from
     // ── Combined listings page (replaces separate product/service list pages)
     Route::get('/seller/my-listings', MyListings::class)->name('my-listings');
     Route::get('/seller/service-add', ServiceAdd::class)->name('service_add');
+
+    Route::get('/seller/rfqs', RFQList::class)
+        ->name('seller.rfqs');
+        Route::get('/seller/rfq/{id}', \App\Livewire\Seller\RFQView::class)
+    ->name('seller.rfq.view');
+    Route::get('/seller/rfq/{id}/quote', \App\Livewire\Seller\RFQQuote::class)
+    ->name('seller.rfq.quote');
 });

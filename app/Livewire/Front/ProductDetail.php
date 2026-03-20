@@ -210,7 +210,7 @@ public $rfq_attachment;
 ]);
 
         // ✅ TEMP: disable mail (test DB first)
-        /*
+  
         $supplier = Customer::find($this->product->customer_id);
 
         if ($supplier?->email) {
@@ -224,7 +224,7 @@ public $rfq_attachment;
                 new RFQMail($rfq, $buyer, $supplier, 'buyer')
             );
         }
-        */
+      
 
         // ✅ RESET
         $this->reset([

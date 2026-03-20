@@ -11,6 +11,7 @@ use App\Models\SellerDashboardItemModel;
 use Illuminate\Support\Facades\Session;
 use Livewire\Component;
 use Illuminate\Support\Str;
+use App\Models\RFQ;
 
 class SellerDashboard extends Component
 {
@@ -66,4 +67,17 @@ class SellerDashboard extends Component
 
         return view('livewire.seller.seller-dashboard', compact('PackageId', 'dashboardItems', 'seller'));
     }
+
+    public $rfqs;
+
+public function mount()
+{
+    $sellerId = session('id'); // or auth()->id()
+
+    $this->rfqs = RFQ::with('product')
+        ->where('supplier_id', $sellerId)
+        ->latest()
+        ->take(10) // optional
+        ->get();
+}
 }
