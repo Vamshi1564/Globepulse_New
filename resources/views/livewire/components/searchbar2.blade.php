@@ -96,7 +96,7 @@
             <span x-init="
                 document.getElementById('sb-bar').style.borderBottomLeftRadius  = '0';
                 document.getElementById('sb-bar').style.borderBottomRightRadius = '0';
-                document.getElementById('sb-bar').style.borderColor = '#ff6a00';
+                document.getElementById('sb-bar').style.borderColor = '#0d1a94';
                 document.getElementById('sb-bar').style.boxShadow = 'none';
             "></span>
         </template>
@@ -114,7 +114,7 @@
          x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0 -translate-y-1"
          x-transition:enter-end="opacity-100 translate-y-0"
-         style="position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid #ff6a00;border-top:none;border-radius:0 0 12px 12px;box-shadow:0 10px 28px rgba(0,0,0,.10);z-index:99999;max-height:420px;overflow-y:auto;">
+         style="position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid #0d1a94;border-top:none;border-radius:0 0 12px 12px;box-shadow:0 10px 28px rgba(0,0,0,.10);z-index:99999;max-height:420px;overflow-y:auto;">
 
         <template x-if="items.length === 0">
             <div style="padding:20px 16px;font-size:14px;color:#aaa;text-align:center;">
@@ -124,57 +124,13 @@
 
         <template x-if="items.length > 0">
             <div>
-                {{-- Products section --}}
-                <template x-if="items.some(i => i.key === 'products')">
-                    <div style="padding:8px 16px 5px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#bbb;background:#fdfcfb;border-bottom:1px solid #f5f0eb;">Products</div>
-                </template>
-                <template x-for="(item, idx) in items.filter(i => i.key === 'products')" :key="'p'+idx">
+                <template x-for="(item, idx) in items" :key="idx">
                     <div @click="select(item.name)"
-                         :style="items.indexOf(item) === activeIdx ? 'background:#fff5ee;' : ''"
-                         @mouseover="activeIdx = items.indexOf(item)"
+                         :style="idx === activeIdx ? 'background:#fff5ee;' : ''"
+                         @mouseover="activeIdx = idx"
                          @mouseleave="activeIdx = -1"
-                         style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;border-bottom:1px solid #faf7f4;transition:background .1s;">
-                        <div style="width:28px;height:28px;border-radius:7px;background:#faf7f4;border:1px solid #ede8e2;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#ccc;">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                        </div>
-                        <div style="flex:1;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-html="highlightHtml(item.name, query)"></div>
-                        <div style="font-size:11px;font-weight:500;color:#bbb;background:#f5f0eb;border-radius:5px;padding:2px 8px;white-space:nowrap;flex-shrink:0;" x-text="item.type"></div>
-                    </div>
-                </template>
-
-                {{-- Categories section --}}
-                <template x-if="items.some(i => i.key === 'categories')">
-                    <div style="padding:8px 16px 5px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#bbb;background:#fdfcfb;border-bottom:1px solid #f5f0eb;border-top:1px solid #f5f0eb;">Categories</div>
-                </template>
-                <template x-for="(item, idx) in items.filter(i => i.key === 'categories')" :key="'c'+idx">
-                    <div @click="select(item.name)"
-                         :style="items.indexOf(item) === activeIdx ? 'background:#fff5ee;' : ''"
-                         @mouseover="activeIdx = items.indexOf(item)"
-                         @mouseleave="activeIdx = -1"
-                         style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;border-bottom:1px solid #faf7f4;transition:background .1s;">
-                        <div style="width:28px;height:28px;border-radius:7px;background:#faf7f4;border:1px solid #ede8e2;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#ccc;">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                        </div>
-                        <div style="flex:1;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-html="highlightHtml(item.name, query)"></div>
-                        <div style="font-size:11px;font-weight:500;color:#bbb;background:#f5f0eb;border-radius:5px;padding:2px 8px;white-space:nowrap;flex-shrink:0;" x-text="item.type"></div>
-                    </div>
-                </template>
-
-                {{-- Buy Leads section --}}
-                <template x-if="items.some(i => i.key === 'buyleads')">
-                    <div style="padding:8px 16px 5px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#bbb;background:#fdfcfb;border-bottom:1px solid #f5f0eb;border-top:1px solid #f5f0eb;">Buy Leads</div>
-                </template>
-                <template x-for="(item, idx) in items.filter(i => i.key === 'buyleads')" :key="'b'+idx">
-                    <div @click="select(item.name)"
-                         :style="items.indexOf(item) === activeIdx ? 'background:#fff5ee;' : ''"
-                         @mouseover="activeIdx = items.indexOf(item)"
-                         @mouseleave="activeIdx = -1"
-                         style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;border-bottom:1px solid #faf7f4;transition:background .1s;">
-                        <div style="width:28px;height:28px;border-radius:7px;background:#faf7f4;border:1px solid #ede8e2;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#ccc;">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a2 2 0 012-2.18h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6z"/></svg>
-                        </div>
-                        <div style="flex:1;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-html="highlightHtml(item.name, query)"></div>
-                        <div style="font-size:11px;font-weight:500;color:#bbb;background:#f5f0eb;border-radius:5px;padding:2px 8px;white-space:nowrap;flex-shrink:0;" x-text="item.type"></div>
+                         style="padding:10px 16px;cursor:pointer;border-bottom:1px solid #faf7f4;transition:background .1s;">
+                        <div style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-html="highlightHtml(item.name, query)"></div>
                     </div>
                 </template>
             </div>
