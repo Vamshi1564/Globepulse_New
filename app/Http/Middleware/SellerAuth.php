@@ -40,18 +40,21 @@ class SellerAuth
             return redirect()->route('seller.set-password');
         }
 
-        // ── 4. Product routes: only need approved status ──────
-        // No profile completion check anywhere — sellers can freely
-        // navigate all pages regardless of profile percentage
-        $productRoutes = [
-            'product_add', 'product_list', 'my-products',
-            'seller-product-edit', 'product_gallery', 'hotdealproductform',
+        // ── 4. Product routes ────────────────────────────────
+        // product_add: sellers can add products/services even while pending
+        //   — they save as DRAFT (status=3), published once account approved
+        // product_list: only show if approved (nothing to show otherwise)
+        $approvedOnlyRoutes = [
+            'product_list',
+            'seller-product-edit',
+            'product_gallery',
+            'hotdealproductform',
         ];
 
-        if (collect($productRoutes)->contains(fn($r) => $request->routeIs($r))) {
+        if (collect($approvedOnlyRoutes)->contains(fn($r) => $request->routeIs($r))) {
             if ($seller->status !== 'approved') {
                 return redirect()->route('seller.dashboard')
-                    ->with('info', '⏳ Your account is under review. You can add products once approved by admin.');
+                    ->with('info', '⏳ Your account is under review. Products go live once approved.');
             }
         }
 

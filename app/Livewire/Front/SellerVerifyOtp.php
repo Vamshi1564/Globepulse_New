@@ -91,7 +91,8 @@ class SellerVerifyOtp extends Component
                 $seller->phone,
                 $cached['seller_name'],
                 $this->email,
-                $cached['temp_password']
+                $cached['temp_password'],
+                $seller->country_id  // pass country_id to get correct calling code
             );
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::warning('SellerVerifyOtp: WhatsApp failed — ' . $e->getMessage());
@@ -150,12 +151,12 @@ class SellerVerifyOtp extends Component
         try {
             $seller = $seller ?? Seller::find($cached['seller_id']);
             if ($seller?->phone) {
-                app(SellerSmsService::class)->sendOtpSms($seller->phone, $newOtp, $cached['seller_name']);
+                app(SellerSmsService::class)->sendOtpSms($seller->phone, $newOtp, $cached['seller_name'], $seller->country_id ?? null);
             }
         } catch (\Exception $e) {}
 
         $this->d1=$this->d2=$this->d3=$this->d4='';
-        $this->successMsg = 'A new code has been sent to ' . $this->email;
+        $this->successMsg = '✅ New OTP sent via Email, SMS & WhatsApp to ' . $this->email . '.';
         $this->dispatch('otp-resent');
     }
 

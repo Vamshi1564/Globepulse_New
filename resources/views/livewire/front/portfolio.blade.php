@@ -1,767 +1,873 @@
-@push('custom-meta')
-    <meta name="robots" content="index, follow" />
-@endpush
 <div>
-
-    <livewire:front.layout.header />
-
-    <style>
-        .profile-container {
-            width: 100%;
-            background: #f4f7fb;
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        .banner-wrapper {
-            position: relative;
-            height: 300px;
-            overflow: hidden;
-        }
-
-        .banner-wrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: brightness(70%);
-        }
-
-        .profile-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            padding: 20px;
-            gap: 10px;
-            margin-top: -70px;
-            /* max-width: 1320px; */
-            margin-left: auto;
-            margin-right: auto;
-            position: relative;
-            z-index: 10;
-        }
-
-        .logo {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            border: 4px solid #fff;
-            object-fit: cover;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-        }
-
-        .info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .company-name h2 {
-            font-size: 24px;
-            margin-bottom: 5px;
-            color: #2b2b2b;
-        }
-
-        .company-name p {
-            margin: 0;
-            width: 90%;
-            color: #777;
-        }
-
-        .contact {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .contact button {
-            background: #007bff;
-            border: none;
-            color: white;
-            font-weight: 600;
-            /* padding: 10px 20px; */
-            /* border-radius: 8px; */
-            transition: 0.3s;
-        }
-
-
-        /*
-        .contact button:hover {
-            background: #0056b3;
-        }
-
-        .contact a {
-            text-decoration: none;
-            color: white;
-        } */
-
-        @media (max-width: 768px) {
-            .profile-card {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-                margin-top: -130px;
-                /* width: 95%; */
-                margin-x: auto;
-            }
-
-            /* .info {
-                margin-top: 10px;
-            } */
-
-            .contact {
-                align-items: center;
-            }
-
-            .banner-wrapper img {
-                width: 100%;
-                height: 70%;
-                object-fit: initial;
-                filter: brightness(70%);
-            }
-
-            .logo {
-                width: 90px;
-                height: 90px;
-                border-radius: 50%;
-                border: 4px solid #fff;
-                object-fit: cover;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-            }
-
-            .company-name p {
-                margin: 0 auto;
-                width: 94%;
-                color: #777;
-            }
-        }
-
-        @media (max-width: 1024px) {
-            .profile-card {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-                margin-top: -130px;
-                /* width: 95%; */
-                margin-x: auto;
-            }
-
-            .company-name p {
-                margin: 0 auto;
-                width: 90%;
-                color: #777;
-            }
-        }
-    </style>
-
-    <div class="profile-container">
-        {{-- @foreach ($slider_images as $index => $item)
-        @if ($index === 0)
-        <div class="banner-wrapper">
-            <img src="{{ config('app.pub_aws_url') . $item->slider_img }}" alt="Banner">
-        </div>
-        @endif
-
-        @endforeach --}}
-
-        @if (count($slider_images) > 0)
-            @foreach ($slider_images as $item)
-                <div class="banner-wrapper">
-                    <img src="{{ config('app.pub_aws_url') . $item->slider_img }}" alt="Banner" />
-                </div>
-            @endforeach
-        @else
-            <div class="banner-wrapper">
-                <img src="{{ asset('assets/img/background-img-cat.jpg') }}" alt="Default Banner" />
-            </div>
-        @endif
-
-
-
-        <div class="container-fluid">
-            <div class="profile-card ">
-                <div>
-                    @if ($customer->profile_image ?? "N/A")
-                        <img class="logo" src="{{ config('app.pub_aws_url') . $customer->profile_image ?? "N/A" }}" alt="Logo" />
-                    @else
-                        <img class="logo" src="../../../assets/img/team/72x72/57.webp" alt="Logo" />
-                    @endif
-                </div>
-
-                <div class="info ms-2">
-                    <div class="company-name">
-                        <h2>{{ $customer->company }}</h2>
-                        <p><i class="fas fa-map-marker-alt me-1"></i> {{ $customer->address }}</p>
-                    </div>
-                </div>
-
-                <div class=" d-flex flex-wrap justify-content-between">
-                    <button id="toggleNumber" class="btn btn-sm bg-primary text-white me-2">
-                        <i class="fas fa-phone me-1"></i> <a class="text-white"
-                            href="tellto:{{ $customer->phonenumber }}">View Number</a>
-                    </button>
-                    <button class="btn btn-sm bg-primary text-white ms-2">
-                        <i class="fas fa-envelope me-1"></i>
-                        <a class="text-white" href="mailto:{{ $customer->email }}">Email Seller</a>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{--
-    <script>
-        document.getElementById("toggleNumber").addEventListener("click", function () {
-            let span = this.querySelector("span");
-            if (span.innerText === "View Number") {
-                span.innerText = "{{ $customer->phonenumber }}";
-            } else {
-                span.innerText = "View Number";
-            }
-        });
-    </script> --}}
-
-
-    <section class="py-5  rounded">
-        <div class="container-fluid">
-            <h3 class="text-uppercase fw-bold mb-4">About Our Company</h3>
-            <p class="mb-5 fs-6 text-dark">
-                <!-- Description content if needed -->
-            </p>
-
-            <div class="row text-start gy-4">
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center bg-white shadow-sm p-2 px-3 rounded h-100">
-                        <i class="fas fa-building text-danger fs-6 me-3"></i>
-                        <p class="mb-0 fs-9"><strong class="fs-8">Business Type:</strong> <br>
-                            {{ optional($customer->products->first())->business_type ?? 'N/A' }}</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center bg-white shadow-sm p-2 px-3 rounded h-100">
-                        <i class="fas fa-building text-danger fs-6 me-3"></i>
-                        <p class="mb-0 fs-9"><strong class="fs-8">GST No:</strong><br>
-                            {{ $customer->gst_no ?? 'N/A' }}
-                        </p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center bg-white shadow-sm p-2 px-3 rounded h-100">
-                        <i class="fas fa-users text-danger fs-6 me-3"></i>
-
-                        <p class="mb-0 fs-9"><strong class="fs-8">Employee Count:</strong><br>
-                            {{ $customer->employee_count ?? 'N/A' }}
-                        </p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center bg-white shadow-sm p-2 px-3 rounded h-100">
-                        <i class="fas fa-calendar-alt text-danger fs-6 me-3"></i>
-                        <p class="mb-0 fs-9"><strong class="fs-8">Establishment:</strong><br>
-                            {{ $customer->company_establish_date ? \Carbon\Carbon::parse($customer->company_establish_date)->format('d M Y') : 'N/A' }}
-                        </p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center bg-white shadow-sm p-2 px-3 rounded h-100">
-                        <i class="fas fa-coins text-danger fs-6 me-3"></i>
-                        <p class="mb-0 fs-9"><strong class="fs-8">Annual Turnover:</strong><br>
-                            {{ $customer->annual_turnoer ?? 'N/A' }}
-                        </p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center bg-white shadow-sm p-2 px-3 rounded h-100">
-                        <i class="fas fa-calendar-check text-danger fs-6 me-3"></i>
-                        <p class="mb-0 fs-9"><strong class="fs-8">Working Days:</strong>
-                            <br>{{ $customer->working_day ?? 'N/A' }}
-                        </p>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="d-flex align-items-center bg-white shadow-sm p-2 px-3 rounded h-100">
-                        <i class="fas fa-credit-card text-danger fs-6 me-3"></i>
-                        <p class="mb-0 fs-9"><strong class="fs-8">Payment Mode:</strong><br>
-                            {{ $customer->payment_mode ?? 'N/A' }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-
-    <style>
-        /* Container for the entire slider section */
-
-
-        /* Header container */
-        .b2b-slider-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-        }
-
-        /* Animated Title Effect */
-        .b2b-title h3 {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            position: relative;
-            overflow: hidden;
-            transition: color 0.3s ease-in-out;
-        }
-
-        /* Title Hover Effect */
-        .b2b-title h3:hover {
-            color: #007bff;
-        }
-
-        /* Underline Animation */
-        .b2b-title h3::after {
-            content: "";
-            display: block;
-            width: 0;
-            height: 3px;
-            background: #007bff;
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            transition: width 0.4s ease-in-out;
-        }
-
-        .b2b-title h3:hover::after {
-            width: 100%;
-        }
-
-        /* Icon Animation */
-        .b2b-title i {
-            font-size: 1.2rem;
-            color: #007bff;
-            transform: scale(1);
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .b2b-title h3:hover i {
-            transform: rotate(10deg) scale(1.1);
-        }
-
-        /* Button Styling */
-        .btn-explore {
-            display: flex;
-            align-items: center;
-            background: #007bff;
-            color: #fff;
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-weight: 500;
-            text-decoration: none;
-            overflow: hidden;
-            position: relative;
-            transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
-        }
-
-        /* Button Hover Animation */
-        .btn-explore:hover {
-            background: #0056b3;
-            transform: scale(1.05);
-        }
-
-        /* Hover effect for icon */
-        .btn-explore i {
-            margin-left: 8px;
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .btn-explore:hover i {
-            transform: translateX(4px);
-        }
-
-
-        /* Swiper slide sizing */
-        .swiper-container.b2b-product-slider {
-            padding-bottom: 30px;
-        }
-
-        .swiper-container.b2b-product-slider .swiper-slide {
-            width: 280px;
-        }
-
-        /* Product Card */
-        .product-card {
-            background: #fff;
-            cursor: pointer;
-            /* padding: 10px; */
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-        }
-
-        .card-image img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            padding: 5px;
-        }
-
-        .card-body {
-            padding: 15px;
-        }
-
-        .card-body a {
-            text-decoration: none;
-            color: #333;
-        }
-
-        .product-title {
-            font-size: 16px;
-            margin-bottom: 10px;
-            line-height: 1.2;
-        }
-
-        .rating {
-            margin-bottom: 10px;
-            font-size: 12px
-        }
-
-        .price-range {
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 8px;
-        }
-
-        .order-info,
-        .business-type,
-        .location {
-            font-size: 12px;
-            color: #777;
-            margin-bottom: 5px;
-        }
-
-        .location i {
-            margin-right: 5px;
-            color: #007bff;
-        }
-
-        /* Navigation Buttons */
-        .b2b-nav {
-            color: #007bff;
-            background: #fff;
-            border-radius: 50%;
-            padding: 10px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-            transition: background 0.3s ease, color 0.3s ease;
-        }
-
-        .flag {
-            width: 24px;
-        }
-
-        .b2b-nav:hover {
-            background: #007bff;
-            color: #fff;
-        }
-    </style>
-
-
-
-    <section class="p-0 m-0">
-        <div class="container-fluid">
+    <livewire:seller.layout.header />
+
+    @if(session('profile_welcome'))
+    {{-- Welcome banner — only shown once after first password set --}}
+    <div style="background:linear-gradient(135deg,#0f172a,#1e3a8a);padding:16px 24px;
+        display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:1.6rem;">🎉</span>
             <div>
-                <!-- Header -->
-                <div class="b2b-slider-header">
-                    <div class="b2b-title bold">
-                        <h2>
-                            Products
-                        </h2>
-                    </div>
+                <div style="font-size:.95rem;font-weight:800;color:#ffffff;">
+                    Password set! Now complete your business profile.
                 </div>
-
-                <div class="row">
-
-                    <div class="d-flex flex-wrap gx-3  mb-3">
-                        @foreach ($products as $product)
-                            <div class="col-6 col-md-4 col-lg-2 mb-4">
-                                <div class="product-card rounded-4 h-100 shadow-sm mx-2">
-                                    <a href="{{ $product->slug ? route('product-detail', ['slug' => $product->slug]) : '#' }}"
-                                        class="text-decoration-none">
-                                        <div class="product-image position-relative">
-                                            @if (!empty($product->product_img))
-                                                <img class="img-fluid transition rounded-3" loading="lazy"
-                                                    src="{{ config('app.pub_aws_url') . $product->product_img }}"
-                                                    alt="{{ $product->title ?? 'Product Image' }}" />
-                                            @else
-                                                <img class="img-fluid transition rounded-3" loading="lazy"
-                                                    src="{{ asset('assets/img/no-image.png') }}"
-                                                    alt="No Image Available" />
-                                            @endif
-                                        </div>
-
-                                        <div class="card-body">
-                                            <h3 class="product-title "
-                                                style="display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden; text-overflow: ellipsis; max-height: 3em; line-height: 1.5em; word-break: break-word;">
-                                                {{ $product->title ?? 'N/A' }}
-                                            </h3>
-
-                                            <div class="price-range text-muted mb-1">
-                                                <span class="price">
-                                                    {{ $product->country->currency_symbol ?? '' }}
-                                                    {{ $product->min_price ?? 'N/A' }}
-                                                </span>
-                                                -
-                                                <span class="price">
-                                                    {{ $product->country->currency_symbol ?? '' }}
-                                                    {{ $product->max_price ?? 'N/A' }}
-                                                    ({{ $product->country->currency ?? 'N/A' }})
-                                                </span>
-                                            </div>
-
-                                            <div class="order-info small text-secondary">
-                                                Min Order: {{ $product->min_order ?? 'N/A' }}
-                                            </div>
-
-                                            <div class="business-type small text-secondary">
-                                                Business Type: {{ $product->business_type ?? 'N/A' }}
-                                            </div>
-
-                                            <div class="d-flex align-items-center gap-2 mt-2">
-                                                <img style="width: 55px; mix-blend-mode: multiply;"
-                                                    src="{{ asset('assets/img/logos/varify.gif') }}" alt="Verified">
-
-                                                <span
-                                                    class="small fw-bold text-success d-flex align-items-center gap-1">
-                                                    @if (!empty($product->country->flag_img) && file_exists(public_path('assets/' . $product->country->flag_img)))
-                                                        <img class="flag" style="width: 20px;" loading="lazy"
-                                                            src="{{ asset('assets/' . $product->country->flag_img) }}"
-                                                            alt="{{ $product->country->short_name ?? 'Flag' }}" />
-                                                    @else
-                                                        <img class="flag" style="width: 20px;" loading="lazy"
-                                                            src="{{ asset('assets/img/no-image.png') }}"
-                                                            alt="No Flag" />
-                                                    @endif
-                                                    {{ $product->country->iso2 ?? 'N/A' }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </div>
-                            </div>
-                        @endforeach
-
-
-
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        @if ($products->hasMorePages())
-            <div class="text-center my-2">
-                <button wire:click="loadMore" wire:loading.remove class="btn btn-primary mb-3">
-                    View More
-                </button>
-                <div wire:loading class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="sr-only">Loading...</span>
-                    </div>
-                </div>
-            </div>
-        @endif
-    </section>
-
-    <!-- begin Contact Us ============================-->
-
-    <section class="p-0 m-0 bg-white mt-5">
-        <div class="container">
-
-            <div class="row g-5 align-items-center">
-                <div class="col-lg-5">
-                    <div class=" mb-3">
-                        <h2 class="fw-bold text-gradient">Let's Connect</h2>
-                        <p class="text-muted fs-7">Have questions? We're here to help!</p>
-                    </div>
-                    <ul class="list-unstyled">
-                        <li class="d-flex align-items-center mb-3">
-                            <i class="uil uil-phone contact-icon"></i>
-                            <div class="flex-1 ms-3">Contact No. :-<a class="link-900"
-                                    href="tel:{{ $customer->phonenumber }}">View Contact</a>
-                            </div>
-                        </li>
-                        <li class="d-flex align-items-center mb-3">
-                            <i class="uil uil-envelope contact-icon"></i>
-                            <div class="flex-1 ms-3">Email :-<a class="fw-semibold "
-                                    href="mailto:{{ $customer->email }}">View Email</a>
-                            </div>
-                        </li>
-                        <li class="d-flex align-items-start">
-                            <i class="uil uil-map-marker contact-icon"></i>
-                            <span class="ms-3">{{ $customer->address }}</span>
-                        </li>
-                    </ul>
-
-                    <ul class="example-2 flex-wrap d-flex justify-content-start mt-3 ps-0">
-                        <li class="icon-content">
-                            <a href="#" target="_blank" aria-label="facebook" data-social="facebook">
-                                <div class="filled"></div>
-                                <svg viewBox="0 0 16 16" fill="currentColor" class="bi bi-facebook" height="20"
-                                    width="20" xmlns="http://www.w3.org/2000/svg">
-                                    <path fill="currentColor"
-                                        d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951">
-                                    </path>
-
-                                </svg>
-                            </a>
-                            <div class="tooltip">Facebook</div>
-                        </li>
-
-                        <li class="icon-content">
-                            <a href="#" target="_blank" aria-label="twitter" data-social="twitter">
-                                <div class="filled"></div>
-                                <svg viewBox="0 0 16 16" fill="currentColor" class="bi bi-twitter" height="20"
-                                    width="20" xmlns="http://www.w3.org/2000/svg">
-                                    <path fill="currentColor"
-                                        d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334q.002-.211-.006-.422A6.7 6.7 0 0 0 16 3.542a6.7 6.7 0 0 1-1.889.518 3.3 3.3 0 0 0 1.447-1.817 6.5 6.5 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.32 9.32 0 0 1-6.767-3.429 3.29 3.29 0 0 0 1.018 4.382A3.3 3.3 0 0 1 .64 6.575v.045a3.29 3.29 0 0 0 2.632 3.218 3.2 3.2 0 0 1-.865.115 3 3 0 0 1-.614-.057 3.28 3.28 0 0 0 3.067 2.277A6.6 6.6 0 0 1 .78 13.58a6 6 0 0 1-.78-.045A9.34 9.34 0 0 0 5.026 15">
-                                    </path>
-
-                                </svg>
-                            </a>
-                            <div class="tooltip">Twitter</div>
-                        </li>
-
-                        <li class="icon-content">
-                            <a href="https://www.instagram.com/gfe.business/" target="_blank" aria-label="Instagram"
-                                data-social="instagram">
-                                <div class="filled"></div>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                    fill="currentColor" class="bi bi-instagram" viewBox="0 0 16 16"
-                                    xml:space="preserve">
-                                    <path
-                                        d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"
-                                        fill="currentColor"></path>
-                                </svg>
-                            </a>
-                            <div class="tooltip">Instagram</div>
-                        </li>
-
-                        <li class="icon-content">
-                            <a href="#" target="_blank" aria-label="LinkedIn" data-social="linkedin">
-                                <div class="filled"></div>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                    fill="currentColor" class="bi bi-linkedin" viewBox="0 0 16 16"
-                                    xml:space="preserve">
-                                    <path
-                                        d=" M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526
-                                                                                    1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854zm4.943
-                                                                                    12.248V6.169H2.542v7.225zm-1.2-8.212c.837 0 1.358-.554
-                                                                                    1.358-1.248-.015-.709-.52-1.248-1.342-1.248S2.4 3.226 2.4 3.934c0 .694.521 1.248 1.327
-                                                                                    1.248zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0
-                                                                                    1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274
-                                                                                    0-1.845.7-2.165 1.193v.025h-.016l.016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225z"
-                                        fill="currentColor"></path>
-                                </svg>
-                            </a>
-                            <div class="tooltip">LinkedIn</div>
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="col-lg-7">
-                    <div class="contact-form p-5 ">
-                        <h4 class="fw-bolder fs-6 mb-4">Drop Us a Message</h4>
-                        <form>
-                            <div class="mb-4">
-                                <input type="text" class="form-control stylish-input border" name="name"
-                                    placeholder="Your Name" required>
-                            </div>
-                            <div class="mb-4">
-                                <input type="email" class="form-control stylish-input border" name="email"
-                                    placeholder="Your Email" required>
-                            </div>
-                            <div class="mb-4">
-                                <textarea class="form-control stylish-input border" rows="5" name="message" placeholder="Your Message"
-                                    required></textarea>
-                            </div>
-                            <button class="btn btn-primary border w-100" type="submit">Send
-                                Message</button>
-                        </form>
-                    </div>
+                <div style="font-size:.77rem;color:rgba(255,255,255,.6);margin-top:2px;">
+                    Fill in your business details below to get verified and reach buyers in 180+ countries.
                 </div>
             </div>
         </div>
-    </section>
+        <a href="{{ route('seller.dashboard') }}"
+            style="background:#fff;color:#1e3a8a;text-decoration:none;padding:8px 18px;
+            border-radius:8px;font-size:.82rem;font-weight:800;white-space:nowrap;">
+            Skip → Dashboard
+        </a>
+    </div>
+    @endif
 
+    <main class="main" id="top">
     <style>
-        .contact-section {
-            background: linear-gradient(135deg, #ffffff, #ffffff);
-        }
+          .doc-card{border:1.5px dashed var(--bdr);border-radius:12px;padding:1.1rem 1.2rem;background:#fafbfe;transition:border .2s,background .2s;}
+            .doc-card.dc-ok{border-style:solid;border-color:var(--green);background:#f0fdf9;}
+            .doc-card.dc-warn{border-style:solid;border-color:#f59e0b;background:#fffbeb;}
+            .doc-card.dc-error{border-style:solid;border-color:#e02424;background:#fff5f5;}
+            .doc-card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem;}
+            .doc-card-title{display:flex;align-items:center;gap:.6rem;font-size:.86rem;font-weight:700;color:#1a1f36;}
+            .doc-guide{font-size:.74rem;background:#f0f4ff;border-radius:7px;padding:.35rem .65rem;color:#374151;margin-bottom:.7rem;line-height:1.5;}
+            .doc-result{display:flex;align-items:flex-start;gap:.5rem;border-radius:8px;padding:.45rem .75rem;font-size:.78rem;line-height:1.5;margin-bottom:.5rem;font-weight:500;}
+            .dr-ok{background:#d5f5ec;color:#065f46;}
+            .dr-warn{background:#fef3c7;color:#92400e;}
+            .dr-error{background:#fee2e2;color:#991b1b;}
+            .ul-btn{display:inline-flex;align-items:center;gap:5px;background:var(--blt);color:var(--blue);border:none;border-radius:8px;padding:.38rem .85rem;font-size:.79rem;font-weight:600;cursor:pointer;transition:background .2s;}
+            .ul-btn:hover{background:#c7d7fc;}
+            .doc-uploading{display:none;font-size:.76rem;color:var(--mu);align-items:center;gap:4px;}
 
-        .contact-card,
-        .contact-form {
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            /* box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.15); */
-        }
+            /* File preview card */
+            .file-preview{border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;margin-bottom:.7rem;}
+            .file-preview-top{background:#f4f6fb;padding:1.2rem;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:110px;}
+            .file-preview-top img{max-height:90px;max-width:100%;border-radius:6px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.1);}
+            .file-preview-icon{font-size:2.8rem;margin-bottom:.3rem;}
+            .file-preview-label{font-size:.72rem;color:var(--mu);font-weight:600;margin-top:.2rem;letter-spacing:.03em;}
+            .file-preview-bottom{padding:.5rem .85rem;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:.5rem;border-top:1px solid var(--bdr);}
+            .file-preview-name{font-size:.76rem;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;display:flex;align-items:center;gap:5px;}
+            .file-preview-meta{font-size:.71rem;color:#9ca3af;white-space:nowrap;}
+            .new-sel-badge{background:var(--green);color:#fff;font-size:.65rem;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.04em;white-space:nowrap;}
+           
+    </style>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@600;700&display=swap');
+        :root{--blue:#1a56db;--blt:#e8f0fe;--green:#0e9f6e;--glt:#d5f5ec;--red:#e02424;--warn:#f59e0b;--wlt:#fef3c7;--bg:#f4f6fb;--bdr:#e5e9f2;--tx:#1a1f36;--mu:#6b7280;--r:14px;}
+        body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);}
+        .pw{max-width:1100px;margin:2rem auto;padding:0 1rem 4rem;}
+        .pg{display:grid;grid-template-columns:270px 1fr;gap:1.5rem;align-items:start;}
+        .gpc{background:#fff;border-radius:var(--r);border:1px solid var(--bdr);padding:1.5rem;}
 
-        .contact-icon {
-            font-size: 24px;
-            color: #007bff;
-        }
+        /* Sidebar */
+        .av-wrap{position:relative;width:88px;height:88px;margin:0 auto 1rem;}
+        .av-wrap svg{position:absolute;top:0;left:0;}
+        .av-img{width:72px;height:72px;border-radius:50%;object-fit:cover;position:absolute;top:8px;left:8px;border:3px solid #fff;}
+        .av-pct{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+        .sname{font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;text-align:center;margin-bottom:.2rem;}
+        .semail{font-size:.78rem;color:var(--mu);text-align:center;margin-bottom:.8rem;}
+        .sbadge{display:flex;align-items:center;justify-content:center;gap:5px;font-size:.73rem;padding:5px 12px;border-radius:20px;font-weight:600;margin-bottom:1rem;}
+        .bp{background:#fef3c7;color:#92400e;}.ba{background:var(--glt);color:#065f46;}.br{background:#fee2e2;color:#991b1b;}.bu{background:var(--blt);color:#1e40af;}
+        .pbar-lbl{font-size:.78rem;color:var(--mu);display:flex;justify-content:space-between;margin-bottom:4px;}
+        .pbar-track{height:7px;background:#e5e9f2;border-radius:99px;overflow:hidden;margin-bottom:.8rem;}
+        .pbar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),#0ea5e9);transition:width .6s;}
+        .chklist{list-style:none;padding:0;margin:.8rem 0 0;}
+        .chklist li{display:flex;align-items:center;gap:8px;font-size:.79rem;padding:5px 0;border-bottom:1px solid #f0f2f8;color:var(--mu);}
+        .chklist li:last-child{border:none;}
+        .chklist li.done{color:var(--tx);}
+        .ck-ic{width:17px;height:17px;border-radius:50%;display:grid;place-items:center;font-size:.6rem;flex-shrink:0;}
+        .ck-y{background:var(--green);color:#fff;}.ck-n{background:#e5e9f2;color:var(--mu);}
 
-        .social-icons a {
-            font-size: 20px;
-            color: #007bff;
-            transition: transform 0.3s ease-in-out;
-        }
+        /* Step nav */
+        .step-nav{display:flex;border-bottom:2px solid var(--bdr);margin-bottom:1.5rem;overflow-x:auto;}
+        .step-btn{flex:1;min-width:100px;padding:.6rem .4rem;font-size:.78rem;font-weight:600;border:none;background:none;cursor:pointer;color:var(--mu);border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .2s;}
+        .step-btn.active{color:var(--blue);border-bottom-color:var(--blue);}
+        .step-btn.sdone{color:var(--green);}
+        .step-num{width:24px;height:24px;border-radius:50%;background:#e5e9f2;color:var(--mu);font-size:.7rem;font-weight:700;display:grid;place-items:center;transition:all .2s;margin-bottom:2px;}
+        .step-btn.active .step-num{background:var(--blue);color:#fff;}
+        .step-btn.sdone .step-num{background:var(--green);color:#fff;}
+        .spct{font-size:.65rem;padding:1px 6px;border-radius:20px;font-weight:700;}
+        .spct-full{background:var(--glt);color:#065f46;}.spct-part{background:#fef3c7;color:#92400e;}.spct-no{background:#fee2e2;color:#991b1b;}
 
-        .social-hover:hover {
-            transform: scale(1.2);
-        }
+        /* Form */
+        .stitle{font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.25rem;}
+        .ssub{font-size:.82rem;color:var(--mu);margin-bottom:1.3rem;}
+        .fg{margin-bottom:1.1rem;}
+        .fg label{font-size:.8rem;font-weight:600;margin-bottom:4px;display:block;color:#374151;}
+        .fg .form-control,.fg .form-select{border:1.5px solid var(--bdr);border-radius:10px;font-size:.87rem;padding:.5rem .85rem;transition:border .2s,box-shadow .2s;}
+        .fg .form-control:focus,.fg .form-select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.08);outline:none;}
+        .fg .form-control:disabled{background:#f9fafb;color:var(--mu);}
 
-        .stylish-input {
-            padding: 14px;
-            border-radius: 10px;
-            border: 2px solid transparent;
-            /* background: rgba(255, 255, 255, 0.8); */
-            transition: border-color 0.3s;
-        }
+        /* Buttons */
+        .btn-p{background:linear-gradient(135deg,var(--blue),#0ea5e9);color:#fff;border:none;border-radius:10px;padding:.58rem 1.6rem;font-weight:700;font-size:.87rem;cursor:pointer;transition:transform .15s,box-shadow .15s;display:inline-flex;align-items:center;gap:6px;}
+        .btn-p:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(26,86,219,.22);}
+        .btn-o{background:#fff;color:var(--blue);border:1.5px solid var(--blue);border-radius:10px;padding:.53rem 1.3rem;font-weight:600;font-size:.87rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;}
+        .btn-o:hover{background:var(--blt);}
 
-        .stylish-input:focus {
-            border-color: #007bff;
-            outline: none;
-        }
+        /* Doc upload zone */
+        .duz{border:1.5px dashed var(--bdr);border-radius:12px;padding:1rem 1.2rem;transition:border .2s;background:#fafbfe;}
+        .duz.up{border-style:solid;border-color:var(--green);background:#f0fdf9;}
+        .duz.warn-zone{border-color:var(--warn);background:#fffbeb;}
+        .duz-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem;}
+        .duz-lbl{font-size:.84rem;font-weight:700;display:flex;align-items:center;gap:6px;}
+        .duz-hint{font-size:.74rem;color:var(--mu);margin-bottom:.5rem;}
+        .ul-btn{display:inline-flex;align-items:center;gap:5px;background:var(--blt);color:var(--blue);border:none;border-radius:8px;padding:.38rem .85rem;font-size:.79rem;font-weight:600;cursor:pointer;transition:background .2s;margin-top:.4rem;}
+        .ul-btn:hover{background:#c7d7fc;}
+        .ds{font-size:.71rem;padding:2px 8px;border-radius:20px;font-weight:600;}
+        .ds-pending{background:#fef3c7;color:#92400e;}.ds-approved{background:var(--glt);color:#065f46;}.ds-rejected{background:#fee2e2;color:#991b1b;}
+        /* File accepted indicator */
+        .file-accepted{font-size:.76rem;color:var(--green);display:flex;align-items:center;gap:5px;margin-top:.4rem;font-weight:600;}
+        /* Document warning */
+        .doc-warn{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.5rem .8rem;font-size:.77rem;color:#92400e;display:flex;align-items:flex-start;gap:6px;margin-top:.5rem;line-height:1.5;}
+        /* Doc type guide pill */
+        .doc-guide{font-size:.71rem;background:#f0f2f8;color:var(--mu);border-radius:6px;padding:3px 8px;font-style:italic;}
 
-        .btn-gradient {
-            padding: 14px;
-            border-radius: 10px;
-            /* background: linear-gradient(45deg, #007bff, #00bcd4); */
-            border: none;
-            color: white;
-            font-weight: bold;
-        }
+        /* Plans */
+        .plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;}
+        .plan-card{border:2px solid var(--bdr);border-radius:14px;padding:1.4rem 1rem;cursor:pointer;transition:all .2s;position:relative;text-align:center;}
+        .plan-card:hover,.plan-card.sel{border-color:var(--blue);box-shadow:0 4px 20px rgba(26,86,219,.12);}
+        .plan-card.sel{background:var(--blt);}
+        .plan-card.sel::after{content:'✓ Selected';position:absolute;top:8px;right:8px;font-size:.65rem;background:var(--blue);color:#fff;padding:2px 8px;border-radius:20px;font-weight:700;}
+        .pop-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;font-size:.67rem;font-weight:700;padding:2px 12px;border-radius:20px;white-space:nowrap;}
+        .pname{font-family:'Sora',sans-serif;font-size:.95rem;font-weight:700;margin-bottom:.3rem;}
+        .pprice{font-size:1.7rem;font-weight:800;color:var(--blue);margin-bottom:.2rem;}
+        .pprice span{font-size:.78rem;font-weight:400;color:var(--mu);}
+        .pfeat{list-style:none;padding:0;margin:.8rem 0 0;text-align:left;}
+        .pfeat li{font-size:.77rem;padding:3px 0;display:flex;align-items:center;gap:6px;color:#374151;}
+        .pfeat li i{color:var(--green);font-size:.68rem;}
 
-        .btn-gradient:hover {
-            /* background: linear-gradient(45deg, #0056b3, #0097a7); */
+        .sfooter{display:flex;justify-content:space-between;align-items:center;padding-top:1.2rem;border-top:1px solid var(--bdr);margin-top:1rem;}
+        .autosave{font-size:.74rem;color:var(--mu);display:flex;align-items:center;gap:5px;}
+        .gp-ok{background:var(--glt);color:#065f46;border-radius:10px;padding:.6rem 1rem;font-size:.82rem;font-weight:500;margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+        .gp-info{background:var(--blt);color:#1e40af;border-radius:10px;padding:.65rem 1rem;font-size:.81rem;margin-top:.8rem;display:flex;align-items:center;gap:8px;}
+
+        @media(max-width:768px){
+            .pg{grid-template-columns:1fr;}
+            .plan-grid{grid-template-columns:1fr;}
+            .step-btn{min-width:70px;font-size:.7rem;}
         }
     </style>
 
+    <div class="pw">
+      <div class="pg">
 
-    <!-- close Contact us ============================-->
+        {{-- ══ SIDEBAR ══ --}}
+        <div>
+          <div class="gpc text-center">
+            <div class="av-wrap">
+              <svg width="88" height="88" viewBox="0 0 88 88">
+                <circle cx="44" cy="44" r="39" fill="none" stroke="#e5e9f2" stroke-width="5"/>
+                <circle cx="44" cy="44" r="39" fill="none" stroke="#1a56db" stroke-width="5"
+                  stroke-dasharray="{{ round($completion * 2.45) }} 245"
+                  stroke-dashoffset="61" stroke-linecap="round"
+                  transform="rotate(-90 44 44)"/>
+              </svg>
+              <img class="av-img" src="{{ asset('assets/img/team/72x72/57.webp') }}" alt="">
+              <span class="av-pct">{{ $completion }}%</span>
+            </div>
+            <div class="sname">{{ $seller?->details?->legal_business_name ?? session('seller_name') }}</div>
+            <div class="semail">{{ $seller?->email }}</div>
+            @php $st = $seller?->status ?? 'pending'; @endphp
+            <div class="sbadge {{ $st==='approved'?'ba':($st==='under_review'?'bu':($st==='rejected'?'br':'bp')) }}">
+              <i class="fas fa-circle" style="font-size:.4rem"></i>
+              {{ ucfirst(str_replace('_',' ',$st)) }}
+            </div>
+            @if($seller?->activeSubscription)
+              <div style="margin-bottom:.8rem;">
+                <span style="font-size:.72rem;background:#f0f2f8;padding:3px 10px;border-radius:20px;font-weight:600;">
+                  <i class="fas fa-crown text-warning me-1"></i>{{ ucfirst($seller->activeSubscription->plan_name) }} Plan
+                </span>
+              </div>
+            @endif
+            <div class="pbar-lbl"><span>Profile Strength</span><span style="color:var(--blue);font-weight:700;">{{ $completion }}%</span></div>
+            <div class="pbar-track"><div class="pbar-fill" style="width:{{ $completion }}%"></div></div>
+            <ul class="chklist">
+              @foreach([
+                ['Phone number',        !empty($phone)],
+                ['Country set',         !empty($country_id)],
+                ['Business name',       !empty($legal_business_name)],
+                ['Business type',       !empty($business_type)],
+                ['Business address',    !empty($business_address)],
+                ['Company description', !empty($company_description)],
+                ['Main products',       !empty($main_products)],
+                ['Plan selected',       !empty($selected_plan)],
+                ['Business Reg. doc',   $documents->has('business_registration')],
+                ['ID / Passport',       $documents->has('owner_id_passport')],
+                ['Tax ID',              $documents->has('tax_id')],
+              ] as [$lbl,$done])
+                <li class="{{ $done?'done':'' }}">
+                  <span class="ck-ic {{ $done?'ck-y':'ck-n' }}"><i class="fas {{ $done?'fa-check':'fa-plus' }}"></i></span>
+                  {{ $lbl }}
+                </li>
+              @endforeach
+            </ul>
+          </div>
+          <div class="gpc mt-3" style="background:var(--blt);border-color:#c7d7fc;">
+            <div style="font-size:.77rem;font-weight:700;color:var(--blue);margin-bottom:.3rem;">
+              <i class="fas fa-lightbulb me-1"></i> Pro Tip
+            </div>
+            <p style="font-size:.75rem;color:#1e40af;margin:0;line-height:1.5;">
+              Sellers with complete profiles get <strong>3× more inquiries</strong>. Complete KYC to unlock the Verified badge.
+            </p>
+          </div>
+        </div>
 
+        {{-- ══ MAIN ══ --}}
+        <div>
+          <div class="gpc">
 
-    <livewire:front.layout.footer />
+            @if($successMsg)
+              <div class="gp-ok"><i class="fas fa-check-circle"></i> {{ $successMsg }}</div>
+            @endif
+            @if($errorMsg)
+              <div style="background:#fee2e2;color:#991b1b;border-radius:10px;padding:.6rem 1rem;font-size:.82rem;margin-bottom:1rem;display:flex;align-items:center;gap:8px;">
+                <i class="fas fa-exclamation-circle"></i> {{ $errorMsg }}
+              </div>
+            @endif
 
+            {{-- Step navigation --}}
+            <div class="step-nav">
+              @foreach([[1,'Basic Info'],[2,'Business'],[3,'Company Profile'],[4,'Verification'],[5,'Plan']] as [$n,$lbl])
+                @php $sc=$stepScore[$n]; $isActive=$activeStep===$n; $isDone=$sc===100; @endphp
+                <button class="step-btn {{ $isActive?'active':'' }} {{ $isDone&&!$isActive?'sdone':'' }}"
+                    wire:click="goToStep({{ $n }})">
+                  <span class="step-num">
+                    @if($isDone&&!$isActive)<i class="fas fa-check" style="font-size:.58rem"></i>@else{{ $n }}@endif
+                  </span>
+                  {{ $lbl }}
+                  <span class="spct {{ $sc===100?'spct-full':($sc>0?'spct-part':'spct-no') }}">{{ $sc }}%</span>
+                </button>
+              @endforeach
+            </div>
+
+            {{-- ── STEP 1: BASIC ── --}}
+            @if($activeStep===1)
+              <div class="stitle">Basic Information</div>
+              <div class="ssub">Your account details</div>
+              <form wire:submit.prevent="saveStep1">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="fg">
+                      <label>Email Address</label>
+                      <input class="form-control" value="{{ $email }}" disabled>
+                      <small class="text-muted" style="font-size:.73rem;">Email cannot be changed</small>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="fg">
+                      <label>Phone Number *</label>
+                      <input type="text" class="form-control" wire:model.defer="phone" placeholder="+91 98765 43210">
+                      @error('phone')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="fg">
+                      <label>Country *</label>
+                      <select class="form-select" wire:model.defer="country_id">
+                        <option value="">Select Country</option>
+                        @foreach($countries as $c)
+                          <option value="{{ $c->country_id }}"
+                            {{ (string)$c->country_id === (string)$country_id ? 'selected' : '' }}>
+                            {{ $c->short_name }}
+                          </option>
+                        @endforeach
+                      </select>
+                      @error('country_id')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                    </div>
+                  </div>
+                </div>
+                <div class="sfooter">
+                  <span class="autosave"><i class="fas fa-save"></i> Auto-saved</span>
+                  <button type="submit" class="btn-p" wire:loading.attr="disabled">
+                    <span wire:loading wire:target="saveStep1" class="spinner-border spinner-border-sm me-1"></span>
+                    Continue <i class="fas fa-arrow-right" wire:loading.remove wire:target="saveStep1"></i>
+                  </button>
+                </div>
+              </form>
+
+            {{-- ── STEP 2: BUSINESS ── --}}
+            @elseif($activeStep===2)
+              <div class="stitle">Business Information</div>
+              <div class="ssub">Tell us about your company</div>
+              <form wire:submit.prevent="saveStep2">
+                <div class="row">
+                  <div class="col-12">
+                    <div class="fg">
+                      <label>Legal Business Name *</label>
+                      <input type="text" class="form-control" wire:model.defer="legal_business_name"
+                        placeholder="e.g. Acme International Ltd.">
+                      @error('legal_business_name')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="fg">
+                      <label>Business Type *</label>
+                      <select class="form-select" wire:model.defer="business_type">
+                        <option value="">Select</option>
+                        <option value="sole_proprietor">Sole Proprietor</option>
+                        <option value="partnership">Partnership</option>
+                        <option value="llc">LLC / LLP</option>
+                        <option value="corporation">Corporation / Pvt Ltd</option>
+                        <option value="other">Other</option>
+                      </select>
+                      @error('business_type')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="fg">
+                      <label>Year Established</label>
+                      <input type="number" class="form-control" wire:model.defer="year_established"
+                        placeholder="{{ date('Y') - 5 }}" min="1800" max="{{ date('Y') }}">
+                      @error('year_established')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="fg">
+                      <label>Company Website</label>
+                      <div style="position:relative;">
+                        <span style="position:absolute;left:.85rem;top:50%;transform:translateY(-50%);font-size:.78rem;color:var(--mu);">https://</span>
+                        <input type="text" class="form-control" wire:model.defer="company_website"
+                          style="padding-left:4.5rem;"
+                          placeholder="www.example.com">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="fg">
+                      <label>Number of Employees *</label>
+                      <select class="form-select" wire:model.defer="num_employees">
+                        <option value="">Select</option>
+                        <option value="1-10">1–10</option>
+                        <option value="11-50">11–50</option>
+                        <option value="51-200">51–200</option>
+                        <option value="201-500">201–500</option>
+                        <option value="500+">500+</option>
+                      </select>
+                      @error('num_employees')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="fg">
+                      <label>Country</label>
+                      <select class="form-select" wire:model.defer="business_country_id">
+                        <option value="">Select</option>
+                        @foreach($countries as $c)
+                          <option value="{{ $c->country_id }}"
+                            {{ (string)$c->country_id===(string)$business_country_id?'selected':'' }}>
+                            {{ $c->short_name }}
+                          </option>
+                        @endforeach
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="fg">
+                      <label>State / Province</label>
+                      <input type="text" class="form-control" wire:model.defer="state_province" placeholder="e.g. Gujarat">
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="fg">
+                      <label>City *</label>
+                      <input type="text" class="form-control" wire:model.defer="city" placeholder="e.g. Surat">
+                      @error('city')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="fg">
+                      <label>Business Address *</label>
+                      <textarea class="form-control" wire:model.defer="business_address" rows="2"
+                        placeholder="e.g. 123 Industrial Ave, Gajera, Surat - 395006"></textarea>
+                      @error('business_address')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                    </div>
+                  </div>
+
+                  {{-- Business Registration Doc --}}
+                  <div class="col-12">
+                    <div class="fg">
+                      <label>
+                        Business Registration Document
+                        <span class="doc-guide ms-1">GST Certificate / Incorporation / Trade License</span>
+                      </label>
+                      @php $brDoc = $documents->get('business_registration'); @endphp
+                      <div class="duz {{ $brDoc?'up':'' }} {{ isset($docWarnings['business_registration'])?'warn-zone':'' }}">
+                        <div class="duz-head">
+                          <div class="duz-lbl">
+                            <i class="fas fa-file-alt text-primary"></i>
+                            Business Registration
+                            @if($brDoc)
+                              <span class="ds ds-{{ $brDoc->review_status }}">{{ ucfirst($brDoc->review_status) }}</span>
+                            @endif
+                          </div>
+                          @if(!$brDoc)
+                            <span style="font-size:.72rem;color:var(--mu);">PDF, JPG, PNG · max 5MB</span>
+                          @endif
+                        </div>
+                        <div class="duz-hint">Upload your GST certificate, business incorporation, or trade license</div>
+                        @if($brDoc)
+                          <div class="file-accepted"><i class="fas fa-check-circle"></i>{{ $brDoc->file_name }} ({{ round($brDoc->file_size_bytes/1024) }} KB)</div>
+                        @endif
+                        @if(isset($docWarnings['business_registration']))
+                          <div class="doc-warn"><i class="fas fa-exclamation-triangle mt-1"></i><span>{{ $docWarnings['business_registration'] }}</span></div>
+                        @endif
+                        <div>
+                          <input type="file" wire:model="doc_business_registration" id="f_br"
+                            style="display:none;" accept=".pdf,.jpg,.jpeg,.png"
+                            x-on:change="$wire.checkDocFile('business_registration', $event.target.files[0]?.name ?? '')">
+                          <label for="f_br" class="ul-btn">
+                            <i class="fas fa-upload"></i> {{ $brDoc?'Re-upload':'Upload Document' }}
+                          </label>
+                          <span wire:loading wire:target="doc_business_registration" class="ms-2 text-muted" style="font-size:.76rem;">
+                            <span class="spinner-border spinner-border-sm"></span> Uploading...
+                          </span>
+                        </div>
+                      </div>
+                      @error('doc_business_registration')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                    </div>
+                  </div>
+                </div>
+                <div class="sfooter">
+                  <button type="button" class="btn-o" wire:click="goToStep(1)">
+                    <i class="fas fa-arrow-left"></i> Back
+                  </button>
+                  <div class="d-flex align-items-center gap-3">
+                    <span class="autosave"><i class="fas fa-save"></i> Auto-saved</span>
+                    <button type="submit" class="btn-p" wire:loading.attr="disabled">
+                      <span wire:loading wire:target="saveStep2" class="spinner-border spinner-border-sm me-1"></span>
+                      Continue <i class="fas fa-arrow-right" wire:loading.remove wire:target="saveStep2"></i>
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+            {{-- ── STEP 3: COMPANY PROFILE ── --}}
+            @elseif($activeStep===3)
+              <div class="stitle">Company Profile</div>
+              <div class="ssub">This will be shown to buyers on your storefront</div>
+              <form wire:submit.prevent="saveStep3">
+                <div class="row">
+                  <div class="col-12">
+                    <div class="fg">
+                      <label>Company Description</label>
+                      <textarea class="form-control" wire:model.defer="company_description" rows="4"
+                        placeholder="Tell buyers about your company, expertise, and what makes you unique..."></textarea>
+                      <small class="text-muted" style="font-size:.72rem;">{{ strlen($company_description ?? '') }}/2000 chars</small>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="fg"><label>Main Products</label>
+                      <input type="text" class="form-control" wire:model.defer="main_products"
+                        placeholder="e.g. LED Lights, Solar Panels, Textile">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="fg"><label>Factory Size (sqm)</label>
+                      <input type="number" class="form-control" wire:model.defer="factory_size_sqm" placeholder="e.g. 5000">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="fg"><label>Production Capacity</label>
+                      <input type="text" class="form-control" wire:model.defer="production_capacity"
+                        placeholder="e.g. 10,000 units/month">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="fg"><label>Export Markets</label>
+                      <input type="text" class="form-control" wire:model.defer="export_markets"
+                        placeholder="e.g. USA, Europe, Middle East">
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="fg"><label>Certifications</label>
+                      <input type="text" class="form-control" wire:model.defer="certifications"
+                        placeholder="e.g. ISO 9001, CE, RoHS, BIS">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="fg">
+                      <label>Company Logo <span class="doc-guide ms-1">PNG, SVG · max 2MB</span></label>
+                      <div class="duz">
+                        <div class="text-center py-1">
+                          <i class="fas fa-image text-muted" style="font-size:1.2rem;"></i>
+                          <div class="duz-hint mt-1">Your logo shown on storefront to buyers</div>
+                        </div>
+                        <input type="file" wire:model="logo_file" id="f_logo" style="display:none;" accept=".png,.svg,.jpg,.jpeg">
+                        <label for="f_logo" class="ul-btn"><i class="fas fa-upload"></i> Upload Logo</label>
+                        <span wire:loading wire:target="logo_file" class="ms-2 text-muted" style="font-size:.76rem;">
+                          <span class="spinner-border spinner-border-sm"></span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="fg">
+                      <label>Company Video <small class="text-muted">(optional · MP4, MOV · max 50MB)</small></label>
+                      <div class="duz">
+                        <div class="text-center py-1">
+                          <i class="fas fa-video text-muted" style="font-size:1.2rem;"></i>
+                          <div class="duz-hint mt-1">Showcase your factory / products to buyers</div>
+                        </div>
+                        <label class="ul-btn"><i class="fas fa-upload"></i> Upload Video</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="sfooter">
+                  <button type="button" class="btn-o" wire:click="goToStep(2)"><i class="fas fa-arrow-left"></i> Back</button>
+                  <div class="d-flex align-items-center gap-3">
+                    <span class="autosave"><i class="fas fa-save"></i> Auto-saved</span>
+                    <button type="submit" class="btn-p" wire:loading.attr="disabled">
+                      <span wire:loading wire:target="saveStep3" class="spinner-border spinner-border-sm me-1"></span>
+                      Continue <i class="fas fa-arrow-right" wire:loading.remove wire:target="saveStep3"></i>
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+            {{-- ── STEP 4: VERIFICATION ── --}}
+            @elseif($activeStep===4)
+            <div class="stitle">Identity & Business Verification</div>
+            <div class="ssub">Upload clear scans or photos · PDF, JPG, PNG · max 5MB each</div>
+
+            @php
+            $docDefs = [
+                ['type'=>'owner_id_passport', 'icon'=>'fas fa-id-card',  'label'=>'Owner ID or Passport',
+                'hint'=>'Government-issued personal photo ID',
+                'guide'=>'Accepted: Aadhaar Card, Passport, Driving Licence, PAN Card, Voter ID',
+                'accept'=>'.jpg,.jpeg,.png,.pdf', 'required'=>true],
+                ['type'=>'business_license',  'icon'=>'fas fa-award',    'label'=>'Business License',
+                'hint'=>'Trade licence or business permit',
+                'guide'=>'Accepted: Shop & Establishment Cert., Trade Licence, Municipal Permit, FSSAI',
+                'accept'=>'.jpg,.jpeg,.png,.pdf', 'required'=>false],
+                ['type'=>'tax_id',            'icon'=>'fas fa-receipt',  'label'=>'Tax ID Document',
+                'hint'=>'Tax identification certificate',
+                'guide'=>'Accepted: GST Certificate, PAN Card (business), TIN, VAT Registration',
+                'accept'=>'.jpg,.jpeg,.png,.pdf', 'required'=>true],
+                ['type'=>'selfie',            'icon'=>'fas fa-camera',   'label'=>'Selfie with ID',
+                'hint'=>'Photo of yourself holding your government ID',
+                'guide'=>'Your face AND the ID must both be visible · JPG or PNG only (no PDF)',
+                'accept'=>'.jpg,.jpeg,.png', 'required'=>false],
+            ];
+            @endphp
+
+            <div class="row g-3">
+                @foreach($docDefs as $def)
+                @php
+                    $type      = $def['type'];
+                    $doc       = $documents->get($type);
+                    $ver       = $docVerification[$type] ?? null;
+                    $fid       = 'f_' . $type;
+                    $spinnerId = 'sp_' . $type;
+                    $prevId    = 'prev_' . $type;
+
+                    // Determine card state
+                    $cardClass = match($ver['status'] ?? ($doc ? 'ok' : '')) {
+                    'ok'    => 'dc-ok',
+                    'warn'  => 'dc-warn',
+                    'error' => 'dc-error',
+                    default => '',
+                    };
+
+                    // Figure out stored file type from mime
+                    $isStoredImage = $doc && str_starts_with($doc->mime_type, 'image/');
+                    $isStoredPdf   = $doc && $doc->mime_type === 'application/pdf';
+                @endphp
+
+                <div class="col-md-6 col-12">
+                    <div class="doc-card {{ $cardClass }}">
+
+                    {{-- Card header --}}
+                    <div class="doc-card-head">
+                        <div class="doc-card-title">
+                        <i class="{{ $def['icon'] }}" style="color:var(--blue);font-size:1rem;"></i>
+                        {{ $def['label'] }}
+                        @if($def['required'])<span style="color:var(--red);">*</span>@endif
+                        @if($doc)
+                            <span class="ds ds-{{ $doc->review_status }}">{{ ucfirst($doc->review_status) }}</span>
+                        @endif
+                        </div>
+                        <span style="font-size:.71rem;color:var(--mu);">{{ $def['hint'] }}</span>
+                    </div>
+
+                    {{-- Guide --}}
+                    <div class="doc-guide">
+                        <i class="fas fa-info-circle me-1" style="color:var(--blue);"></i>{{ $def['guide'] }}
+                    </div>
+
+                    {{-- ── FILE PREVIEW (shown after upload) ── --}}
+                    @if($doc && (!$ver || $ver['status'] !== 'error'))
+                        <div class="file-preview" id="{{ $prevId }}">
+
+                        {{-- Top preview area --}}
+                        <div class="file-preview-top">
+                            @if($isStoredImage)
+                            {{-- Show actual image thumbnail --}}
+                            <img
+                                src="{{ asset('storage/' . $doc->storage_url) }}"
+                                alt="{{ $doc->file_name }}"
+                                onerror="this.style.display='none';document.getElementById('icon_{{ $type }}').style.display='block';"
+                            >
+                            <div id="icon_{{ $type }}" style="display:none;text-align:center;">
+                                <div class="file-preview-icon" style="color:#0ea5e9;">
+                                <i class="fas fa-image"></i>
+                                </div>
+                                <div class="file-preview-label">IMAGE</div>
+                            </div>
+                            @elseif($isStoredPdf)
+                            {{-- PDF icon --}}
+                            <div class="file-preview-icon" style="color:#e02424;">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div class="file-preview-label">PDF DOCUMENT</div>
+                            @else
+                            {{-- Generic file --}}
+                            <div class="file-preview-icon" style="color:#6b7280;">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="file-preview-label">DOCUMENT</div>
+                            @endif
+                        </div>
+
+                        {{-- Bottom: filename + new selection badge --}}
+                        <div class="file-preview-bottom">
+                            <div class="file-preview-name">
+                            <i class="fas fa-paperclip" style="color:var(--blue);flex-shrink:0;font-size:.7rem;"></i>
+                            {{ $doc->file_name }}
+                            </div>
+                            <div style="display:flex;align-items:center;gap:.5rem;">
+                            <span class="file-preview-meta">{{ round($doc->file_size_bytes / 1024) }} KB</span>
+                            @if($ver && $ver['status'] === 'ok')
+                                <span class="new-sel-badge">UPLOADED</span>
+                            @endif
+                            </div>
+                        </div>
+
+                        </div>{{-- end file-preview --}}
+                    @endif
+
+                    {{-- ── CLIENT-SIDE PREVIEW (shown immediately after user picks file, before Livewire uploads) ── --}}
+                    {{-- This is shown by JS as soon as user selects a file --}}
+                    <div id="local_prev_{{ $type }}" style="display:none;" class="file-preview">
+                        <div class="file-preview-top" id="local_prev_top_{{ $type }}">
+                        {{-- JS fills this in --}}
+                        </div>
+                        <div class="file-preview-bottom">
+                        <div class="file-preview-name" id="local_prev_name_{{ $type }}">
+                            <i class="fas fa-paperclip" style="color:var(--blue);flex-shrink:0;font-size:.7rem;"></i>
+                            <span></span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:.5rem;">
+                            <span class="file-preview-meta" id="local_prev_size_{{ $type }}"></span>
+                            <span class="new-sel-badge" style="background:var(--blue);">NEW SELECTION</span>
+                        </div>
+                        </div>
+                    </div>
+
+                    {{-- Spinner (JS controlled) --}}
+                    <span id="{{ $spinnerId }}" class="doc-uploading" style="margin-bottom:.4rem;">
+                        <span class="spinner-border spinner-border-sm"></span> Uploading...
+                    </span>
+
+                    {{-- Validation result --}}
+                    @if($ver)
+                        <div class="doc-result dr-{{ $ver['status'] }}">
+                        <i class="fas fa-{{ $ver['status']==='ok' ? 'check-circle' : ($ver['status']==='warn' ? 'exclamation-triangle' : 'times-circle') }} mt-1" style="flex-shrink:0;"></i>
+                        <span>{{ $ver['message'] }}</span>
+                        </div>
+                    @endif
+
+                    {{-- Admin rejection note --}}
+                    @if($doc && $doc->review_status === 'rejected' && $doc->rejection_reason)
+                        <div class="doc-result dr-error">
+                        <i class="fas fa-times-circle mt-1" style="flex-shrink:0;"></i>
+                        <div><strong>Rejected:</strong> {{ $doc->rejection_reason }}</div>
+                        </div>
+                    @endif
+
+                    {{-- Upload / Replace button --}}
+                    <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.3rem;">
+                        <input
+                        type="file"
+                        wire:model="doc_{{ $type }}"
+                        id="{{ $fid }}"
+                        style="display:none;"
+                        accept="{{ $def['accept'] }}"
+                        onchange="handleDocSelect(this, '{{ $type }}')"
+                        >
+                        <label for="{{ $fid }}" class="ul-btn">
+                        <i class="fas fa-{{ $doc ? 'redo' : 'upload' }}"></i>
+                        {{ $doc ? 'Change Document' : 'Upload Document' }}
+                        </label>
+                    </div>
+
+                    @error('doc_'.$type)
+                        <small class="text-danger d-block mt-2">
+                        <i class="fas fa-exclamation-circle me-1"></i>{{ $message }}
+                        </small>
+                    @enderror
+
+                    </div>
+                </div>
+                @endforeach
+            </div>
+
+            {{-- JS: preview selected file immediately, then show spinner --}}
+            <script>
+                function handleDocSelect(input, type) {
+                if (!input.files || !input.files[0]) return;
+                var file = input.files[0];
+                var ext  = file.name.split('.').pop().toLowerCase();
+
+                // Show spinner
+                var spinner = document.getElementById('sp_' + type);
+                if (spinner) spinner.style.display = 'flex';
+
+                // Hide server-rendered preview (will be replaced after Livewire re-render)
+                var serverPrev = document.getElementById('prev_' + type);
+                if (serverPrev) serverPrev.style.display = 'none';
+
+                // Show local preview
+                var localPrev = document.getElementById('local_prev_' + type);
+                var localTop  = document.getElementById('local_prev_top_' + type);
+                var localName = document.getElementById('local_prev_name_' + type);
+                var localSize = document.getElementById('local_prev_size_' + type);
+
+                if (!localPrev) return;
+
+                // File name
+                if (localName) localName.querySelector('span').textContent = file.name;
+
+                // File size
+                var sizeKb = (file.size / 1024).toFixed(0);
+                if (localSize) localSize.textContent = sizeKb + ' KB';
+
+                // Preview content based on type
+                if (localTop) {
+                    if (['jpg','jpeg','png','webp','gif'].includes(ext)) {
+                    // Image: show actual thumbnail
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        localTop.innerHTML =
+                        '<img src="' + e.target.result + '" style="max-height:90px;max-width:100%;border-radius:6px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.1);">' ;
+                    };
+                    reader.readAsDataURL(file);
+                    } else if (ext === 'pdf') {
+                    localTop.innerHTML =
+                        '<div class="file-preview-icon" style="color:#e02424;"><i class="fas fa-file-pdf"></i></div>' +
+                        '<div class="file-preview-label">PDF DOCUMENT</div>';
+                    } else if (['doc','docx'].includes(ext)) {
+                    localTop.innerHTML =
+                        '<div class="file-preview-icon" style="color:#1a56db;"><i class="fas fa-file-word"></i></div>' +
+                        '<div class="file-preview-label">WORD DOCUMENT</div>';
+                    } else {
+                    localTop.innerHTML =
+                        '<div class="file-preview-icon" style="color:#6b7280;"><i class="fas fa-file-alt"></i></div>' +
+                        '<div class="file-preview-label">DOCUMENT</div>';
+                    }
+                }
+
+                localPrev.style.display = 'block';
+
+                // Safety: hide spinner after 30s if Livewire stalls
+                setTimeout(function() {
+                    if (spinner) spinner.style.display = 'none';
+                }, 30000);
+                }
+
+                // Hide all spinners and local previews when Livewire re-renders
+                // (server-side preview will now show instead)
+                document.addEventListener('livewire:update', function() {
+                document.querySelectorAll('.doc-uploading').forEach(function(el) {
+                    el.style.display = 'none';
+                });
+                document.querySelectorAll('[id^="local_prev_"]').forEach(function(el) {
+                    // Only hide the top-level local preview divs, not sub-elements
+                    if (el.id.split('_').length === 3) el.style.display = 'none';
+                });
+                });
+            </script>
+
+            <div style="background:var(--blt);border-radius:10px;padding:.65rem 1rem;font-size:.8rem;color:#1e40af;margin-top:.8rem;display:flex;align-items:center;gap:.6rem;">
+                <i class="fas fa-shield-alt"></i>
+                Documents stored securely on our servers · Reviewed by our team within 24–48 hours
+            </div>
+
+            <div class="sfooter">
+                <button type="button" class="btn-o" wire:click="goToStep(3)">
+                <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button type="button" class="btn-p" wire:click="saveStep4" wire:loading.attr="disabled">
+                <span wire:loading wire:target="saveStep4" class="spinner-border spinner-border-sm me-1"></span>
+                Continue <i class="fas fa-arrow-right" wire:loading.remove wire:target="saveStep4"></i>
+                </button>
+            </div>
+
+            {{-- ── STEP 5: PLAN (LAST) ── --}}
+            @elseif($activeStep===5)
+              <div class="stitle">Choose your plan</div>
+              <div class="ssub">You can upgrade or change anytime after registration</div>
+              <div class="plan-grid">
+                <div class="plan-card {{ $selected_plan==='free'?'sel':'' }}" wire:click="$set('selected_plan','free')">
+                  <div class="pname">Free</div>
+                  <div class="pprice">$0<span>/forever</span></div>
+                  <ul class="pfeat">
+                    <li><i class="fas fa-check-circle"></i> Up to 10 products</li>
+                    <li><i class="fas fa-check-circle"></i> Receive buyer inquiries</li>
+                    <li><i class="fas fa-check-circle"></i> Basic company profile</li>
+                  </ul>
+                </div>
+                <div class="plan-card {{ $selected_plan==='growth'?'sel':'' }}" wire:click="$set('selected_plan','growth')">
+                  <span class="pop-badge">Popular</span>
+                  <div class="pname">Growth</div>
+                  <div class="pprice">$49<span>/month</span></div>
+                  <ul class="pfeat">
+                    <li><i class="fas fa-check-circle"></i> Up to 100 products</li>
+                    <li><i class="fas fa-check-circle"></i> Verified seller badge</li>
+                    <li><i class="fas fa-check-circle"></i> RFQ priority</li>
+                    <li><i class="fas fa-check-circle"></i> Analytics dashboard</li>
+                  </ul>
+                </div>
+                <div class="plan-card {{ $selected_plan==='global'?'sel':'' }}" wire:click="$set('selected_plan','global')">
+                  <div class="pname">Global</div>
+                  <div class="pprice">$199<span>/month</span></div>
+                  <ul class="pfeat">
+                    <li><i class="fas fa-check-circle"></i> Unlimited products</li>
+                    <li><i class="fas fa-check-circle"></i> Global promotion</li>
+                    <li><i class="fas fa-check-circle"></i> AI buyer matching</li>
+                    <li><i class="fas fa-check-circle"></i> Premium supplier badge</li>
+                  </ul>
+                </div>
+              </div>
+
+              @if($selected_plan && $selected_plan !== 'free')
+                <div class="gp-info" style="background:#f0fdf9;color:#065f46;border-color:var(--green);">
+                  <i class="fas fa-info-circle"></i>
+                  <span>
+                    <strong>{{ ucfirst($selected_plan) }} Plan selected.</strong>
+                    Payment will be collected after your account is approved.
+                    You can start listing products on the Free plan immediately.
+                  </span>
+                </div>
+              @endif
+
+              <div class="sfooter">
+                <button type="button" class="btn-o" wire:click="goToStep(4)"><i class="fas fa-arrow-left"></i> Back</button>
+                <button type="button" class="btn-p" wire:click="saveStep5" wire:loading.attr="disabled">
+                  <span wire:loading wire:target="saveStep5" class="spinner-border spinner-border-sm me-1"></span>
+                  <span wire:loading.remove wire:target="saveStep5">
+                    <i class="fas fa-paper-plane me-1"></i> Submit for Review
+                  </span>
+                </button>
+              </div>
+            @endif
+
+          </div>{{-- gpc --}}
+        </div>{{-- right col --}}
+      </div>{{-- grid --}}
+    </div>
+    </main>
+    <livewire:seller.layout.footer />
 </div>

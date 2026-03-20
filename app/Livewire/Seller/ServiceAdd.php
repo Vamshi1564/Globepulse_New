@@ -1,16 +1,14 @@
 <?php
 // FILE: app/Livewire/Seller/ServiceAdd.php
-// Route: Route::get('/seller/service-add', ServiceAdd::class)->name('service_add');
+// IndiaMART-style: 2 tabs, radio/checkbox specs, live product score
 
 namespace App\Livewire\Seller;
 
 use App\Models\Category;
-use App\Models\Customer;
 use App\Models\SellerService;
 use App\Models\Subcategory;
 use App\Models\SubSubCategory;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -19,43 +17,95 @@ class ServiceAdd extends Component
 {
     use WithFileUploads;
 
-    // ── Step state ────────────────────────────────────────────
-    public int $activeStep  = 1;
-    public int $totalSteps  = 3;
+    public int $activeTab = 1; // 1 = Basic Details, 2 = Specifications
 
-    // ── Step 1: Basic Info ────────────────────────────────────
-    public $title            = '';
-    public $description      = '';
-    public $service_type     = '';
-    public $category_id      = '';
-    public $subcategory_id   = '';
-    public $sub_subcategory_id = '';
-    public $keywords         = '';
-    public $subcategories    = [];
+    // ── Tab 1: Basic Details ──────────────────────────────────
+    public $title          = '';
+    public $price          = '';   // single price field like IndiaMART
+    public $price_unit     = '';   // Monthly Retainer / Hourly / Project Based etc.
+    public $description    = '';
+    public $cover_image;
+    public $gallery_images    = [];
+    public $new_gallery_images= [];
+    public $video_url      = '';
+    public $brochure_pdf;          // PDF upload like IndiaMART
+
+    // ── Tab 2: Specifications ─────────────────────────────────
+    // Category
+    public $category_id       = '';
+    public $subcategory_id    = '';
+    public $sub_subcategory_id= '';
+    public $subcategories     = [];
     public $sub_subcategories = [];
 
-    // ── Step 2: Pricing & Delivery ───────────────────────────
-    public $pricing_type         = 'quote_based';
-    public $min_price            = '';
-    public $max_price            = '';
-    public $price_unit           = 'per project';
-    public $delivery_mode        = 'Both';
-    public $turnaround_time      = '';
-    public $service_area         = '';
-    public $payment_terms        = '';
-    public $sample_consultation  = 'no';
+    // Service Type (radio — changes per service category)
+    public $service_type      = '';
 
-    // ── Step 3: Credentials & Media ──────────────────────────
-    public $experience_years     = '';
-    public $projects_completed   = '';
-    public $certifications       = '';
-    public $languages            = 'English';
-    public $inclusions           = '';
-    public $exclusions           = '';
-    public $cover_image;
-    public $portfolio_files      = [];
-    public $new_portfolio_files  = [];
-    public $video_url            = '';
+    // Pricing Model (radio)
+    public $pricing_model     = '';  // Monthly Retainer|Project Based|Hourly|Performance Based|Other
+
+    // Contract Duration (radio)
+    public $contract_duration = '';  // 1 Month|3 Months|6 Months|12 Months|Above 12 Months|Other
+
+    // Business Type (radio — who is the target client)
+    public $business_type_target = '';  // Startup|SME|Large Enterprise|Agency|D2C Brand|Other
+
+    // Industries Served (checkbox — multiple)
+    public array $industries_served = [];
+
+    // Delivery mode
+    public $delivery_mode = '';   // Onsite|Remote|Both
+
+    // Additional
+    public $experience_years   = '';
+    public $certifications     = '';
+    public $keywords           = '';
+
+    // ─────────────────────────────────────────────────────────
+    // Product score (0-100 like IndiaMART)
+    public function getProductScoreProperty(): int
+    {
+        $score = 0;
+        if (strlen($this->title) >= 3)       $score += 10;
+        if ($this->price)                    $score += 15;
+        if (strlen($this->description) > 100)$score += 20;
+        if ($this->cover_image)              $score += 15;
+        if (!empty($this->gallery_images))   $score += 10;
+        if ($this->video_url)                $score += 10;
+        if ($this->brochure_pdf)             $score += 5;
+        if ($this->service_type)             $score += 5;
+        if ($this->pricing_model)            $score += 5;
+        if ($this->certifications)           $score += 5;
+        return min($score, 100);
+    }
+
+    public function getScoreColorProperty(): string
+    {
+        $s = $this->productScore;
+        if ($s >= 70) return '#059669';
+        if ($s >= 40) return '#f59e0b';
+        return '#ef4444';
+    }
+
+    public function getScoreLabelProperty(): string
+    {
+        $s = $this->productScore;
+        if ($s >= 70) return 'Good';
+        if ($s >= 40) return 'Low';
+        return 'Very Low';
+    }
+
+    // ── Toggle industry in array ──────────────────────────────
+    public function toggleIndustry(string $industry): void
+    {
+        if (in_array($industry, $this->industries_served)) {
+            $this->industries_served = array_values(
+                array_filter($this->industries_served, fn($i) => $i !== $industry)
+            );
+        } else {
+            $this->industries_served[] = $industry;
+        }
+    }
 
     // ─────────────────────────────────────────────────────────
     public function render()
@@ -78,137 +128,111 @@ class ServiceAdd extends Component
         $this->sub_subcategory_id = null;
     }
 
-    public function updatedNewPortfolioFiles()
+    public function updatedNewGalleryImages()
     {
-        foreach ($this->new_portfolio_files as $f) {
-            $this->portfolio_files[] = $f;
+        foreach ($this->new_gallery_images as $img) {
+            $this->gallery_images[] = $img;
         }
-        $this->new_portfolio_files = [];
+        $this->new_gallery_images = [];
     }
 
-    // ── Step navigation ───────────────────────────────────────
-    public function nextStep()
+    public function saveAndContinue()
     {
-        $this->validateCurrentStep();
-        if ($this->activeStep < $this->totalSteps) $this->activeStep++;
+        // Tab 1 validation
+        $this->validate([
+            'title'       => 'required|string|min:3|max:255',
+            'price'       => 'nullable|numeric|min:0',
+            'description' => 'nullable|string',
+            'cover_image' => 'nullable|image|mimes:jpg,jpeg,webp,png|max:4096',
+            'video_url'   => 'nullable|url|max:500',
+        ], [
+            'title.required' => 'Service/Product name is required.',
+            'title.min'      => 'Name must be at least 3 words.',
+        ]);
+
+        $this->activeTab = 2;
     }
 
-    public function prevStep()
-    {
-        if ($this->activeStep > 1) $this->activeStep--;
-    }
-
-    public function goToStep(int $step)
-    {
-        if ($step < $this->activeStep) $this->activeStep = $step;
-    }
-
-    private function validateCurrentStep(): void
-    {
-        match ($this->activeStep) {
-            1 => $this->validate([
-                'title'        => 'required|string|min:10|max:255',
-                'description'  => 'required|string|min:30',
-                'service_type' => 'required|string',
-                'category_id'  => 'required',
-                'keywords'     => 'nullable|string|max:500',
-            ], [
-                'title.min'       => 'Title must be at least 10 characters.',
-                'description.min' => 'Description must be at least 30 characters.',
-                'service_type.required' => 'Please select a service type.',
-                'category_id.required'  => 'Please select a category.',
-            ]),
-            2 => $this->validate([
-                'pricing_type'    => 'required|in:fixed,hourly,negotiable,quote_based',
-                'min_price'       => 'nullable|numeric|min:0',
-                'max_price'       => 'nullable|numeric|gte:min_price',
-                'delivery_mode'   => 'required|string',
-                'turnaround_time' => 'nullable|string|max:100',
-                'service_area'    => 'nullable|string|max:300',
-            ], [
-                'max_price.gte' => 'Max price must be ≥ min price.',
-            ]),
-            3 => $this->validate([
-                'cover_image'        => 'nullable|image|mimes:jpg,jpeg,webp,png|max:4096',
-                'portfolio_files'    => 'nullable|array|max:10',
-                'portfolio_files.*'  => 'image|mimes:jpg,jpeg,webp,png|max:4096',
-                'video_url'          => 'nullable|url|max:500',
-                'experience_years'   => 'nullable|string|max:50',
-                'projects_completed' => 'nullable|integer|min:0',
-                'certifications'     => 'nullable|string|max:500',
-                'languages'          => 'nullable|string|max:200',
-                'inclusions'         => 'nullable|string|max:1000',
-                'exclusions'         => 'nullable|string|max:1000',
-            ]),
-            default => null,
-        };
-    }
-
-    // ── Submit ────────────────────────────────────────────────
     public function submit()
     {
-        $this->validateCurrentStep();
+        $this->validate([
+            'title' => 'required|string|min:3|max:255',
+        ]);
 
         try {
             $customerId = Session::get('id');
-            $customer   = Customer::find($customerId);
 
             // Upload cover image
             $coverPath = null;
             if ($this->cover_image) {
-                $ext        = $this->cover_image->getClientOriginalExtension();
-                $uniqueName = 'service-cover-' . $customerId . '-' . rand(1000, 999999) . '.' . $ext;
-                $this->cover_image->storeAs('public/uploads/services', $uniqueName, 's3');
-                $coverPath = 'uploads/services/' . $uniqueName;
+                $ext      = $this->cover_image->getClientOriginalExtension();
+                $uname    = 'svc-' . $customerId . '-' . rand(1000,999999) . '.' . $ext;
+                $this->cover_image->storeAs('public/uploads/services', $uname, 's3');
+                $coverPath = 'uploads/services/' . $uname;
             }
 
-            // Upload portfolio images
-            $portfolioPaths = [];
-            if (!empty($this->portfolio_files)) {
-                foreach ($this->portfolio_files as $pf) {
-                    $ext     = $pf->getClientOriginalExtension();
-                    $uname   = 'service-portfolio-' . $customerId . '-' . rand(1000, 999999) . '.' . $ext;
-                    $pf->storeAs('public/uploads/services', $uname, 's3');
-                    $portfolioPaths[] = 'uploads/services/' . $uname;
-                }
+            // Upload gallery
+            $galleryPaths = [];
+            foreach ($this->gallery_images as $gi) {
+                $ext   = $gi->getClientOriginalExtension();
+                $uname = 'svc-g-' . $customerId . '-' . rand(1000,999999) . '.' . $ext;
+                $gi->storeAs('public/uploads/services', $uname, 's3');
+                $galleryPaths[] = 'uploads/services/' . $uname;
             }
 
-            $slug = Str::slug($this->title) . '-' . $customerId . '-' . rand(100, 99999);
+            // Upload PDF brochure
+            $pdfPath = null;
+            if ($this->brochure_pdf) {
+                $ext   = $this->brochure_pdf->getClientOriginalExtension();
+                $uname = 'svc-pdf-' . $customerId . '-' . rand(1000,999999) . '.' . $ext;
+                $this->brochure_pdf->storeAs('public/uploads/services', $uname, 's3');
+                $pdfPath = 'uploads/services/' . $uname;
+            }
+
+            $slug = Str::slug($this->title) . '-' . $customerId . '-' . rand(100,99999);
+
+            // Combine pricing info
+            $pricingType = match($this->pricing_model) {
+                'Hourly'           => 'hourly',
+                'Monthly Retainer' => 'fixed',
+                'Project Based'    => 'fixed',
+                default            => 'quote_based',
+            };
 
             SellerService::create([
                 'customer_id'         => $customerId,
                 'title'               => $this->title,
                 'slug'                => $slug,
-                'description'         => $this->description,
-                'service_type'        => $this->service_type,
-                'category_id'         => $this->category_id    ?: null,
+                'description'         => $this->description ?: null,
+                'service_type'        => $this->service_type ?: null,
+                'category_id'         => $this->category_id ?: null,
                 'subcategory_id'      => $this->subcategory_id ?: null,
                 'sub_subcategory_id'  => $this->sub_subcategory_id ?: null,
-                'pricing_type'        => $this->pricing_type,
-                'min_price'           => $this->min_price       ?: null,
-                'max_price'           => $this->max_price       ?: null,
-                'price_unit'          => $this->price_unit      ?: null,
-                'delivery_mode'       => $this->delivery_mode   ?: null,
-                'turnaround_time'     => $this->turnaround_time ?: null,
-                'service_area'        => $this->service_area    ?: null,
-                'inclusions'          => $this->inclusions      ?: null,
-                'exclusions'          => $this->exclusions      ?: null,
-                'certifications'      => $this->certifications  ?: null,
-                'languages'           => $this->languages       ?: null,
-                'experience_years'    => $this->experience_years    ?: null,
-                'projects_completed'  => $this->projects_completed  ?: null,
+                'keywords'            => $this->keywords ?: null,
+                'pricing_type'        => $pricingType,
+                'min_price'           => $this->price ?: null,
+                'max_price'           => $this->price ?: null,
+                'price_unit'          => $this->price_unit ?: $this->pricing_model ?: null,
+                'delivery_mode'       => $this->delivery_mode ?: null,
+                'certifications'      => $this->certifications ?: null,
+                'experience_years'    => $this->experience_years ?: null,
                 'cover_image'         => $coverPath,
-                'portfolio_images'    => !empty($portfolioPaths) ? $portfolioPaths : null,
-                'video_url'           => $this->video_url       ?: null,
-                'payment_terms'       => $this->payment_terms   ?: null,
-                'sample_consultation' => $this->sample_consultation,
-                'keywords'            => $this->keywords        ?: null,
-                'status'              => 'pending',
+                'portfolio_images'    => !empty($galleryPaths) ? $galleryPaths : null,
+                'video_url'           => $this->video_url ?: null,
+                // Store additional spec fields as JSON in inclusions field
+                'inclusions'          => json_encode([
+                    'pricing_model'       => $this->pricing_model,
+                    'contract_duration'   => $this->contract_duration,
+                    'business_type_target'=> $this->business_type_target,
+                    'industries_served'   => $this->industries_served,
+                    'brochure_pdf'        => $pdfPath,
+                ]),
+                'status' => 'pending',
             ]);
 
             $this->reset();
-            return redirect()->route('service_list')
-                ->with('message', '✅ Service submitted for review! It will go live once approved by admin.');
+            return redirect()->route('my-listings')
+                ->with('message', '✅ Service listed successfully! Goes live once approved.');
 
         } catch (\Exception $e) {
             session()->flash('error', 'Something went wrong: ' . $e->getMessage());
