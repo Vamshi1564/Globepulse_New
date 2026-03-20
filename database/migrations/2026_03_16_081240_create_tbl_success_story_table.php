@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('tbl_success_story')) {
+
         Schema::create('tbl_success_story', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
         });
+          }
     }
 
     /**
