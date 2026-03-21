@@ -77,7 +77,7 @@
 @else
 
 <!-- CARD TABLE -->
-<div class="card shadow-sm border-0 rounded-4">
+<div class="card shadow-sm border-0 rounded-4" style="margin-bottom: 120px;">
 <div class="card-body p-0">
 
 <div class="table-responsive">
@@ -138,14 +138,22 @@
 
 <!-- STATUS -->
 <td>
-    @if($rfq->status == 0)
-        <span class="badge bg-warning text-dark">Pending</span>
-    @elseif($rfq->status == 1)
-        <span class="badge bg-success">Quoted</span>
-    @else
-        <span class="badge bg-secondary">Closed</span>
-    @endif
-</td>
+                                                @if($rfq->status == 'pending')
+                                                    <span class="badge bg-warning text-dark">Pending</span>
+
+                                                @elseif($rfq->status == 'quoted')
+                                                    <span class="badge bg-success">Quoted</span>
+
+                                                @elseif($rfq->status == 'accepted')
+                                                    <span class="badge bg-primary">Accepted</span>
+
+                                                @elseif($rfq->status == 'rejected')
+                                                    <span class="badge bg-danger">Rejected</span>
+
+                                                @elseif($rfq->status == 'closed')
+                                                    <span class="badge bg-secondary">Closed</span>
+                                                @endif
+                                            </td>
 
 <!-- DATE -->
 <td>
