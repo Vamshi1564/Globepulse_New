@@ -402,12 +402,42 @@ class Profile extends Component
 
     public function render()
     {
-        $seller = Seller::with('details','documents','activeSubscription')
-            ->find(Session::get('seller_id'));
+        $sellerId = \Illuminate\Support\Facades\Session::get('seller_id');
+        $seller   = \App\Models\Seller::with('details', 'documents', 'activeSubscription')
+                        ->find($sellerId);
+
+        // Build missingDetails — list of fields the seller has not filled yet
+        $missingDetails = [];
+        if (empty($this->phone))               $missingDetails[] = 'Phone number';
+        if (empty($this->country_id))          $missingDetails[] = 'Country';
+        if (empty($this->legal_business_name)) $missingDetails[] = 'Business name';
+        if (empty($this->business_type))       $missingDetails[] = 'Business type';
+        if (empty($this->business_address))    $missingDetails[] = 'Business address';
+        if (empty($this->city))                $missingDetails[] = 'City';
+        if (empty($this->num_employees))       $missingDetails[] = 'Number of employees';
+        if (empty($this->company_description)) $missingDetails[] = 'Company description';
+        if (empty($this->main_products))       $missingDetails[] = 'Main products';
+
         return view('livewire.seller.profile', [
-            'seller'     => $seller,
-            'completion' => $this->completion,
-            'stepScore'  => $this->stepScore,
+            // Core seller objects
+            'seller'            => $seller,
+            'customer'          => $seller,           // blade uses $customer as alias
+
+            // Collections
+            'countries'         => collect($this->countries      ?? []),
+            'documents'         => $this->documents              ?? collect(),
+            'docVerification'   => $this->docVerification        ?? [],
+
+            // Computed
+            'completion'        => $this->completion,
+            'profilePercentage' => $this->completion,  // blade uses $profilePercentage
+            'stepScore'         => $this->stepScore,
+            'missingDetails'    => $missingDetails,
+
+            // State
+            'currentPlan'       => $this->currentPlan   ?? null,
+            'successMsg'        => $this->successMsg    ?? '',
+            'errorMsg'          => $this->errorMsg      ?? '',
         ]);
     }
 }

@@ -250,6 +250,13 @@
     </ul>
 
 </li>
+
+<li class="nav-item">
+<a class="nav-link {{ request()->routeIs('seller.quotations') ? 'active' : '' }}"
+   href="{{ route('seller.quotations') }}">
+<i class="fas fa-paper-plane"></i> Sent Quotations
+</a>
+</li>
                     <li class="nav-item" data-nav-item="data-nav-item">
                         <a class="nav-link active" href="{{ route('postbyrequirement') }}">Post Buy Requirements</a>
                     </li>

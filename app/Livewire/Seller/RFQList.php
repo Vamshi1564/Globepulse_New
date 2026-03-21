@@ -8,15 +8,21 @@ class RFQList extends Component
 {
     public $rfqs;
 
-    public function mount()
-    {
-        $sellerId = session('id'); // or auth()->id()
+public function mount()
+{
+    $sellerId = session('seller_id') ?? session('id');
 
-        $this->rfqs = RFQ::with(['product', 'buyer'])
-            ->where('supplier_id', $sellerId)
-            ->latest()
-            ->get();
+    if (!$sellerId) {
+        return redirect()->route('seller.login');
     }
+
+    $sellerId = (int) $sellerId;
+
+    $this->rfqs = RFQ::with(['product', 'buyer'])
+        ->where('supplier_id', $sellerId)
+        ->latest()
+        ->get();
+}
 
     public function render()
     {

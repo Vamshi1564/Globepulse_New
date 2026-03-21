@@ -387,8 +387,7 @@
             @foreach([
               'range'      => '📊 Price Range',
               'fixed'      => '🏷️ Fixed Price',
-              'negotiable' => '🤝 Negotiable',
-              'quote'      => '📋 Get Quote',
+        
             ] as $val => $lbl)
             <div class="price-pill {{ $price_type === $val ? 'active' : '' }}"
                  wire:click="$set('price_type','{{ $val }}')">{{ $lbl }}</div>
@@ -805,14 +804,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load existing content
     editor.innerHTML = @json($description ?? '');
 
-    // Sync to Livewire on every keystroke
+    // Sync hidden input on every keystroke (no Livewire re-render)
     function syncEditor() {
         if (hidden) {
             hidden.value = editor.innerHTML;
-            @this.set('description', editor.innerHTML);
         }
     }
     editor.addEventListener('input', syncEditor);
+
+    // Only push to Livewire on blur (when user leaves the field)
+    // This prevents cursor-jumping caused by Livewire re-renders on every keystroke
+    editor.addEventListener('blur', function() {
+        if (hidden) {
+            hidden.value = editor.innerHTML;
+            @this.set('description', editor.innerHTML, false);
+        }
+    });
 
     window.fmt = function(cmd) {
         document.execCommand('styleWithCSS', false, true);

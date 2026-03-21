@@ -108,7 +108,7 @@ use App\Livewire\Seller\DigitalInformationForm;
 use App\Livewire\Seller\MyListings;
 use App\Livewire\Seller\ServiceAdd;
 use App\Livewire\Seller\RFQList;
-
+use App\Livewire\Seller\Quotations as SellerQuotations;
  
 use App\Http\Controllers\Seller\ProfileController;
 
@@ -236,4 +236,6 @@ Route::middleware([SellerAuth::class])->group(function () {  // <-- CHANGED from
     ->name('seller.rfq.view');
     Route::get('/seller/rfq/{id}/quote', \App\Livewire\Seller\RFQQuote::class)
     ->name('seller.rfq.quote');
+    Route::get('/seller/quotations', SellerQuotations::class)
+    ->name('seller.quotations');
 });

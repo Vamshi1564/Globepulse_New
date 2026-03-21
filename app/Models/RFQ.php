@@ -51,8 +51,8 @@ class RFQ extends Model
     {
         return $this->belongsTo(\App\Models\Buyer::class, 'buyer_id');
     }
-    public function quotations()
+public function quotations()
 {
-    return $this->hasMany(\App\Models\Quotation::class);
+    return $this->hasMany(\App\Models\Quotation::class, 'rfq_id'); // ✅ FIX
 }
 }

@@ -116,7 +116,12 @@ margin-bottom:4px;
 <i class="fas fa-list"></i> My RFQs
 </a>
 </li>
-
+<li class="nav-item">
+<a class="nav-link {{ request()->routeIs('buyer.quotations') ? 'active' : '' }}"
+   href="{{ route('buyer.quotations') }}">
+<i class="fas fa-file-invoice-dollar"></i> Quotations
+</a>
+</li>
 <li class="nav-item">
 <a class="nav-link" href="#">
 <i class="fas fa-search"></i> Find Suppliers
