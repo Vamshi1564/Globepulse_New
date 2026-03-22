@@ -48,6 +48,10 @@ use App\Livewire\Front\BuyerProfile;
 use App\Livewire\Front\BuyerDashboard;
 use App\Livewire\Front\MyRFQs;
 use App\Livewire\Front\ViewRFQ;
+<<<<<<< HEAD
+=======
+use App\Livewire\Front\Quotations;
+>>>>>>> f7d950e39accfee04a1040700c7429e4f7f3ebae
 
 // public website / front routes (preserved exactly)
 
@@ -188,6 +192,11 @@ Route::get('/buyer/rfqs', MyRFQs::class)
     ->name('buyer.myrfqs');
     Route::get('/buyer/rfq/{id}', ViewRFQ::class)
     ->name('buyer.rfq.view');
+<<<<<<< HEAD
+=======
+   Route::get('/buyer/quotations', Quotations::class)
+    ->name('buyer.quotations');
+>>>>>>> f7d950e39accfee04a1040700c7429e4f7f3ebae
 // ── Buyer Dashboard (temporary placeholder) ────────
 // Route::get('/buyer/dashboard', function () {
 

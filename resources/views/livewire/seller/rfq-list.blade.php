@@ -1,36 +1,4 @@
-@php
-use Carbon\Carbon;
 
-$rfqs = collect([
-    (object)[
-        'id' => 1,
-        'product' => (object)['title' => 'Wheat Flour'],
-        'name' => 'Ravi Traders',
-        'quantity' => '100 kg',
-        'target_price' => '₹50/kg',
-        'status' => 0,
-        'created_at' => Carbon::now()
-    ],
-    (object)[
-        'id' => 2,
-        'product' => (object)['title' => 'Rice Premium'],
-        'name' => 'Global Foods Ltd',
-        'quantity' => '500 kg',
-        'target_price' => '₹60/kg',
-        'status' => 1,
-        'created_at' => Carbon::now()->subDays(2)
-    ],
-    (object)[
-        'id' => 3,
-        'product' => (object)['title' => 'Sugar'],
-        'name' => 'ABC Exports',
-        'quantity' => '200 kg',
-        'target_price' => null,
-        'status' => 2,
-        'created_at' => Carbon::now()->subDays(5)
-    ],
-]);
-@endphp
 
 <style>
     html, body {
@@ -109,7 +77,7 @@ $rfqs = collect([
 @else
 
 <!-- CARD TABLE -->
-<div class="card shadow-sm border-0 rounded-4">
+<div class="card shadow-sm border-0 rounded-4" style="margin-bottom: 120px;">
 <div class="card-body p-0">
 
 <div class="table-responsive">
@@ -170,14 +138,22 @@ $rfqs = collect([
 
 <!-- STATUS -->
 <td>
-    @if($rfq->status == 0)
-        <span class="badge bg-warning text-dark">Pending</span>
-    @elseif($rfq->status == 1)
-        <span class="badge bg-success">Quoted</span>
-    @else
-        <span class="badge bg-secondary">Closed</span>
-    @endif
-</td>
+                                                @if($rfq->status == 'pending')
+                                                    <span class="badge bg-warning text-dark">Pending</span>
+
+                                                @elseif($rfq->status == 'quoted')
+                                                    <span class="badge bg-success">Quoted</span>
+
+                                                @elseif($rfq->status == 'accepted')
+                                                    <span class="badge bg-primary">Accepted</span>
+
+                                                @elseif($rfq->status == 'rejected')
+                                                    <span class="badge bg-danger">Rejected</span>
+
+                                                @elseif($rfq->status == 'closed')
+                                                    <span class="badge bg-secondary">Closed</span>
+                                                @endif
+                                            </td>
 
 <!-- DATE -->
 <td>
