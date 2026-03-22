@@ -130,6 +130,18 @@ class MyListings extends Component
         }
     }
 
+
+    public function publishProduct(int $id): void
+    {
+        $cid     = $this->getCustomerId();
+        $product = \App\Models\Product::where('id', $id)->where('customer_id', $cid)->first();
+        if ($product) {
+            $product->update(['status' => 0]); // 0 = pending admin review
+            $this->loadCounts();
+            session()->flash('message', 'Product submitted for admin review!');
+        }
+    }
+
     public function render()
     {
         $cid = $this->getCustomerId();
@@ -165,7 +177,7 @@ class MyListings extends Component
                     'price'      => '₹' . number_format($p->min_price ?? 0)
                                   . ' – ₹' . number_format($p->max_price ?? 0),
                     'meta'       => 'MOQ: ' . ($p->min_order ?? '—'),
-                    'edit_url'   => route('seller-product-edit', $p->id),
+                    'edit_route'   => route('seller-product-edit', $p->id),
                     'created_at' => $p->created_at,
                 ]);
         }
@@ -193,7 +205,7 @@ class MyListings extends Component
                         'price'      => $s->price_display,
                         'meta'       => $s->service_type
                                       . ($s->delivery_mode ? ' · ' . $s->delivery_mode : ''),
-                        'edit_url'   => route('service_add') . '?edit=' . $s->id,
+                        'edit_route'   => route('service_add') . '?edit=' . $s->id,
                         'created_at' => $s->created_at,
                     ]);
             } catch (\Exception $e) {

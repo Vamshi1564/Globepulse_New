@@ -20,7 +20,7 @@
 .sa-tab:disabled{cursor:not-allowed;opacity:.5;}
 
 /* ── Main layout ── */
-.sa-main{display:grid;grid-template-columns:1fr 280px;gap:20px;padding:20px;}
+.sa-main{display:grid;grid-template-columns:1fr;gap:20px;padding:20px;}
 @media(max-width:992px){.sa-main{grid-template-columns:1fr;}}
 
 /* ── Form card ── */
@@ -117,7 +117,7 @@
     <i class="bi bi-arrow-left"></i> Back
   </a>
   <span style="color:#d1d5db;">|</span>
-  <span class="sa-page-title">Add Product / Service</span>
+  <span class="sa-page-title">Add Service</span>
 </div>
 
 {{-- 2 tabs --}}
@@ -219,7 +219,7 @@
               <div class="col-md-8">
                 {{-- Name --}}
                 <div class="mb-3">
-                  <label class="sa-label">Product / Service Name *</label>
+                  <label class="sa-label">Service Name *</label>
                   <input class="sa-input" wire:model.lazy="title"
                     placeholder="Enter product or service name (use at least 3 words)">
                   @error('title')<div class="sa-err">{{ $message }}</div>@enderror
@@ -254,7 +254,7 @@
                 {{-- Description --}}
                 <div class="mb-3">
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                    <label class="sa-label" style="margin:0;">Product / Service Description</label>
+                    <label class="sa-label" style="margin:0;">Service Description</label>
                     <span style="font-size:.7rem;color:#94a3b8;">Uses, Details, Benefits, etc.</span>
                   </div>
 
@@ -275,13 +275,19 @@
                     @endforeach
                   </div>
 
-                  <div wire:ignore>
-                    <div id="sa-editor" contenteditable="true"
-                      style="border:1.5px solid #d1d5db;border-radius:0 0 8px 8px;min-height:180px;
-                        padding:10px 12px;font-size:.88rem;background:#fff;outline:none;line-height:1.7;"
-                      placeholder="Describe your service..."></div>
-                  </div>
-                  <input type="hidden" wire:model="description" id="sa-desc-hidden">
+                  {{-- FIXED: description uses a plain <textarea> with wire:model.lazy instead of
+                       a contenteditable div. The contenteditable + @this.set() approach caused
+                       the cursor to jump back to position 0 on every keystroke because Livewire
+                       re-renders the DOM after each @this.set() call, destroying the caret position. --}}
+                  <textarea
+                    id="sa-editor"
+                    wire:model.lazy="description"
+                    style="border:1.5px solid #d1d5db;border-radius:0 0 8px 8px;min-height:180px;
+                      padding:10px 12px;font-size:.88rem;background:#fff;outline:none;line-height:1.7;
+                      width:100%;resize:vertical;font-family:inherit;"
+                    placeholder="Describe your service..."
+                    maxlength="4000"></textarea>
+
                   <div style="text-align:right;font-size:.7rem;color:#94a3b8;margin-top:4px;">
                     {{ strlen(strip_tags($description)) }} characters (maximum 4000)
                   </div>
@@ -468,6 +474,7 @@
           <button type="button" class="btn-back-tab" wire:click="$set('activeTab', 1)">
             ← Back
           </button>
+          {{-- FIXED: removed wire:click="generateSlug" — slug is generated inside submit() now --}}
           <button type="submit" class="btn-finish" wire:loading.attr="disabled">
             <span wire:loading.remove wire:target="submit">Finish</span>
             <span wire:loading wire:target="submit"><i class="bi bi-arrow-repeat me-1"></i> Submitting...</span>
@@ -480,12 +487,11 @@
     </div> {{-- end left --}}
 
 
-    {{-- ══ RIGHT: Product Score — IndiaMART style ══ --}}
+    {{-- ══ RIGHT: Product Score — commented out as requested ══
     <div>
       <div class="score-card">
         <div class="score-title">Product Score:</div>
 
-        {{-- Score circle + bar --}}
         @php
           $score = $this->productScore;
           $color = $this->scoreColor;
@@ -504,7 +510,6 @@
         </div>
         <div class="score-0-100"><span>0</span><span>100</span></div>
 
-        {{-- Score breakdown like IndiaMART --}}
         <div style="border-top:1px solid #f1f5f9;padding-top:12px;">
           <div style="font-size:.78rem;font-weight:800;color:#374151;margin-bottom:8px;">Basic details</div>
 
@@ -543,27 +548,12 @@
         </div>
       </div>
     </div>
+    ══ END score panel ══ --}}
 
   </div>
 </div>
 
 <livewire:seller.layout.footer />
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const editor = document.getElementById('sa-editor');
-    const hidden = document.getElementById('sa-desc-hidden');
-    if (!editor) return;
-
-    editor.innerHTML = @json($description ?? '');
-
-    window.saSync = function() {
-        if (hidden) {
-            hidden.value = editor.innerHTML;
-            @this.set('description', editor.innerHTML);
-        }
-    };
-    editor.addEventListener('input', saSync);
-});
-</script>
+{{-- No JS editor needed — description uses a plain <textarea wire:model.lazy> --}}
 </div>

@@ -234,7 +234,7 @@ class ProductAdd extends Component
             }
 
             $this->reset();
-            return redirect()->route('product_list')
+            return redirect()->route('my-listings')
                 ->with('message', '📝 Product saved as draft. You can publish it anytime from My Listings.');
 
         } catch (\Exception $e) {
@@ -297,22 +297,37 @@ class ProductAdd extends Component
 
         try {
             $customerId = Session::get('id');
-            $customer   = Customer::find($customerId);
+            $customer   = $customerId ? Customer::find($customerId) : null;
 
-            if (!$customer || $customer->package_id == 0) {
-                session()->flash('error', 'You need a valid package to add products.');
-                return;
+            // Fallback: resolve customer from seller_email session (new seller system)
+            if (!$customer && Session::get('seller_email')) {
+                $customer   = Customer::where('email', Session::get('seller_email'))->first();
+                $customerId = $customer?->id;
+                if ($customerId) Session::put('id', $customerId);
             }
 
-            // Check product limit
-            $existingProducts = Product::where('customer_id', $customerId)->count();
-            $productLimit     = !empty($customer->product_upload_limit)
-                ? $customer->product_upload_limit
-                : (($m = ItemsModel::find($customer->package_id)) ? $m->product_limit : 0);
-
-            if ($existingProducts >= $productLimit) {
-                session()->flash('error', 'You have reached your product upload limit.');
-                return;
+            // New seller system uses subscription plans, not package_id
+            // Check subscription plan product limit instead
+            $sellerId = Session::get('seller_id');
+            if ($sellerId) {
+                $sub = \App\Models\SellerSubscription::where('seller_id', $sellerId)
+                    ->where('status', 'active')->first();
+                $maxProducts = $sub?->max_products ?? 10; // free plan default
+                $existingProducts = Product::where('customer_id', $customerId)->count();
+                if ($maxProducts !== null && $existingProducts >= $maxProducts) {
+                    session()->flash('error', 'You have reached your plan product limit. Upgrade to add more.');
+                    return;
+                }
+            } elseif ($customer) {
+                // Legacy GFE system: use package_id check
+                $existingProducts = Product::where('customer_id', $customerId)->count();
+                $productLimit = !empty($customer->product_upload_limit)
+                    ? $customer->product_upload_limit
+                    : 999; // no limit if no package system
+                if ($existingProducts >= $productLimit) {
+                    session()->flash('error', 'You have reached your product upload limit.');
+                    return;
+                }
             }
 
             // Upload main image
@@ -401,7 +416,7 @@ class ProductAdd extends Component
             }
 
             $this->reset();
-            return redirect()->route('product_list')
+            return redirect()->route('my-listings')
                 ->with('message', '✅ Product submitted for review! Goes live once approved by admin.');
 
         } catch (\Exception $e) {
