@@ -108,11 +108,7 @@ use App\Livewire\Seller\DigitalInformationForm;
 use App\Livewire\Seller\MyListings;
 use App\Livewire\Seller\ServiceAdd;
 use App\Livewire\Seller\RFQList;
-<<<<<<< HEAD
-
-=======
 use App\Livewire\Seller\Quotations as SellerQuotations;
->>>>>>> f7d950e39accfee04a1040700c7429e4f7f3ebae
  
 use App\Http\Controllers\Seller\ProfileController;
 
@@ -240,9 +236,6 @@ Route::middleware([SellerAuth::class])->group(function () {  // <-- CHANGED from
     ->name('seller.rfq.view');
     Route::get('/seller/rfq/{id}/quote', \App\Livewire\Seller\RFQQuote::class)
     ->name('seller.rfq.quote');
-<<<<<<< HEAD
-=======
-    Route::get('/seller/quotations', SellerQuotations::class)
+Route::get('/seller/quotations', SellerQuotations::class)
     ->name('seller.quotations');
->>>>>>> f7d950e39accfee04a1040700c7429e4f7f3ebae
 });
