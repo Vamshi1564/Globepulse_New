@@ -1,30 +1,24 @@
 <?php
 namespace App\Livewire\Seller;
 
-use Livewire\Component; // ✅ ADD THIS
+use Livewire\Component;
 use App\Models\RFQ;
 
 class RFQList extends Component
 {
-    public $rfqs;
+    public $rfqs = [];
 
-public function mount()
-{
-    if (!session()->has('seller_id')) {
-        return redirect()->route('seller.login');
+    public function mount()
+    {
+        $sellerUuid = session('seller_uuid');
+
+        
+
+        $this->rfqs = RFQ::with(['product', 'buyer'])
+            ->where('supplier_uuid', $sellerUuid)
+            ->latest()
+            ->get();
     }
-
-    $sellerId = trim(session('seller_id'));   // remove spaces
-    $sellerId = (int) $sellerId;              // force int
-
-    // 🔥 DEBUG
-    // dd($sellerId);
-
-    $this->rfqs = RFQ::with(['product', 'buyer'])
-        ->where('supplier_id', $sellerId)
-        ->latest()
-        ->get();
-}
 
     public function render()
     {

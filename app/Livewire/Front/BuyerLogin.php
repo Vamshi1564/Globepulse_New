@@ -18,7 +18,7 @@ class BuyerLogin extends Component
     public function mount()
     {
         // Clear old buyer session
-        session()->forget(['buyer_id','buyer_email','buyer_name']);
+        session()->forget(['buyer_id','buyer_uuid','buyer_email','buyer_name']);
 
         if(session('login_success')){
             $this->successMsg = session('login_success');
@@ -64,10 +64,11 @@ class BuyerLogin extends Component
         }
 
         // Create session
-        session([
-    'buyer_id' => $buyer->id,
+session([
+    'buyer_id'    => $buyer->id,   // keep for compatibility
+    'buyer_uuid'  => $buyer->id,   // 🔥 IMPORTANT FIX
     'buyer_email' => $buyer->email,
-    'buyer_name' => $buyer->full_name
+    'buyer_name'  => $buyer->full_name
 ]);
 
 DB::table('buyers')

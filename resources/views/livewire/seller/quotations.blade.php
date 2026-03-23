@@ -67,7 +67,7 @@
 
                         <div class="col-md-3">
                             <small class="text-muted">Buyer</small>
-                            <div>{{ $quote->buyer->name ?? 'N/A' }}</div>
+                            <div>{{ $quote->buyer->full_name ?? 'N/A' }}</div>
                         </div>
 
                     </div>
