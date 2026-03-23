@@ -12,16 +12,21 @@ class Quotations extends Component
 
 public function mount()
 {
-    $sellerId = Session::get('seller_id'); // string
-    $buyerId  = Session::get('buyer_id');
+    $sellerUuid = Session::get('seller_uuid');
+    $buyerUuid  = Session::get('buyer_uuid');
 
     $this->quotations = Quotation::with(['rfq.product', 'buyer'])
-        ->where(function ($query) use ($sellerId, $buyerId) {
-            $query->where('supplier_id', $sellerId);
+        ->where(function ($query) use ($sellerUuid, $buyerUuid) {
 
-            if ($buyerId) {
-                $query->orWhere('buyer_id', $buyerId);
+            if ($sellerUuid && $buyerUuid) {
+                $query->where('supplier_uuid', $sellerUuid)
+                      ->orWhere('buyer_uuid', $buyerUuid);
+            } elseif ($sellerUuid) {
+                $query->where('supplier_uuid', $sellerUuid);
+            } elseif ($buyerUuid) {
+                $query->where('buyer_uuid', $buyerUuid);
             }
+
         })
         ->latest()
         ->get();

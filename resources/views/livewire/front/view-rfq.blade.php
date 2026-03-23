@@ -306,10 +306,11 @@
             <div class="col-md-6">
                 <span>Location</span>
                 <div class="d-flex align-items-center gap-2">
-    <img src="{{ asset('assets/'.$rfq->supplier->country['flag_img']) }}" width="22">
-    <span class="fw-semibold">
-        {{ $rfq->supplier->country['short_name'] }}
-    </span>
+   <img src="{{ asset('assets/'.$rfq->supplier?->country?->flag_img) }}" width="22">
+
+<span>
+{{ $rfq->supplier?->country?->short_name ?? 'N/A' }}
+</span>
 </div>
             </div>
 

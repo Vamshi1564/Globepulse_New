@@ -737,13 +737,23 @@ document.addEventListener('livewire:init', () => {
             </div>
 
                         <!-- Delivery -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold text-start">Delivery Time</label>
-                            <input type="text"
-                                wire:model="rfq_delivery_time"
-                                class="form-control"
-                                placeholder="e.g. 7 days">
-                        </div>
+                       <div class="col-md-6">
+    <label class="form-label fw-semibold text-start">Delivery Time</label>
+
+    <select wire:model="rfq_delivery_time" class="form-control">
+        <option value="">Select delivery time</option>
+        <option value="1-3 days">1-3 days</option>
+        <option value="3-5 days">3-5 days</option>
+        <option value="7 days">7 days</option>
+        <option value="10 days">10 days</option>
+        <option value="14 days">14 days</option>
+        <option value="21 days">21 days</option>
+        <option value="30 days">30 days</option>
+        <option value="45 days">45 days</option>
+        <option value="60 days">60 days</option>
+        <option value="90 days">90 days</option>
+    </select>
+</div>
 
                         <div class="col-md-6">
                 <label class="form-label fw-semibold">Destination Port</label>

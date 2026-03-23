@@ -10,15 +10,19 @@ class Quotations extends Component
 {
     public $quotations = [];
 
-    public function mount()
-    {
-        $buyerId = Session::get('buyer_id'); // UUID or ID
+   public function mount()
+{
+    $buyerUuid = Session::get('buyer_uuid');
 
-        $this->quotations = Quotation::with(['rfq.product', 'supplier'])
-            ->where('buyer_id', $buyerId)
-            ->latest()
-            ->get();
+    if (!$buyerUuid) {
+        abort(403, 'Buyer not logged in');
     }
+
+    $this->quotations = Quotation::with(['rfq.product', 'supplier'])
+        ->where('buyer_uuid', $buyerUuid)
+        ->latest()
+        ->get();
+}
 
     public function render()
     {

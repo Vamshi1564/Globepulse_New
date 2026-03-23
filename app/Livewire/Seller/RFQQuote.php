@@ -18,9 +18,16 @@ class RFQQuote extends Component
     public $message;
 
     public function mount($id)
-    {
-        $this->rfq = RFQ::findOrFail($id);
-    }
+{
+    $sellerUuid = session('seller_uuid');
+
+   
+
+    // 🔒 SECURITY: ensure seller owns this RFQ
+    $this->rfq = RFQ::where('id', $id)
+        ->where('supplier_uuid', $sellerUuid)
+        ->firstOrFail();
+}
 
     public function submitQuote()
     {
@@ -31,9 +38,8 @@ class RFQQuote extends Component
 
         $quotation = Quotation::create([
             'rfq_id' => $this->rfq->id,
-            'supplier_id' => session('seller_id') ?? session('id'), // ✅ FIXED
-            'buyer_id' => $this->rfq->buyer_id,
-
+            'supplier_uuid' => session('seller_uuid'),
+            'buyer_uuid'    => $this->rfq->buyer_uuid,
             'price' => $this->price,
             'delivery_time' => $this->delivery_time,
             'payment_terms' => $this->payment_terms,
@@ -51,7 +57,10 @@ class RFQQuote extends Component
         }
 
         // update RFQ status → quoted
-        $this->rfq->update(['status' => 1]);
+        if ($this->rfq->status === 'quoted') {
+            session()->flash('error', 'Quote already submitted');
+            return;
+        }
 
         session()->flash('message', 'Quotation sent successfully!');
 

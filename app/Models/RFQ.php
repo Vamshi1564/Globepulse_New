@@ -11,12 +11,12 @@ class RFQ extends Model
 
     protected $table = 'rfqs';
 
-    public $timestamps = true;
-
     protected $fillable = [
         'product_id',
-        'supplier_id',
-        'buyer_id',
+
+        // 🔥 ONLY KEEP UUID
+        'supplier_uuid',
+        'buyer_uuid',
 
         'quantity',
         'target_price',
@@ -34,25 +34,26 @@ class RFQ extends Model
         'status',
     ];
 
-    // ✅ Product Relation
+    // ✅ Product
     public function product()
     {
         return $this->belongsTo(\App\Models\Product::class, 'product_id');
     }
 
-    // ✅ Supplier (Seller)
-    public function supplier()
-    {
-        return $this->belongsTo(\App\Models\Customer::class, 'supplier_id');
-    }
-
-    // ✅ Buyer (IMPORTANT ADD THIS)
-    public function buyer()
-    {
-        return $this->belongsTo(\App\Models\Buyer::class, 'buyer_id');
-    }
-public function quotations()
+    // ✅ Seller (UUID → id)
+  public function supplier()
 {
-    return $this->hasMany(\App\Models\Quotation::class, 'rfq_id'); // ✅ FIX
+    return $this->belongsTo(\App\Models\Seller::class, 'supplier_uuid', 'id');
 }
+
+public function buyer()
+{
+    return $this->belongsTo(\App\Models\Buyer::class, 'buyer_uuid', 'id');
+}
+
+    // ✅ Quotations
+    public function quotations()
+    {
+        return $this->hasMany(\App\Models\Quotation::class, 'rfq_id');
+    }
 }

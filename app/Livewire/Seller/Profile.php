@@ -321,7 +321,7 @@ class Profile extends Component
             ][$this->selected_plan];
 
             SellerSubscription::create([
-                'id'=>(string)Str::uuid(),'seller_id'=>$sellerId,'plan_name'=>$this->selected_plan,
+                'id'=>(string)Str::id(),'seller_id'=>$sellerId,'plan_name'=>$this->selected_plan,
                 'price_usd'=>$p['price'],'billing_cycle'=>$p['cycle'],'max_products'=>$p['max'],
                 'has_verified_badge'=>$p['badge'],'has_rfq_priority'=>$p['rfq'],'has_analytics'=>$p['analytics'],
                 'has_global_promotion'=>$p['global'],'has_ai_buyer_matching'=>$p['ai'],
@@ -379,7 +379,7 @@ class Profile extends Component
             ->update(['is_latest' => 0]);
 
         SellerDocument::create([
-            'id'              => (string) Str::uuid(),
+            'id'              => (string) Str::id(),
             'seller_id'       => $sellerId,
             'document_type'   => $type,
             'file_name'       => $fileName,

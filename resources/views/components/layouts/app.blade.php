@@ -110,9 +110,9 @@
 </head>
 
 <body>
-<script>
+<!-- <script>
 window.isLoggedIn = @json(auth('customer')->check());
-</script>
+</script> -->
     <div class="loading-overlay" id="loading-overlay">
         <div class="logo-container">
             <div class="main-logo">
@@ -436,7 +436,7 @@ window.isLoggedIn = @json(auth('customer')->check());
         </div>
     </div>
 
-    @livewireScripts
+<!--   
     <script>
         var modal = document.getElementById("myModal");
 
@@ -447,10 +447,11 @@ window.isLoggedIn = @json(auth('customer')->check());
         var span = document.getElementsByClassName("close")[0];
 
         // When the user clicks on the button, open the modal
-        btn.onclick = function() {
+       if (btn) {
+    btn.onclick = function() {
             modal.style.display = "block";
         }
-
+}
         // When the user clicks on <span> (x), close the modal
         span.onclick = function() {
             modal.style.display = "none";
@@ -462,22 +463,24 @@ window.isLoggedIn = @json(auth('customer')->check());
                 modal.style.display = "none";
             }
         }
-    </script>
+    </script> -->
     <script>
         function changeSrc(obj) {
             document.getElementById("myiframe").src = obj;
             return false;
         }
     </script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-
-    <script>
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-    </script>
+    <!-- <script>
+       if (window.$) {
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    });
+}
+    </script> -->
     <script src="{{ asset('../../../vendors/echarts/echarts.min.js') }}"></script>
     <script src="{{ asset('../../../assets/js/crm-dashboard.js') }}"></script>
     <script src="{{ asset('../../../vendors/popper/popper.min.js') }}"></script>
@@ -509,7 +512,7 @@ window.isLoggedIn = @json(auth('customer')->check());
     <script src="{{ asset('../../../assets/js/ecommerce-dashboard.js') }}"></script>
     <script src="{{ asset('../../../assets/js/echarts-example.js') }}"></script>
     <script src="{{ asset('../../../vendors/glightbox/glightbox.min.js') }}"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.3.1/js/tom-select.complete.min.js"
         integrity="sha512-zdXqksVc9s0d2eoJGdQ2cEhS4mb62qJueasTG4HjCT9J8f9x5gXCQGSdeilD+C7RqvUi1b4DdD5XaGjJZSlP9Q=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -519,9 +522,8 @@ window.isLoggedIn = @json(auth('customer')->check());
     <script src="{{ asset('../../vendors/isotope-packery/packery-mode.pkgd.min.js') }}"></script>
     <script src="{{ asset('../../vendors/bigpicture/BigPicture.js') }}"></script>
 
-    {{--
-    <script src="//unpkg.com/alpinejs"></script> --}}
-    <script defer src="https://unpkg.com/alpinejs"></script>
+ 
+    
 
 
     {{-- tooltips show name --}}
@@ -554,6 +556,7 @@ window.isLoggedIn = @json(auth('customer')->check());
     <script>
         new TomSelect("#country");
     </script>
+   
     <script>
         document.addEventListener("livewire:load", function() {
             const alert = document.getElementById('alert');
@@ -625,7 +628,7 @@ Continue Browsing
 </div>
 </div>
 
-{{-- @livewireScripts --}}
+
 
 <script>
 
@@ -852,7 +855,8 @@ document.addEventListener("click", function(e){
 
 });
 </script> -->
-
+ <script defer src="https://unpkg.com/alpinejs"></script>
+  @livewireScripts
 </body>
 
 </html>
