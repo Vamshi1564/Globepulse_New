@@ -10,39 +10,63 @@ class ViewRFQ extends Component
     public $rfq;
 
     public function mount($id)
-    {
-        $buyerId = session('buyer_id');
+{
+    $buyerUuid = session('buyer_uuid') ?? session('buyer_id');
 
-        if (!$buyerId) {
-            return redirect()->route('buyer.login');
-        }
-
-        $this->rfq = RFQ::with('product', 'supplier')
-            ->where('buyer_id', $buyerId)
-            ->findOrFail($id);
+    if (!$buyerUuid) {
+        abort(403, 'Buyer not logged in');
     }
+
+    $this->rfq = RFQ::with(['product', 'supplier', 'quotations'])
+        ->where('buyer_uuid', $buyerUuid)
+        ->where('id', $id) // ✅ IMPORTANT
+        ->firstOrFail();
+}
 
     public function render()
     {
         return view('livewire.front.view-rfq');
     }
 
-
-
-public function acceptQuote($id)
+    // ✅ ACCEPT QUOTE (SECURE)
+    public function acceptQuote($id)
 {
-    $quote = Quotation::find($id);
-    $quote->update(['status' => 1]);
+    $buyerUuid = session('buyer_uuid') ?? session('buyer_id');
 
-    // close RFQ
-    $quote->rfq->update(['status' => 2]);
+    $quote = Quotation::where('id', $id)
+        ->where('buyer_uuid', $buyerUuid)
+        ->firstOrFail();
+
+    $quote->update([
+        'status' => 1 // accepted
+    ]);
+
+    // ✅ close RFQ
+    $quote->rfq->update([
+        'status' => 'accepted' // use ENUM value (important)
+    ]);
+
+    // ✅ refresh UI
+    $this->rfq = $this->rfq->fresh();
 
     session()->flash('message', 'Quotation accepted!');
 }
 
-public function rejectQuote($id)
+    // ✅ REJECT QUOTE (SECURE)
+    public function rejectQuote($id)
 {
-    Quotation::find($id)->update(['status' => 2]);
+    $buyerUuid = session('buyer_uuid') ?? session('buyer_id');
+
+    $quote = Quotation::where('id', $id)
+        ->where('buyer_uuid', $buyerUuid)
+        ->firstOrFail();
+
+    $quote->update([
+        'status' => 2 // rejected
+    ]);
+
+    // ✅ refresh UI
+    $this->rfq = $this->rfq->fresh();
 
     session()->flash('message', 'Quotation rejected!');
 }

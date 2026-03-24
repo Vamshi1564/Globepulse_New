@@ -281,7 +281,36 @@
 </div>
 
 <!-- ACTION -->
+<div class="mt-4 d-flex justify-content-end gap-2">
+
+    @if($rfq->status == 'pending')
+
+       <button onclick="updateRFQStatus('accepted')" class="btn btn-primary">
+    ✅ Accept RFQ
+</button>
+
+<button onclick="updateRFQStatus('rejected')" class="btn btn-danger">
+    ❌ Reject RFQ
+</button>
+
+<script>
+function updateRFQStatus(status) {
+    if (!confirm('Are you sure?')) return;
+
+    document.body.style.cursor = 'wait';
+
+    @this.call('updateStatusAndRedirect', status) // ✅ FIXED
+        .then(() => {
+            document.body.style.cursor = 'default';
+        });
+}
+</script>
+
+    @endif
+
+</div>
 <div class="mt-4 text-end">
+    
     <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
        class="btn btn-success px-4">
         💰 Send Quotation

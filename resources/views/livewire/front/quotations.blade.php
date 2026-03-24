@@ -70,7 +70,7 @@
 
                         <div class="col-md-3">
                             <small class="text-muted">Supplier</small>
-                            <div>{{ $quote->supplier->company ?? 'N/A' }}</div>
+                            <div>{{ optional($quote->supplier)->company ?? 'N/A' }}</div>
                         </div>
 
                     </div>

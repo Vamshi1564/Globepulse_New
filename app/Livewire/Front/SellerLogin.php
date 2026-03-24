@@ -61,6 +61,7 @@ class SellerLogin extends Component
         // ✅ Credentials verified — create session
         session([
             'seller_id'    => $seller->id,
+            'seller_uuid'  => $seller->id,
             'id'           => $seller->id,   // ← old dashboard pages use Session::get('id')
             'seller_email' => $seller->email,
             'seller_name'  => $seller->details?->legal_business_name ?? $seller->email,

@@ -9,22 +9,21 @@ class MyRFQs extends Component
     public $rfqs = [];
 
     public function mount()
-    {
-        $buyerId = session('buyer_id');
+{
+    $buyerUuid = session('buyer_uuid') ?? session('buyer_id');
 
-        if (!$buyerId) {
-            return redirect()->route('buyer.login');
-        }
-
-        // 🔥 CORE LOGIC
-        $this->rfqs = RFQ::with('product')
-            ->where('buyer_id', $buyerId)
-            ->latest()
-            ->get();
+    if (!$buyerUuid) {
+        abort(403, 'Buyer not logged in');
     }
 
-  public function render()
-{
-   return view('livewire.front.buyer-rfqs');
+    $this->rfqs = RFQ::with('product')
+        ->where('buyer_uuid', $buyerUuid)
+        ->latest()
+        ->get();
 }
+
+    public function render()
+    {
+        return view('livewire.front.buyer-rfqs');
+    }
 }
