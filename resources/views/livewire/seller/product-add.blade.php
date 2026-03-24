@@ -149,10 +149,20 @@
 <div class="container-fluid px-3 py-3">
 
   @if(session('message'))
-  <div class="pa-alert success"><i class="bi bi-check-circle-fill"></i> {{ session('message') }}</div>
+  <div id="pa-toast-s" style="position:fixed;top:20px;right:20px;z-index:99999;background:#059669;color:#fff;padding:14px 20px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);display:flex;align-items:center;gap:10px;font-size:.88rem;font-weight:600;min-width:300px;max-width:420px;animation:slideIn .3s ease;">
+    <i class="bi bi-check-circle-fill" style="font-size:1.1rem;"></i>
+    <span>{{ session('message') }}</span>
+    <button onclick="this.closest('#pa-toast-s').remove()" style="margin-left:auto;background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;">×</button>
+  </div>
+  <script>setTimeout(function(){var t=document.getElementById('pa-toast-s');if(t)t.remove();},5000);</script>
   @endif
   @if(session('error'))
-  <div class="pa-alert error"><i class="bi bi-x-circle-fill"></i> {{ session('error') }}</div>
+  <div id="pa-toast-e" style="position:fixed;top:20px;right:20px;z-index:99999;background:#dc2626;color:#fff;padding:14px 20px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);display:flex;align-items:center;gap:10px;font-size:.88rem;font-weight:600;min-width:300px;max-width:420px;animation:slideIn .3s ease;">
+    <i class="bi bi-x-circle-fill" style="font-size:1.1rem;"></i>
+    <span>{{ session('error') }}</span>
+    <button onclick="this.closest('#pa-toast-e').remove()" style="margin-left:auto;background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;">×</button>
+  </div>
+  <script>setTimeout(function(){var t=document.getElementById('pa-toast-e');if(t)t.remove();},6000);</script>
   @endif
 
   <form id="productForm" wire:submit.prevent="submit">
@@ -460,7 +470,20 @@
             </div>
             <div class="col-md-6">
               <label class="pa-label">Delivery Lead Time</label>
-              <input class="pa-input" wire:model.lazy="lead_time" placeholder="e.g. 7–15 Business Days">
+              <select class="pa-select" wire:model.lazy="lead_time">
+                <option value="">Select lead time</option>
+                <option value="1-3 Business Days">1–3 Business Days</option>
+                <option value="3-5 Business Days">3–5 Business Days</option>
+                <option value="7 Business Days">7 Business Days</option>
+                <option value="7-10 Business Days">7–10 Business Days</option>
+                <option value="10-15 Business Days">10–15 Business Days</option>
+                <option value="15-20 Business Days">15–20 Business Days</option>
+                <option value="15-30 Business Days">15–30 Business Days</option>
+                <option value="30 Business Days">30 Business Days</option>
+                <option value="30-45 Business Days">30–45 Business Days</option>
+                <option value="45-60 Business Days">45–60 Business Days</option>
+                <option value="To be negotiated">To be negotiated</option>
+              </select>
             </div>
             <div class="col-md-6">
               <label class="pa-label">Business Type *</label>
@@ -669,11 +692,13 @@
               </span>
             </button>
 
-            {{-- Publish --}}
+            {{-- Publish — disabled after first click to prevent double submit --}}
             <button type="submit"
               class="btn-publish"
               wire:loading.attr="disabled"
+              wire:target="submit"
               wire:click="generateSlug"
+              onclick="this.disabled=true;this.innerHTML='<i class=\'bi bi-arrow-repeat me-1\'></i> Submitting...';this.closest('form').requestSubmit();"
               title="Submit for admin review — goes live once approved">
               <span wire:loading.remove wire:target="submit">
                 <i class="bi bi-send-fill"></i> Submit for Review

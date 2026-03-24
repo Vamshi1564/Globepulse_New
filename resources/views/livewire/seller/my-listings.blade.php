@@ -106,7 +106,17 @@
 <div class="ml-wrap">
 
   @if(session('message'))
-  <div class="ml-alert success"><i class="bi bi-check-circle-fill"></i> {{ session('message') }}</div>
+  <div id="ml-toast" style="position:fixed;top:20px;right:20px;z-index:99999;background:#059669;color:#fff;padding:14px 20px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);display:flex;align-items:center;gap:10px;font-size:.88rem;font-weight:600;min-width:300px;max-width:420px;animation:slideIn .3s ease;">
+    <i class="bi bi-check-circle-fill" style="font-size:1.1rem;flex-shrink:0;"></i>
+    <span>{{ session('message') }}</span>
+    <button onclick="document.getElementById('ml-toast').remove()" style="margin-left:auto;background:none;border:none;color:#fff;font-size:1.1rem;cursor:pointer;padding:0 0 0 8px;opacity:.8;">×</button>
+  </div>
+  <style>
+    @keyframes slideIn { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+  </style>
+  <script>
+    setTimeout(function(){ var t=document.getElementById('ml-toast'); if(t) t.style.animation='slideIn .3s ease reverse'; setTimeout(function(){ if(t) t.remove(); },300); }, 4000);
+  </script>
   @endif
 
   {{-- ── TOP BAR ── --}}
@@ -202,7 +212,7 @@
 
           <td>
             @if($item->image)
-              <img src="{{ config('app.pub_aws_url') . $item->image }}" class="ml-thumb"
+              <img src="{{ $item->image && str_starts_with($item->image, 'http') ? $item->image : asset('storage/' . $item->image) }}" class="ml-thumb"
                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
               <div class="ml-thumb-placeholder" style="display:none;">
                 {{ $item->type === 'product' ? '📦' : '🛠️' }}

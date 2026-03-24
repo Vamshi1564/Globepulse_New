@@ -24,6 +24,7 @@ use App\Livewire\Front\Home as FrontHome;
 use App\Livewire\Front\Portfolio;
 use App\Livewire\Front\Product;
 use App\Livewire\Front\ProductDetail;
+use App\Livewire\Front\ServiceDetail;
 use App\Livewire\Front\ProductInquiry;
 use App\Livewire\Front\RfqComponent;
 use App\Livewire\Front\Signup;
@@ -76,6 +77,9 @@ Route::get('/rfq/{product_id}/{supplier_id}', function ($product_id, $supplier_i
     return view('rfq-page', compact('product_id', 'supplier_id'));
 })->name('rfq.create');
 Route::get('/product-detail/{slug}', ProductDetail::class)->name('product-detail');
+
+Route::get('/service-detail/{slug}', ServiceDetail::class)
+    ->name('service-detail');
 Route::get('/signup/{id?}', Signup::class)->name('signup');
 Route::get('/buyer/login', BuyerLogin::class)->name('buyer.login');
 Route::get('/buyer/signup', BuyerSignup::class)->name('buyer.signup');

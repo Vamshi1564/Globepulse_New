@@ -157,7 +157,14 @@ class ProductAdd extends Component
     {
         try {
             $customerId = Session::get('id');
-            $customer   = Customer::find($customerId);
+            $customer   = $customerId ? Customer::find($customerId) : null;
+
+            // Fallback: new seller system uses seller_email
+            if (!$customer && Session::get('seller_email')) {
+                $customer   = Customer::where('email', Session::get('seller_email'))->first();
+                $customerId = $customer?->id;
+                if ($customerId) Session::put('id', $customerId);
+            }
 
             if (!$customer) {
                 session()->flash('error', 'Session expired. Please login again.');
@@ -328,6 +335,16 @@ class ProductAdd extends Component
                     session()->flash('error', 'You have reached your product upload limit.');
                     return;
                 }
+            }
+
+            // Check for duplicate product title by same seller
+            $duplicate = Product::where('customer_id', $customerId)
+                ->where('title', $this->title)
+                ->where('status', '!=', 3) // allow draft with same name
+                ->exists();
+            if ($duplicate) {
+                session()->flash('error', '⚠️ You already have a product with this name. Please use a different title.');
+                return;
             }
 
             // Upload main image

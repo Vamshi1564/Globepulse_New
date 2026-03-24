@@ -1,559 +1,594 @@
-{{-- FILE: resources/views/livewire/seller/service-add.blade.php
-     IndiaMART-style: 2-tab layout, radio specs, live product score --}}
+{{-- FILE: resources/views/livewire/seller/service-add.blade.php --}}
 <div>
 <livewire:seller.layout.header />
-
 <style>
-/* ── Page header ── */
-.sa-page-header{background:#fff;border-bottom:1px solid #e5e9f2;padding:12px 20px;
-  display:flex;align-items:center;gap:12px;}
-.sa-back-btn{color:#1a56db;font-size:.84rem;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:4px;}
-.sa-back-btn:hover{color:#1e40af;}
-.sa-page-title{font-size:1rem;font-weight:800;color:#0f172a;}
+/* ── Reuse product-add's pa- prefix for consistency ── */
+.pa-wrap{max-width:1200px;margin:0 auto;padding:1.5rem;}
+.pa-stepbar{background:#fff;border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;border:1px solid #e5e9f2;box-shadow:0 1px 6px rgba(0,0,0,.04);}
+.pa-steps{display:flex;align-items:center;gap:0;}
+.pa-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:.35rem;position:relative;}
+.pa-step::after{content:'';position:absolute;top:18px;left:50%;width:100%;height:2px;background:#e2e8f0;z-index:0;}
+.pa-step:last-child::after{display:none;}
+.pa-step-num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:800;z-index:1;border:2px solid #e2e8f0;background:#fff;color:#94a3b8;transition:all .2s;}
+.pa-step.active .pa-step-num{background:#1d4ed8;border-color:#1d4ed8;color:#fff;}
+.pa-step.done .pa-step-num{background:#059669;border-color:#059669;color:#fff;}
+.pa-step-lbl{font-size:.72rem;font-weight:600;color:#94a3b8;text-align:center;white-space:nowrap;}
+.pa-step.active .pa-step-lbl{color:#1d4ed8;font-weight:700;}
+.pa-step.done .pa-step-lbl{color:#059669;}
 
-/* ── 2-tab bar — IndiaMART style ── */
-.sa-tabs{display:flex;background:#f1f5f9;border-radius:0;}
-.sa-tab{flex:1;padding:14px 20px;text-align:center;font-size:.88rem;font-weight:700;cursor:pointer;
-  border:none;background:transparent;color:#64748b;border-bottom:3px solid transparent;transition:all .2s;}
-.sa-tab.active{background:#1e3a8a;color:#fff;border-bottom-color:#1e3a8a;}
-.sa-tab.done{background:#f0fdf4;color:#059669;border-bottom-color:#10b981;}
-.sa-tab:disabled{cursor:not-allowed;opacity:.5;}
+.pa-body{display:grid;grid-template-columns:1fr 340px;gap:1.5rem;align-items:start;}
+@media(max-width:900px){.pa-body{grid-template-columns:1fr;}}
 
-/* ── Main layout ── */
-.sa-main{display:grid;grid-template-columns:1fr;gap:20px;padding:20px;}
-@media(max-width:992px){.sa-main{grid-template-columns:1fr;}}
+.pa-card{background:#fff;border-radius:14px;border:1px solid #e5e9f2;box-shadow:0 1px 6px rgba(0,0,0,.04);overflow:hidden;}
+.pa-card-hd{padding:1rem 1.25rem;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:.6rem;}
+.pa-card-hd-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.pa-card-hd h3{font-size:.95rem;font-weight:800;color:#1e293b;margin:0;}
+.pa-card-hd p{font-size:.74rem;color:#94a3b8;margin:0;}
+.pa-card-body{padding:1.25rem;}
 
-/* ── Form card ── */
-.sa-form-card{background:#fff;border:1px solid #e5e9f2;border-radius:12px;overflow:hidden;}
-.sa-form-head{background:#1e3a8a;color:#fff;padding:14px 20px;font-size:.9rem;font-weight:800;}
-.sa-form-body{padding:20px;}
+.pa-label{display:block;font-size:.75rem;font-weight:700;color:#374151;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.03em;}
+.pa-input,.pa-select,.pa-textarea{width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:.5rem .85rem;font-size:.88rem;color:#1e293b;background:#fff;outline:none;transition:border .2s,box-shadow .2s;}
+.pa-input:focus,.pa-select:focus,.pa-textarea:focus{border-color:#1d4ed8;box-shadow:0 0 0 3px rgba(29,78,216,.08);}
+.pa-hint{font-size:.72rem;color:#94a3b8;margin-top:.25rem;}
+.pa-err{font-size:.75rem;color:#dc2626;margin-top:.25rem;}
+.pa-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:600px){.pa-row{grid-template-columns:1fr;}}
 
-/* ── Fields ── */
-.sa-label{font-size:.8rem;font-weight:700;color:#374151;margin-bottom:6px;display:block;}
-.sa-input,.sa-select,.sa-textarea{border:1.5px solid #d1d5db;border-radius:8px;padding:.5rem .85rem;
-  font-size:.88rem;width:100%;outline:none;transition:border .2s;background:#fff;}
-.sa-input:focus,.sa-select:focus,.sa-textarea:focus{border-color:#1e3a8a;box-shadow:0 0 0 3px rgba(30,58,138,.08);}
-.sa-textarea{resize:vertical;min-height:180px;}
-.sa-hint{font-size:.72rem;color:#94a3b8;margin-top:3px;}
-.sa-err{font-size:.75rem;color:#dc2626;margin-top:3px;font-weight:600;}
+/* Editor */
+.editor-toolbar{display:flex;flex-wrap:wrap;gap:4px;padding:8px;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:10px 10px 0 0;border-bottom:none;}
+.editor-toolbar button,.editor-toolbar select{border:1px solid #e2e8f0;background:#fff;border-radius:6px;padding:3px 8px;font-size:.75rem;cursor:pointer;color:#374151;}
+.editor-toolbar button:hover{background:#e8f0fe;border-color:#1d4ed8;color:#1d4ed8;}
+.editor-content{border:1.5px solid #e2e8f0;border-radius:0 0 10px 10px;min-height:160px;padding:12px 14px;font-size:.88rem;outline:none;color:#1e293b;}
+.editor-content:focus{border-color:#1d4ed8;}
 
-/* ── Price row ── */
-.price-row{display:flex;align-items:center;gap:8px;}
-.price-symbol{background:#f8fafc;border:1.5px solid #d1d5db;border-radius:8px 0 0 8px;
-  padding:.5rem 12px;font-size:.88rem;font-weight:700;color:#374151;border-right:none;}
-.price-input{border:1.5px solid #d1d5db;border-radius:0;padding:.5rem .85rem;font-size:.88rem;
-  width:160px;outline:none;transition:border .2s;background:#fff;}
-.price-input:focus{border-color:#1e3a8a;}
-.price-per{font-size:.84rem;color:#64748b;font-weight:600;padding:0 8px;}
-.price-unit-select{border:1.5px solid #d1d5db;border-radius:0 8px 8px 0;padding:.5rem .85rem;
-  font-size:.84rem;outline:none;background:#fff;cursor:pointer;flex:1;max-width:220px;}
-.price-unit-select:focus{border-color:#1e3a8a;}
+/* Media uploads */
+.photo-grid{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.5rem;}
+.photo-slot{width:80px;height:80px;border:2px dashed #e2e8f0;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#f8fafc;font-size:1.2rem;transition:all .15s;position:relative;}
+.photo-slot:hover{border-color:#1d4ed8;background:#e8f0fe;}
+.photo-slot img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
+.photo-slot .remove-btn{position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:#ef4444;border-radius:50%;color:#fff;font-size:.65rem;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;}
+.upload-hint{font-size:.72rem;color:#94a3b8;margin-top:.25rem;}
 
-/* ── Photo upload area ── */
-.photo-grid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
-.photo-slot{width:80px;height:80px;border:1.5px dashed #d1d5db;border-radius:10px;
-  display:flex;align-items:center;justify-content:center;flex-direction:column;
-  cursor:pointer;background:#f8fafc;transition:all .15s;position:relative;}
-.photo-slot:hover{border-color:#1e3a8a;background:#eff6ff;}
-.photo-slot img{width:100%;height:100%;object-fit:cover;border-radius:9px;}
-.photo-slot-main{width:120px;height:120px;font-size:2rem;}
-.media-btn{border:1.5px solid #d1d5db;border-radius:8px;padding:8px 14px;background:#f8fafc;
-  font-size:.8rem;font-weight:700;color:#374151;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;}
-.media-btn:hover{border-color:#1e3a8a;color:#1e3a8a;background:#eff6ff;}
-.media-btn.active{border-color:#059669;color:#059669;background:#f0fdf4;}
+/* Spec radio/checkbox */
+.spec-grid{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.4rem;}
+.spec-chip{padding:.35rem .85rem;border-radius:20px;border:1.5px solid #e2e8f0;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;background:#f8fafc;color:#475569;}
+.spec-chip:hover{border-color:#1d4ed8;color:#1d4ed8;background:#e8f0fe;}
+.spec-chip.sel{background:#1d4ed8;color:#fff;border-color:#1d4ed8;}
+.spec-chip.sel-green{background:#059669;color:#fff;border-color:#059669;}
 
-/* ── Spec radio/checkbox ── */
-.spec-section{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid #f1f5f9;}
-.spec-section:last-child{border-bottom:none;}
-.spec-title{font-size:.84rem;font-weight:800;color:#1e3a8a;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
-.spec-badge{font-size:.6rem;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:20px;font-weight:700;}
-.spec-options{display:flex;flex-wrap:wrap;gap:8px;}
-.spec-radio-label,.spec-check-label{display:flex;align-items:center;gap:6px;padding:7px 14px;
-  border:1.5px solid #e2e8f0;border-radius:20px;cursor:pointer;font-size:.8rem;font-weight:600;
-  color:#374151;background:#fff;transition:all .15s;user-select:none;}
-.spec-radio-label:hover,.spec-check-label:hover{border-color:#1e3a8a;color:#1e3a8a;background:#eff6ff;}
-.spec-radio-label input,.spec-check-label input{accent-color:#1e3a8a;width:14px;height:14px;}
-.spec-radio-label.selected,.spec-check-label.selected{border-color:#1e3a8a;background:#eff6ff;color:#1e3a8a;}
+/* Bottom actions */
+.pa-actions{display:flex;gap:.75rem;align-items:center;padding-top:1.25rem;border-top:1px solid #f1f5f9;margin-top:1.25rem;flex-wrap:wrap;}
+.btn-next{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.5rem;border-radius:10px;font-size:.88rem;font-weight:700;background:#1d4ed8;color:#fff;border:none;cursor:pointer;transition:background .15s;}
+.btn-next:hover{background:#1e40af;}
+.btn-back{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.25rem;border-radius:10px;font-size:.88rem;font-weight:700;background:#f1f5f9;color:#374151;border:1px solid #e2e8f0;cursor:pointer;}
+.btn-back:hover{background:#e2e8f0;}
+.btn-draft{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.25rem;border-radius:10px;font-size:.88rem;font-weight:700;background:#fff;color:#64748b;border:1.5px solid #e2e8f0;cursor:pointer;transition:all .15s;}
+.btn-draft:hover{border-color:#64748b;color:#1e293b;}
+.btn-publish{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.5rem;border-radius:10px;font-size:.88rem;font-weight:700;background:linear-gradient(135deg,#059669,#0d9488);color:#fff;border:none;cursor:pointer;}
+.btn-publish:hover{opacity:.9;}
+.btn-publish:disabled{opacity:.6;cursor:not-allowed;}
 
-/* ── Product score (IndiaMART right panel) ── */
-.score-card{background:#fff;border:1px solid #e5e9f2;border-radius:12px;padding:18px;position:sticky;top:70px;}
-.score-title{font-size:.84rem;font-weight:800;color:#0f172a;margin-bottom:12px;}
-.score-circle{width:52px;height:52px;border-radius:50%;border:3px solid #e2e8f0;
-  display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;
-  margin-bottom:8px;}
-.score-bar-wrap{background:#e5e9f2;border-radius:20px;height:8px;margin-bottom:4px;overflow:hidden;}
-.score-bar{height:100%;border-radius:20px;transition:width .4s,background .4s;}
-.score-0-100{display:flex;justify-content:space-between;font-size:.68rem;color:#94a3b8;margin-bottom:16px;}
-.score-item{display:flex;justify-content:space-between;align-items:center;font-size:.78rem;
-  padding:6px 0;border-bottom:1px solid #f1f5f9;}
-.score-item:last-child{border-bottom:none;}
-.score-item-label{color:#374151;font-weight:600;}
-.score-item-pts{font-weight:800;}
-.score-item-pts.earned{color:#059669;}
-.score-item-pts.missing{color:#94a3b8;}
+/* Preview panel */
+.pa-preview{background:#fff;border-radius:14px;border:1px solid #e5e9f2;padding:1.25rem;position:sticky;top:80px;}
+.preview-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#cbd5e1;}
+.preview-title{font-size:1.05rem;font-weight:800;color:#1e293b;margin:.85rem 0 .3rem;}
+.preview-price{font-size:1.1rem;font-weight:800;color:#059669;}
+.preview-badge{display:inline-flex;align-items:center;gap:.3rem;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;background:#dbeafe;color:#1e40af;margin-bottom:.5rem;}
+.preview-meta{font-size:.78rem;color:#64748b;margin-top:.3rem;}
 
-/* ── Buttons ── */
-.btn-save-continue{background:#0d9488;color:#fff;border:none;border-radius:8px;
-  padding:.65rem 2rem;font-size:.9rem;font-weight:800;cursor:pointer;
-  box-shadow:0 4px 14px rgba(13,148,136,.3);transition:all .2s;display:flex;align-items:center;gap:.5rem;}
-.btn-save-continue:hover{background:#0f766e;transform:translateY(-1px);}
-.btn-finish{background:#1e3a8a;color:#fff;border:none;border-radius:8px;
-  padding:.65rem 2rem;font-size:.9rem;font-weight:800;cursor:pointer;
-  box-shadow:0 4px 14px rgba(30,58,138,.3);transition:all .2s;}
-.btn-finish:hover{background:#1e40af;transform:translateY(-1px);}
-.btn-back-tab{background:#f1f5f9;color:#374151;border:1px solid #e2e8f0;border-radius:8px;
-  padding:.6rem 1.4rem;font-size:.86rem;font-weight:700;cursor:pointer;transition:all .15s;}
-
-/* ── Alerts ── */
-.sa-alert{border-radius:10px;padding:12px 16px;margin-bottom:1rem;font-size:.84rem;
-  font-weight:600;display:flex;align-items:center;gap:8px;}
-.sa-alert.success{background:#d1fae5;border:1.5px solid #6ee7b7;color:#065f46;}
-.sa-alert.error{background:#fee2e2;border:1.5px solid #fca5a5;color:#991b1b;}
+/* Toast */
+.pa-toast{position:fixed;top:20px;right:20px;z-index:99999;min-width:300px;max-width:420px;padding:14px 20px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);display:flex;align-items:center;gap:10px;font-size:.88rem;font-weight:600;animation:slideIn .3s ease;}
+.pa-toast.success{background:#059669;color:#fff;}
+.pa-toast.error{background:#dc2626;color:#fff;}
+@keyframes slideIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
 </style>
 
-{{-- Page header --}}
-<div class="sa-page-header">
-  <a href="{{ route('my-listings') }}" class="sa-back-btn">
-    <i class="bi bi-arrow-left"></i> Back
-  </a>
-  <span style="color:#d1d5db;">|</span>
-  <span class="sa-page-title">Add Service</span>
+{{-- Toast --}}
+@if($alertMessage)
+<div class="pa-toast {{ $alertType }}" id="sa-toast">
+    <i class="bi bi-{{ $alertType === 'success' ? 'check-circle-fill' : 'x-circle-fill' }}" style="font-size:1.1rem;flex-shrink:0;"></i>
+    <span>{{ $alertMessage }}</span>
+    <button onclick="document.getElementById('sa-toast').remove()" style="margin-left:auto;background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;">×</button>
 </div>
+<script>setTimeout(function(){var t=document.getElementById('sa-toast');if(t)t.remove();},5000);</script>
+@endif
 
-{{-- 2 tabs --}}
-<div class="sa-tabs">
-  <button class="sa-tab {{ $activeTab == 1 ? 'active' : ($activeTab > 1 ? 'done' : '') }}"
-          wire:click="$set('activeTab', 1)" type="button">
-    @if($activeTab > 1)<i class="bi bi-check-circle me-1"></i>@endif
-    Basic Details
-  </button>
-  <button class="sa-tab {{ $activeTab == 2 ? 'active' : '' }}"
-          wire:click="$set('activeTab', 2)" type="button"
-          {{ $activeTab < 2 ? 'disabled' : '' }}>
-    Specification / Additional Details
-  </button>
+@if(session('message'))
+<div class="pa-toast success" id="sa-flash">
+    <i class="bi bi-check-circle-fill" style="font-size:1.1rem;"></i>
+    <span>{{ session('message') }}</span>
+    <button onclick="document.getElementById('sa-flash').remove()" style="margin-left:auto;background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;">×</button>
 </div>
+<script>setTimeout(function(){var t=document.getElementById('sa-flash');if(t)t.remove();},5000);</script>
+@endif
 
-<div class="container-fluid px-3 py-0">
+<div class="pa-wrap">
 
-  @if(session('message'))
-  <div class="sa-alert success mt-3"><i class="bi bi-check-circle-fill"></i> {{ session('message') }}</div>
-  @endif
-  @if(session('error'))
-  <div class="sa-alert error mt-3"><i class="bi bi-x-circle-fill"></i> {{ session('error') }}</div>
-  @endif
-
-  <div class="sa-main">
-
-    {{-- ══ LEFT: Form ══ --}}
-    <div>
-
-      {{-- ─────────── TAB 1: Basic Details ─────────── --}}
-      @if($activeTab == 1)
-      <form wire:submit.prevent="saveAndContinue">
-
-        <div class="sa-form-card mb-3">
-          <div class="sa-form-body">
-
-            {{-- Photos on left, fields on right — IndiaMART layout --}}
-            <div class="row g-4">
-
-              {{-- LEFT: Photo upload --}}
-              <div class="col-md-4">
-                <label class="sa-label">Photos</label>
-                <div style="margin-bottom:10px;">
-                  @if($cover_image)
-                    <div class="photo-slot photo-slot-main" style="width:120px;height:120px;border:none;">
-                      <img src="{{ $cover_image->temporaryUrl() }}" style="border-radius:10px;">
-                    </div>
-                  @else
-                    <label for="mainImg" class="photo-slot photo-slot-main" style="width:120px;height:120px;border-style:dashed;">
-                      <i class="bi bi-camera" style="font-size:1.6rem;color:#94a3b8;"></i>
-                      <div style="font-size:.68rem;color:#94a3b8;margin-top:4px;font-weight:700;">Add Photo</div>
-                    </label>
-                  @endif
-                  <input type="file" id="mainImg" class="d-none" wire:model="cover_image" accept="image/*">
-                </div>
-
-                {{-- Gallery thumbs --}}
-                <div class="photo-grid">
-                  @foreach($gallery_images as $gi)
-                  <div class="photo-slot" style="width:72px;height:72px;">
-                    <img src="{{ $gi->temporaryUrl() }}">
-                  </div>
-                  @endforeach
-                  @if(count($gallery_images) < 9)
-                  <label for="galleryImgs" class="photo-slot" style="width:72px;height:72px;">
-                    <i class="bi bi-plus-lg" style="color:#94a3b8;font-size:1.2rem;"></i>
-                  </label>
-                  @endif
-                  <input type="file" id="galleryImgs" class="d-none" wire:model="new_gallery_images" multiple accept="image/*">
-                </div>
-
-                {{-- Video + PDF buttons --}}
-                <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;">
-                  <label for="videoUrl" class="media-btn {{ $video_url ? 'active' : '' }}" style="cursor:default;">
-                    <i class="bi bi-play-circle"></i> Add Video
-                  </label>
-                  <div style="display:none;"><input type="url" id="videoUrl" wire:model.lazy="video_url"></div>
-                  @if(!$video_url)
-                  <input class="sa-input" wire:model.lazy="video_url" placeholder="YouTube / Vimeo URL" style="font-size:.78rem;padding:.4rem .7rem;">
-                  @else
-                  <div style="font-size:.72rem;color:#059669;font-weight:700;">✅ Video added</div>
-                  @endif
-
-                  <label for="pdfUpload" class="media-btn {{ $brochure_pdf ? 'active' : '' }}">
-                    <i class="bi bi-file-earmark-pdf"></i>
-                    {{ $brochure_pdf ? '✅ PDF added' : 'Add PDF' }}
-                  </label>
-                  <input type="file" id="pdfUpload" class="d-none" wire:model="brochure_pdf" accept=".pdf">
-                </div>
-
-                <div wire:loading wire:target="cover_image,new_gallery_images,brochure_pdf"
-                  style="font-size:.75rem;color:#1e3a8a;font-weight:700;margin-top:6px;">
-                  <i class="bi bi-arrow-repeat me-1"></i> Uploading...
-                </div>
-              </div>
-
-              {{-- RIGHT: Fields --}}
-              <div class="col-md-8">
-                {{-- Name --}}
-                <div class="mb-3">
-                  <label class="sa-label">Service Name *</label>
-                  <input class="sa-input" wire:model.lazy="title"
-                    placeholder="Enter product or service name (use at least 3 words)">
-                  @error('title')<div class="sa-err">{{ $message }}</div>@enderror
-                </div>
-
-                {{-- Price + Unit — IndiaMART style --}}
-                <div class="mb-3">
-                  <label class="sa-label">Price</label>
-                  <div class="price-row">
-                    <span class="price-symbol">₹</span>
-                    <input type="number" class="price-input" wire:model.lazy="price"
-                      placeholder="Enter price" min="0">
-                    <span class="price-per">- per -</span>
-                    <select class="price-unit-select" wire:model.lazy="price_unit">
-                      <option value="">Enter Unit</option>
-                      <option value="Hour">Hour</option>
-                      <option value="Day">Day</option>
-                      <option value="Week">Week</option>
-                      <option value="Month">Month</option>
-                      <option value="Year">Year</option>
-                      <option value="Project">Project</option>
-                      <option value="Piece">Piece</option>
-                      <option value="Unit">Unit</option>
-                      <option value="Kg">Kg</option>
-                      <option value="Meter">Meter</option>
-                      <option value="Square Feet">Square Feet</option>
-                    </select>
-                  </div>
-                  <div class="sa-hint">Leave blank if price varies — buyers can send enquiry</div>
-                </div>
-
-                {{-- Description --}}
-                <div class="mb-3">
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                    <label class="sa-label" style="margin:0;">Service Description</label>
-                    <span style="font-size:.7rem;color:#94a3b8;">Uses, Details, Benefits, etc.</span>
-                  </div>
-
-                  {{-- Toolbar --}}
-                  <div style="border:1.5px solid #d1d5db;border-radius:8px 8px 0 0;border-bottom:none;
-                    padding:6px 10px;background:#f8fafc;display:flex;gap:4px;flex-wrap:wrap;" wire:ignore>
-                    @foreach([
-                      ['bold','bi-type-bold','B'],
-                      ['italic','bi-type-italic','I'],
-                      ['insertUnorderedList','bi-list-ul','☰'],
-                      ['insertOrderedList','bi-list-ol','1.'],
-                    ] as [$cmd,$icon,$label])
-                    <button type="button" onclick="document.execCommand('{{ $cmd }}');saSync()"
-                      style="border:1px solid #e2e8f0;background:#fff;border-radius:4px;padding:3px 8px;
-                        font-size:.78rem;cursor:pointer;font-weight:700;color:#374151;">
-                      {{ $label }}
-                    </button>
-                    @endforeach
-                  </div>
-
-                  {{-- FIXED: description uses a plain <textarea> with wire:model.lazy instead of
-                       a contenteditable div. The contenteditable + @this.set() approach caused
-                       the cursor to jump back to position 0 on every keystroke because Livewire
-                       re-renders the DOM after each @this.set() call, destroying the caret position. --}}
-                  <textarea
-                    id="sa-editor"
-                    wire:model.lazy="description"
-                    style="border:1.5px solid #d1d5db;border-radius:0 0 8px 8px;min-height:180px;
-                      padding:10px 12px;font-size:.88rem;background:#fff;outline:none;line-height:1.7;
-                      width:100%;resize:vertical;font-family:inherit;"
-                    placeholder="Describe your service..."
-                    maxlength="4000"></textarea>
-
-                  <div style="text-align:right;font-size:.7rem;color:#94a3b8;margin-top:4px;">
-                    {{ strlen(strip_tags($description)) }} characters (maximum 4000)
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
+    {{-- Page header --}}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;">
+        <div>
+            <h1 style="font-size:1.35rem;font-weight:800;color:#1e293b;margin:0;">Add New Service</h1>
+            <p style="font-size:.82rem;color:#94a3b8;margin:.2rem 0 0;">List your service — approved services are visible to buyers worldwide</p>
         </div>
-
-        {{-- Tips --}}
-        <div style="margin-bottom:16px;">
-          <button type="button" style="background:none;border:none;color:#1e3a8a;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;">
-            <i class="bi bi-lightbulb"></i> Tips
-          </button>
-        </div>
-
-        {{-- Save and Continue button --}}
-        <div style="display:flex;justify-content:flex-end;">
-          <button type="submit" class="btn-save-continue" wire:loading.attr="disabled">
-            <span wire:loading.remove wire:target="saveAndContinue">Save and Continue →</span>
-            <span wire:loading wire:target="saveAndContinue"><i class="bi bi-arrow-repeat me-1"></i> Saving...</span>
-          </button>
-        </div>
-
-      </form>
-      @endif {{-- end tab 1 --}}
-
-
-      {{-- ─────────── TAB 2: Specifications ─────────── --}}
-      @if($activeTab == 2)
-      <form wire:submit.prevent="submit">
-
-        {{-- Category breadcrumb like IndiaMART --}}
-        <div style="background:#fff;border:1px solid #e5e9f2;border-radius:12px;padding:14px 20px;margin-bottom:16px;
-          display:flex;align-items:center;gap:10px;">
-          <label class="sa-label" style="margin:0;white-space:nowrap;">Category</label>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <select class="sa-select" wire:model.live="category_id" style="max-width:200px;">
-              <option value="">Select Category</option>
-              @foreach($categories as $cat)
-                <option value="{{ $cat->id }}">{{ $cat->cat_name }}</option>
-              @endforeach
-            </select>
-            @if($category_id)
-            <select class="sa-select" wire:model.live="subcategory_id" style="max-width:200px;">
-              <option value="">Sub Category</option>
-              @foreach($subcategories as $sub)
-                <option value="{{ $sub->id }}">{{ $sub->sub_cat_name }}</option>
-              @endforeach
-            </select>
-            @endif
-          </div>
-        </div>
-
-        <div class="sa-form-card mb-3">
-          <div class="sa-form-body">
-
-            {{-- ── Service Type ── --}}
-            <div class="spec-section">
-              <div class="spec-title">
-                Service Type <span class="spec-badge">Important</span>
-              </div>
-              <div class="spec-options">
-                @foreach([
-                  'Full Service','Consulting Only','Implementation','Managed Service',
-                  'On-Demand','Subscription','One-Time Project','Retainer','Other'
-                ] as $opt)
-                <div class="spec-radio-label {{ $service_type === $opt ? 'selected' : '' }}"
-                     wire:click="$set('service_type', '{{ $opt }}')">
-                  {{ $opt }}
-                </div>
-                @endforeach
-              </div>
-            </div>
-
-            {{-- ── Pricing Model ── --}}
-            <div class="spec-section">
-              <div class="spec-title">
-                Pricing Model <span class="spec-badge">Important</span>
-              </div>
-              <div class="spec-options">
-                @foreach([
-                  'Monthly Retainer','Project Based','Hourly',
-                  'Performance Based','Daily Rate','Annual Contract','Other'
-                ] as $opt)
-                <div class="spec-radio-label {{ $pricing_model === $opt ? 'selected' : '' }}"
-                     wire:click="$set('pricing_model', '{{ $opt }}')">
-                  {{ $opt }}
-                </div>
-                @endforeach
-              </div>
-            </div>
-
-            {{-- ── Contract Duration ── --}}
-            <div class="spec-section">
-              <div class="spec-title">
-                Contract Duration <span class="spec-badge">Important</span>
-              </div>
-              <div class="spec-options">
-                @foreach(['1 Month','3 Months','6 Months','12 Months','Above 12 Months','One-Time','Ongoing','Other'] as $opt)
-                <div class="spec-radio-label {{ $contract_duration === $opt ? 'selected' : '' }}"
-                     wire:click="$set('contract_duration', '{{ $opt }}')">
-                  {{ $opt }}
-                </div>
-                @endforeach
-              </div>
-            </div>
-
-            {{-- ── Delivery Mode ── --}}
-            <div class="spec-section">
-              <div class="spec-title">Delivery Mode</div>
-              <div class="spec-options">
-                @foreach(['Onsite','Remote / Online','Both Onsite & Remote','Pan India','International'] as $opt)
-                <div class="spec-radio-label {{ $delivery_mode === $opt ? 'selected' : '' }}"
-                     wire:click="$set('delivery_mode', '{{ $opt }}')">
-                  {{ $opt }}
-                </div>
-                @endforeach
-              </div>
-            </div>
-
-            {{-- ── Business Type (who is your target client) ── --}}
-            <div class="spec-section">
-              <div class="spec-title">Business Type <span style="font-size:.7rem;color:#94a3b8;">(Target Client)</span></div>
-              <div class="spec-options">
-                @foreach(['Startup','SME','Large Enterprise','Agency','D2C Brand','Manufacturer','Exporter','Other'] as $opt)
-                <div class="spec-radio-label {{ $business_type_target === $opt ? 'selected' : '' }}"
-                     wire:click="$set('business_type_target', '{{ $opt }}')">
-                  {{ $opt }}
-                </div>
-                @endforeach
-              </div>
-            </div>
-
-            {{-- ── Industries Served (checkbox — multiple) ── --}}
-            <div class="spec-section">
-              <div class="spec-title">Industries Served</div>
-              <div class="spec-options">
-                @foreach([
-                  'Ecommerce','Education','Healthcare','Real Estate','Travel','Manufacturing',
-                  'Retail','Food & Beverage','Textile','Chemicals','Automobile','IT & Software',
-                  'Finance','Logistics','Agriculture','Other'
-                ] as $industry)
-                <div class="spec-check-label {{ in_array($industry, $industries_served) ? 'selected' : '' }}"
-                     wire:click="toggleIndustry('{{ $industry }}')">
-                  @if(in_array($industry, $industries_served))
-                  <i class="bi bi-check-square-fill" style="color:#1e3a8a;font-size:.8rem;"></i>
-                  @else
-                  <i class="bi bi-square" style="color:#94a3b8;font-size:.8rem;"></i>
-                  @endif
-                  {{ $industry }}
-                </div>
-                @endforeach
-              </div>
-            </div>
-
-            {{-- ── Additional fields ── --}}
-            <div class="spec-section">
-              <div class="spec-title">Provider Details</div>
-              <div class="row g-3">
-                <div class="col-md-4">
-                  <label class="sa-label">Years of Experience</label>
-                  <input class="sa-input" wire:model.lazy="experience_years" placeholder="e.g. 10 Years">
-                </div>
-                <div class="col-md-8">
-                  <label class="sa-label">Certifications / Accreditations</label>
-                  <input class="sa-input" wire:model.lazy="certifications"
-                    placeholder="e.g. ISO 9001, MSME, Export House, Google Partner">
-                </div>
-                <div class="col-12">
-                  <label class="sa-label">Keywords (for search)</label>
-                  <input class="sa-input" wire:model.lazy="keywords"
-                    placeholder="e.g. digital marketing, SEO, social media, PPC">
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {{-- Finish button --}}
-        <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:2rem;">
-          <button type="button" class="btn-back-tab" wire:click="$set('activeTab', 1)">
-            ← Back
-          </button>
-          {{-- FIXED: removed wire:click="generateSlug" — slug is generated inside submit() now --}}
-          <button type="submit" class="btn-finish" wire:loading.attr="disabled">
-            <span wire:loading.remove wire:target="submit">Finish</span>
-            <span wire:loading wire:target="submit"><i class="bi bi-arrow-repeat me-1"></i> Submitting...</span>
-          </button>
-        </div>
-
-      </form>
-      @endif {{-- end tab 2 --}}
-
-    </div> {{-- end left --}}
-
-
-    {{-- ══ RIGHT: Product Score — commented out as requested ══
-    <div>
-      <div class="score-card">
-        <div class="score-title">Product Score:</div>
-
-        @php
-          $score = $this->productScore;
-          $color = $this->scoreColor;
-          $label = $this->scoreLabel;
-        @endphp
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div class="score-circle" style="border-color:{{ $color }};color:{{ $color }};">
-            {{ $score }}
-          </div>
-          <div>
-            <div style="font-size:.84rem;font-weight:700;color:{{ $color }};">{{ $label }}</div>
-          </div>
-        </div>
-        <div class="score-bar-wrap">
-          <div class="score-bar" style="width:{{ $score }}%;background:{{ $color }};"></div>
-        </div>
-        <div class="score-0-100"><span>0</span><span>100</span></div>
-
-        <div style="border-top:1px solid #f1f5f9;padding-top:12px;">
-          <div style="font-size:.78rem;font-weight:800;color:#374151;margin-bottom:8px;">Basic details</div>
-
-          @foreach([
-            ['Name (>=3 Words)',   strlen($title) >= 3,                      10],
-            ['Price (with Unit)',  $price && $price_unit,                    15],
-            ['Description (>100)',strlen(strip_tags($description ?? ''))>100, 20],
-            ['Video',             !empty($video_url),                        10],
-            ['Product PDF',       !empty($brochure_pdf),                      5],
-          ] as [$lbl, $earned, $pts])
-          <div class="score-item">
-            <span class="score-item-label">{{ $lbl }}</span>
-            <span class="score-item-pts {{ $earned ? 'earned' : 'missing' }}">
-              {{ $earned ? $pts : '0' }}/{{ $pts }}
-            </span>
-          </div>
-          @endforeach
-
-          <div style="font-size:.78rem;font-weight:800;color:#374151;margin:10px 0 8px;">Specifications</div>
-
-          @foreach([
-            ['Photos',           !empty($cover_image), 15],
-            ['Gallery Images',   count($gallery_images) > 0, 10],
-            ['Service Type',     !empty($service_type), 5],
-            ['Pricing Model',    !empty($pricing_model), 5],
-            ['Certifications',   !empty($certifications), 5],
-          ] as [$lbl, $earned, $pts])
-          <div class="score-item">
-            <span class="score-item-label">{{ $lbl }}</span>
-            <span class="score-item-pts {{ $earned ? 'earned' : 'missing' }}">
-              {{ $earned ? $pts : '0' }}/{{ $pts }}
-            </span>
-          </div>
-          @endforeach
-
-        </div>
-      </div>
+        <a href="{{ route('my-listings') }}" style="font-size:.82rem;color:#64748b;text-decoration:none;display:flex;align-items:center;gap:.3rem;padding:.4rem .9rem;border:1.5px solid #e2e8f0;border-radius:9px;background:#f8fafc;font-weight:600;">
+            <i class="bi bi-arrow-left-short"></i> My Listings
+        </a>
     </div>
-    ══ END score panel ══ --}}
 
-  </div>
-</div>
+    {{-- Step bar --}}
+    <div class="pa-stepbar">
+        <div class="pa-steps">
+            @foreach([1=>['bi-tag-fill','Basic Info'],2=>['bi-images','Media'],3=>['bi-currency-exchange','Pricing'],4=>['bi-patch-check','Specs']] as $n=>[$icon,$lbl])
+            <div class="pa-step {{ $activeStep==$n ? 'active' : ($activeStep>$n ? 'done' : 'pending') }}"
+                 wire:click.prevent="goToStep({{ $n }})" style="cursor:pointer;">
+                <div class="pa-step-num">
+                    @if($activeStep > $n)<i class="bi bi-check-lg" style="font-size:.72rem;"></i>
+                    @else {{ $n }} @endif
+                </div>
+                <span class="pa-step-lbl"><i class="bi {{ $icon }}" style="font-size:.7rem;"></i> {{ $lbl }}</span>
+            </div>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- Body --}}
+    <div class="pa-body">
+
+        {{-- ── LEFT: Form ──────────────────────────────────── --}}
+        <div>
+
+        {{-- ════ STEP 1: Basic Info ════ --}}
+        @if($activeStep == 1)
+        <div class="pa-card">
+            <div class="pa-card-hd">
+                <div class="pa-card-hd-icon" style="background:#ede9fe;"><i class="bi bi-tag-fill" style="color:#7c3aed;"></i></div>
+                <div><h3>Basic Information</h3><p>Service name, description and keywords</p></div>
+            </div>
+            <div class="pa-card-body">
+                <div style="margin-bottom:1rem;">
+                    <label class="pa-label">Service Name *</label>
+                    <input class="pa-input" wire:model.lazy="title" placeholder="e.g. Digital Marketing, Web Development, SEO Services">
+                    @error('title')<div class="pa-err">{{ $message }}</div>@enderror
+                    <div class="pa-hint">Be specific — buyers search by service name</div>
+                </div>
+
+                <div style="margin-bottom:1rem;">
+                    <label class="pa-label">Description</label>
+                    <div class="editor-toolbar">
+                        <button type="button" onclick="sfmt('bold')" title="Bold"><b>B</b></button>
+                        <button type="button" onclick="sfmt('italic')" title="Italic"><i>I</i></button>
+                        <button type="button" onclick="sfmt('underline')" title="Underline"><u>U</u></button>
+                        <button type="button" onclick="sfmt('insertUnorderedList')" title="List">• List</button>
+                        <select onchange="if(this.value){document.execCommand('formatBlock',false,this.value);this.value=''}"
+                            style="font-size:.75rem;">
+                            <option value="">Format</option>
+                            <option value="h3">Heading</option>
+                            <option value="p">Paragraph</option>
+                        </select>
+                    </div>
+                    <div id="sa-editor" class="editor-content" contenteditable="true"
+                        placeholder="Describe your service in detail..."></div>
+                    <input type="hidden" id="sa-desc-hidden" wire:model="description">
+                    @error('description')<div class="pa-err">{{ $message }}</div>@enderror
+                </div>
+
+                <div>
+                    <label class="pa-label">Keywords</label>
+                    <input class="pa-input" wire:model.lazy="keywords" placeholder="SEO, digital marketing, social media (comma separated)">
+                    <div class="pa-hint">Helps buyers find your service</div>
+                </div>
+
+                <div class="pa-actions">
+                    <button class="btn-draft" type="button" wire:click="saveDraft">
+                        <i class="bi bi-floppy"></i> Save Draft
+                    </button>
+                    <button class="btn-next" type="button" wire:click="nextStep"
+                        wire:loading.attr="disabled" wire:target="nextStep">
+                        Next: Media <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- ════ STEP 2: Media ════ --}}
+        @if($activeStep == 2)
+        <div class="pa-card">
+            <div class="pa-card-hd">
+                <div class="pa-card-hd-icon" style="background:#fce7f3;"><i class="bi bi-images" style="color:#be185d;"></i></div>
+                <div><h3>Photos, Video & Documents</h3><p>Cover image · Gallery (max 9) · Video URL · PDF Brochure</p></div>
+            </div>
+            <div class="pa-card-body">
+
+                {{-- Cover image --}}
+                <div style="margin-bottom:1.25rem;">
+                    <label class="pa-label">Cover Image</label>
+                    <div class="photo-grid">
+                        <label for="coverImg" class="photo-slot" style="width:120px;height:90px;">
+                            @if($cover_image)
+                                <img src="{{ $cover_image->temporaryUrl() }}" style="border-radius:8px;">
+                            @else
+                                <div style="text-align:center;color:#94a3b8;">
+                                    <i class="bi bi-cloud-upload" style="font-size:1.4rem;display:block;"></i>
+                                    <span style="font-size:.68rem;">Cover</span>
+                                </div>
+                            @endif
+                        </label>
+                    </div>
+                    <input type="file" id="coverImg" class="d-none" wire:model="cover_image" accept="image/jpg,image/jpeg,image/png,image/webp">
+                    <div class="upload-hint">JPG, PNG, WebP · Max 4MB</div>
+                    @error('cover_image')<div class="pa-err">{{ $message }}</div>@enderror
+                </div>
+
+                {{-- Gallery --}}
+                <div style="margin-bottom:1.25rem;">
+                    <label class="pa-label">Portfolio / Gallery Images <span style="color:#94a3b8;">(up to 9)</span></label>
+                    <div class="photo-grid">
+                        @foreach($gallery_images as $idx => $gi)
+                        <div class="photo-slot" style="width:80px;height:80px;">
+                            <img src="{{ $gi->temporaryUrl() }}" style="border-radius:8px;">
+                            <button class="remove-btn" type="button" wire:click="removeGalleryImage({{ $idx }})">×</button>
+                        </div>
+                        @endforeach
+                        @if(count($gallery_images) < 9)
+                        <label for="galleryImgs" class="photo-slot" style="width:80px;height:80px;">
+                            <div style="text-align:center;color:#94a3b8;">
+                                <i class="bi bi-plus-lg" style="font-size:1.4rem;display:block;"></i>
+                                <span style="font-size:.68rem;">Add</span>
+                            </div>
+                        </label>
+                        @endif
+                    </div>
+                    <input type="file" id="galleryImgs" class="d-none" wire:model="new_gallery_images" multiple accept="image/jpg,image/jpeg,image/png,image/webp">
+                    <div class="upload-hint">JPG, PNG, WebP · Max 4MB each · Up to 9 images</div>
+                    <div wire:loading wire:target="new_gallery_images" style="font-size:.78rem;color:#1d4ed8;">
+                        <i class="bi bi-arrow-repeat"></i> Uploading images...
+                    </div>
+                </div>
+
+                {{-- Video URL --}}
+                <div style="margin-bottom:1.25rem;">
+                    <label class="pa-label">Service / Demo Video URL</label>
+                    <input class="pa-input" wire:model.lazy="video_url" placeholder="https://youtube.com/watch?v=...  or  https://vimeo.com/...">
+                    @error('video_url')<div class="pa-err">{{ $message }}</div>@enderror
+                    @if($video_url)
+                    <div style="margin-top:.5rem;font-size:.78rem;color:#059669;">
+                        <i class="bi bi-check-circle"></i> Video URL added
+                        <a href="{{ $video_url }}" target="_blank" style="margin-left:.5rem;color:#1d4ed8;">Preview ↗</a>
+                    </div>
+                    @endif
+                    <div class="pa-hint">YouTube or Vimeo link — shows buyers a demo of your work</div>
+                </div>
+
+                {{-- PDF Brochure --}}
+                <div style="margin-bottom:1.25rem;">
+                    <label class="pa-label">Service Brochure / Portfolio PDF</label>
+                    <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+                        <label for="pdfUpload" style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;border-radius:9px;border:1.5px solid #e2e8f0;background:#f8fafc;font-size:.82rem;font-weight:600;cursor:pointer;color:#475569;transition:all .15s;"
+                            onmouseover="this.style.borderColor='#1d4ed8';this.style.color='#1d4ed8'"
+                            onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#475569'">
+                            <i class="bi bi-file-earmark-pdf" style="color:#ef4444;"></i>
+                            {{ $brochure_pdf ? 'Replace PDF' : 'Upload PDF' }}
+                        </label>
+                        @if($brochure_pdf)
+                        <span style="font-size:.78rem;color:#059669;display:flex;align-items:center;gap:.3rem;">
+                            <i class="bi bi-check-circle-fill"></i>
+                            {{ $brochure_pdf->getClientOriginalName() }}
+                            <span style="color:#94a3b8;">({{ round($brochure_pdf->getSize() / 1024) }} KB)</span>
+                        </span>
+                        @endif
+                    </div>
+                    <input type="file" id="pdfUpload" class="d-none" wire:model="brochure_pdf" accept=".pdf,application/pdf">
+                    <div class="upload-hint">PDF only · Max 10MB</div>
+                    <div wire:loading wire:target="brochure_pdf" style="font-size:.78rem;color:#1d4ed8;margin-top:.3rem;">
+                        <i class="bi bi-arrow-repeat"></i> Uploading PDF...
+                    </div>
+                    @error('brochure_pdf')<div class="pa-err">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="pa-actions">
+                    <button class="btn-back" type="button" wire:click="prevStep">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </button>
+                    <button class="btn-draft" type="button" wire:click="saveDraft">
+                        <i class="bi bi-floppy"></i> Save Draft
+                    </button>
+                    <button class="btn-next" type="button" wire:click="nextStep"
+                        wire:loading.attr="disabled" wire:target="nextStep">
+                        Next: Pricing <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- ════ STEP 3: Pricing ════ --}}
+        @if($activeStep == 3)
+        <div class="pa-card">
+            <div class="pa-card-hd">
+                <div class="pa-card-hd-icon" style="background:#fef3c7;"><i class="bi bi-currency-exchange" style="color:#d97706;"></i></div>
+                <div><h3>Pricing & Delivery</h3><p>Price, delivery mode and turnaround time</p></div>
+            </div>
+            <div class="pa-card-body">
+
+                <div class="pa-row" style="margin-bottom:1rem;">
+                    <div>
+                        <label class="pa-label">Starting Price (₹)</label>
+                        <input class="pa-input" wire:model.lazy="price" type="number" min="0" placeholder="e.g. 5000">
+                        @error('price')<div class="pa-err">{{ $message }}</div>@enderror
+                    </div>
+                    <div>
+                        <label class="pa-label">Price Unit</label>
+                        <select class="pa-select" wire:model.lazy="price_unit">
+                            <option value="per project">Per Project</option>
+                            <option value="per hour">Per Hour</option>
+                            <option value="per month">Per Month</option>
+                            <option value="per day">Per Day</option>
+                            <option value="custom">Custom / Negotiable</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:1rem;">
+                    <label class="pa-label">Pricing Model</label>
+                    <div class="spec-grid">
+                        @foreach(['Monthly Retainer','Project Based','Hourly','Performance Based','Quote Based','Other'] as $opt)
+                        <button type="button"
+                            class="spec-chip {{ $pricing_model === $opt ? 'sel' : '' }}"
+                            wire:click="$set('pricing_model','{{ $opt }}')">{{ $opt }}</button>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div style="margin-bottom:1rem;">
+                    <label class="pa-label">Delivery Mode</label>
+                    <div class="spec-grid">
+                        @foreach(['Remote','Onsite','Both'] as $opt)
+                        <button type="button"
+                            class="spec-chip {{ $delivery_mode === $opt ? 'sel-green' : '' }}"
+                            wire:click="$set('delivery_mode','{{ $opt }}')">{{ $opt }}</button>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="pa-row" style="margin-bottom:1rem;">
+                    <div>
+                        <label class="pa-label">Turnaround Time</label>
+                        <select class="pa-select" wire:model.lazy="turnaround_time">
+                            <option value="">Select</option>
+                            <option value="1-3 days">1–3 Days</option>
+                            <option value="3-7 days">3–7 Days</option>
+                            <option value="1-2 weeks">1–2 Weeks</option>
+                            <option value="2-4 weeks">2–4 Weeks</option>
+                            <option value="1-2 months">1–2 Months</option>
+                            <option value="Ongoing">Ongoing</option>
+                            <option value="Custom">Custom</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="pa-label">Contract Duration</label>
+                        <select class="pa-select" wire:model.lazy="contract_duration">
+                            <option value="">Select</option>
+                            <option value="1 Month">1 Month</option>
+                            <option value="3 Months">3 Months</option>
+                            <option value="6 Months">6 Months</option>
+                            <option value="12 Months">12 Months</option>
+                            <option value="Above 12 Months">Above 12 Months</option>
+                            <option value="One-time">One-time</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="pa-row" style="margin-bottom:1rem;">
+                    <div>
+                        <label class="pa-label">Service Area</label>
+                        <input class="pa-input" wire:model.lazy="service_area" placeholder="e.g. Pan India, Global, Mumbai">
+                    </div>
+                    <div>
+                        <label class="pa-label">Free Consultation</label>
+                        <select class="pa-select" wire:model.lazy="sample_consultation">
+                            <option value="no">No</option>
+                            <option value="yes">Yes — Free 30 min call</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="pa-actions">
+                    <button class="btn-back" type="button" wire:click="prevStep">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </button>
+                    <button class="btn-draft" type="button" wire:click="saveDraft">
+                        <i class="bi bi-floppy"></i> Save Draft
+                    </button>
+                    <button class="btn-next" type="button" wire:click="nextStep"
+                        wire:loading.attr="disabled" wire:target="nextStep">
+                        Next: Specs <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- ════ STEP 4: Specs & Category ════ --}}
+        @if($activeStep == 4)
+        <form wire:submit.prevent="submit">
+        <div class="pa-card">
+            <div class="pa-card-hd">
+                <div class="pa-card-hd-icon" style="background:#d1fae5;"><i class="bi bi-patch-check-fill" style="color:#059669;"></i></div>
+                <div><h3>Specifications & Category</h3><p>Service type, target clients, category</p></div>
+            </div>
+            <div class="pa-card-body">
+
+                {{-- Category --}}
+                <div style="margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+                    <label class="pa-label" style="margin:0;white-space:nowrap;">Category</label>
+                    <select class="pa-select" wire:model.live="category_id" style="max-width:200px;">
+                        <option value="">Select Category</option>
+                        @foreach($categories as $cat)
+                        <option value="{{ $cat->id }}">{{ $cat->cat_name }}</option>
+                        @endforeach
+                    </select>
+                    @if($category_id)
+                    <select class="pa-select" wire:model.live="subcategory_id" style="max-width:200px;">
+                        <option value="">Sub Category</option>
+                        @foreach($subcategories as $sub)
+                        <option value="{{ $sub->id }}">{{ $sub->sub_cat_name }}</option>
+                        @endforeach
+                    </select>
+                    @endif
+                </div>
+
+                {{-- Service Type --}}
+                <div style="margin-bottom:1rem;">
+                    <label class="pa-label">Service Type</label>
+                    <div class="spec-grid">
+                        @foreach(['Full Service','Consulting Only','Implementation','Managed Service','On-Demand','Subscription','One-Time Project','Retainer','Other'] as $opt)
+                        <button type="button" class="spec-chip {{ $service_type === $opt ? 'sel' : '' }}"
+                            wire:click="$set('service_type','{{ $opt }}')">{{ $opt }}</button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Target Clients --}}
+                <div style="margin-bottom:1rem;">
+                    <label class="pa-label">Target Client Type</label>
+                    <div class="spec-grid">
+                        @foreach(['Startup','SME','Large Enterprise','Agency','D2C Brand','Government','Other'] as $opt)
+                        <button type="button" class="spec-chip {{ $business_type_target === $opt ? 'sel' : '' }}"
+                            wire:click="$set('business_type_target','{{ $opt }}')">{{ $opt }}</button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Experience & Certifications --}}
+                <div class="pa-row" style="margin-bottom:1rem;">
+                    <div>
+                        <label class="pa-label">Experience (years)</label>
+                        <input class="pa-input" wire:model.lazy="experience_years" type="number" min="0" placeholder="e.g. 5">
+                    </div>
+                    <div>
+                        <label class="pa-label">Certifications</label>
+                        <input class="pa-input" wire:model.lazy="certifications" placeholder="e.g. Google Certified, ISO">
+                    </div>
+                </div>
+
+                <div class="pa-actions">
+                    <button class="btn-back" type="button" wire:click="prevStep">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </button>
+                    <button class="btn-draft" type="button" wire:click="saveDraft">
+                        <i class="bi bi-floppy"></i> Save Draft
+                    </button>
+                    <button type="submit" class="btn-publish"
+                        wire:loading.attr="disabled" wire:target="submit"
+                        onclick="this.disabled=true;this.innerHTML='<i class=\'bi bi-arrow-repeat me-1\'></i> Submitting...';this.closest(\'form\').requestSubmit();">
+                        <span wire:loading.remove wire:target="submit">
+                            <i class="bi bi-send-fill"></i> Submit for Review
+                        </span>
+                        <span wire:loading wire:target="submit">
+                            <i class="bi bi-arrow-repeat me-1"></i> Submitting...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        </form>
+        @endif
+
+        </div>{{-- end left --}}
+
+        {{-- ── RIGHT: Preview panel ────────────────────────── --}}
+        <div class="pa-preview">
+            <div style="font-size:.72rem;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem;">Live Preview</div>
+
+            {{-- Cover image or placeholder --}}
+            @if($cover_image)
+            <img src="{{ $cover_image->temporaryUrl() }}" class="preview-img" style="display:block;">
+            @else
+            <div class="preview-img" style="display:flex;">🛠️</div>
+            @endif
+
+            @if($service_type)
+            <div style="margin-top:.75rem;">
+                <span class="preview-badge">🛠️ {{ $service_type }}</span>
+            </div>
+            @endif
+
+            <div class="preview-title">{{ $title ?: 'Your Service Name' }}</div>
+
+            @if($price)
+            <div class="preview-price">
+                ₹{{ number_format((float)$price) }}
+                @if($price_unit) / {{ $price_unit }}@endif
+            </div>
+            @endif
+
+            @if($delivery_mode)
+            <div class="preview-meta"><i class="bi bi-geo-alt"></i> {{ $delivery_mode }}</div>
+            @endif
+            @if($turnaround_time)
+            <div class="preview-meta"><i class="bi bi-clock"></i> {{ $turnaround_time }}</div>
+            @endif
+            @if($experience_years)
+            <div class="preview-meta"><i class="bi bi-award"></i> {{ $experience_years }} years experience</div>
+            @endif
+
+            {{-- Gallery thumbnails --}}
+            @if(!empty($gallery_images))
+            <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.75rem;">
+                @foreach($gallery_images as $gi)
+                <img src="{{ $gi->temporaryUrl() }}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;">
+                @endforeach
+            </div>
+            @endif
+
+            {{-- Video indicator --}}
+            @if($video_url)
+            <div style="margin-top:.75rem;font-size:.78rem;color:#1d4ed8;display:flex;align-items:center;gap:.35rem;">
+                <i class="bi bi-play-circle-fill"></i> Video demo added
+            </div>
+            @endif
+
+            {{-- PDF indicator --}}
+            @if($brochure_pdf)
+            <div style="margin-top:.4rem;font-size:.78rem;color:#ef4444;display:flex;align-items:center;gap:.35rem;">
+                <i class="bi bi-file-earmark-pdf-fill"></i> PDF brochure attached
+            </div>
+            @endif
+        </div>
+
+    </div>{{-- end pa-body --}}
+</div>{{-- end pa-wrap --}}
+
+{{-- JS for rich text editor --}}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editor = document.getElementById('sa-editor');
+    const hidden  = document.getElementById('sa-desc-hidden');
+    if (!editor) return;
+
+    editor.innerHTML = @json($description ?? '');
+
+    editor.addEventListener('blur', function() {
+        if (hidden) {
+            hidden.value = editor.innerHTML;
+            @this.set('description', editor.innerHTML, false);
+        }
+    });
+
+    editor.addEventListener('input', function() {
+        if (hidden) hidden.value = editor.innerHTML;
+    });
+});
+
+window.sfmt = function(cmd) {
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand(cmd, false, null);
+    const editor = document.getElementById('sa-editor');
+    const hidden  = document.getElementById('sa-desc-hidden');
+    if (editor && hidden) hidden.value = editor.innerHTML;
+};
+</script>
 
 <livewire:seller.layout.footer />
-
-{{-- No JS editor needed — description uses a plain <textarea wire:model.lazy> --}}
 </div>

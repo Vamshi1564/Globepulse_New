@@ -1,10 +1,5 @@
 <?php
 // FILE: app/Livewire/Seller/MyListings.php
-// FIXED:
-//  1. seller_services table may not exist yet — wrapped in try/catch
-//  2. Products use Session::get('id') which may be UUID or int — handle both
-//  3. Services use seller_id (UUID from globpulse sellers table)
-//  4. Graceful fallback if SellerService table missing
 
 namespace App\Livewire\Seller;
 
@@ -28,7 +23,6 @@ class MyListings extends Component
     public string $search       = '';
     public int    $perPage      = 15;
     public array  $counts       = [];
-    public bool   $servicesEnabled = false; // true once seller_services table exists
 
     protected $queryString = [
         'activeTab'    => ['except' => 'all'],
@@ -42,50 +36,65 @@ class MyListings extends Component
 
     public function mount(): void
     {
-        // Check if seller_services table exists
-        try {
-            $this->servicesEnabled = Schema::hasTable('seller_services');
-        } catch (\Exception $e) {
-            $this->servicesEnabled = false;
-        }
         $this->loadCounts();
     }
 
-    // ── Get correct customer_id for product queries ───────────
-    // Products table uses GFE integer customer_id
-    // Session 'id' stores this integer (set during SellerLogin for backward compat)
+    // ── Resolve customer ID (same logic as ServiceAdd) ────────
     private function getCustomerId(): mixed
     {
-        return Session::get('id'); // integer GFE customer_id
+        return Session::get('id')
+            ?? Session::get('customer_id')
+            ?? Session::get('user_id')
+            ?? (auth()->check() ? auth()->id() : null);
     }
 
-    // ── Get seller UUID for services ──────────────────────────
-    private function getSellerId(): ?string
+    // ── Check seller_services table exists ────────────────────
+    private function servicesTableExists(): bool
     {
-        return Session::get('seller_id'); // UUID from sellers table
+        try {
+            return Schema::hasTable('seller_services');
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    // ── Format service price safely (no accessor needed) ──────
+    private function formatServicePrice(\App\Models\SellerService $s): string
+    {
+        if ($s->min_price && $s->price_unit) {
+            return '₹' . number_format($s->min_price) . ' / ' . $s->price_unit;
+        }
+        if ($s->min_price) {
+            return '₹' . number_format($s->min_price);
+        }
+        if ($s->pricing_type === 'quote_based') {
+            return 'Get Quote';
+        }
+        return '—';
     }
 
     private function loadCounts(): void
     {
         $cid = $this->getCustomerId();
 
-        // Product counts
+        // ── Product counts ────────────────────────────────────
         $pTotal    = Product::where('customer_id', $cid)->count();
         $pPending  = Product::where('customer_id', $cid)->where('status', 0)->count();
         $pApproved = Product::where('customer_id', $cid)->where('status', 1)->count();
         $pRejected = Product::where('customer_id', $cid)->where('status', 2)->count();
+        $pDraft    = Product::where('customer_id', $cid)->where('status', 3)->count();
 
-        // Service counts (only if table exists)
+        // ── Service counts ────────────────────────────────────
         $sTotal = $sPending = $sApproved = $sRejected = 0;
-        if ($this->servicesEnabled) {
+        if ($this->servicesTableExists()) {
             try {
-                $sid       = $this->getSellerId() ?? $cid;
-                $sTotal    = \App\Models\SellerService::where('customer_id', $sid)->count();
-                $sPending  = \App\Models\SellerService::where('customer_id', $sid)->where('status', 'pending')->count();
-                $sApproved = \App\Models\SellerService::where('customer_id', $sid)->where('status', 'approved')->count();
-                $sRejected = \App\Models\SellerService::where('customer_id', $sid)->where('status', 'rejected')->count();
+                // FIXED: always use customer_id (same key used in ServiceAdd)
+                $sTotal    = \App\Models\SellerService::where('customer_id', $cid)->count();
+                $sPending  = \App\Models\SellerService::where('customer_id', $cid)->where('status', 'pending')->count();
+                $sApproved = \App\Models\SellerService::where('customer_id', $cid)->where('status', 'approved')->count();
+                $sRejected = \App\Models\SellerService::where('customer_id', $cid)->where('status', 'rejected')->count();
             } catch (\Exception $e) {
-                $this->servicesEnabled = false;
+                Log::warning('[MyListings] service count failed: ' . $e->getMessage());
             }
         }
 
@@ -96,10 +105,22 @@ class MyListings extends Component
             'p_pending'  => $pPending,
             'p_approved' => $pApproved,
             'p_rejected' => $pRejected,
+            'p_draft'    => $pDraft,
             's_pending'  => $sPending,
             's_approved' => $sApproved,
             's_rejected' => $sRejected,
         ];
+    }
+
+    public function publishProduct(int $id): void
+    {
+        $cid     = $this->getCustomerId();
+        $product = Product::where('id', $id)->where('customer_id', $cid)->first();
+        if ($product) {
+            $product->update(['status' => 0]);
+            $this->loadCounts();
+            session()->flash('message', '✅ Product submitted for review! Goes live once approved.');
+        }
     }
 
     public function deleteProduct(int $id): void
@@ -119,39 +140,27 @@ class MyListings extends Component
 
     public function deleteService(int $id): void
     {
-        if (!$this->servicesEnabled) return;
+        if (!$this->servicesTableExists()) return;
         try {
-            $sid = $this->getSellerId() ?? $this->getCustomerId();
-            \App\Models\SellerService::where('id', $id)->where('customer_id', $sid)->delete();
+            $cid = $this->getCustomerId();
+            \App\Models\SellerService::where('id', $id)
+                ->where('customer_id', $cid)
+                ->delete();
             $this->loadCounts();
             session()->flash('message', 'Service deleted successfully.');
         } catch (\Exception $e) {
-            session()->flash('error', 'Could not delete service.');
-        }
-    }
-
-
-    public function publishProduct(int $id): void
-    {
-        $cid     = $this->getCustomerId();
-        $product = \App\Models\Product::where('id', $id)->where('customer_id', $cid)->first();
-        if ($product) {
-            $product->update(['status' => 0]); // 0 = pending admin review
-            $this->loadCounts();
-            session()->flash('message', 'Product submitted for admin review!');
+            session()->flash('error', 'Could not delete service: ' . $e->getMessage());
         }
     }
 
     public function render()
     {
         $cid = $this->getCustomerId();
-        $sid = $this->getSellerId() ?? $cid;
 
         // ── Products ──────────────────────────────────────────
         $products = collect();
         if (in_array($this->activeTab, ['all', 'products'])) {
-            $products = Product::with('country')
-                ->where('customer_id', $cid)
+            $products = Product::where('customer_id', $cid)
                 ->when($this->search, fn($q) =>
                     $q->where('title', 'like', "%{$this->search}%")
                 )
@@ -159,6 +168,7 @@ class MyListings extends Component
                     $q->where('status', match($this->statusFilter) {
                         'approved' => 1,
                         'rejected' => 2,
+                        'draft'    => 3,
                         default    => 0,
                     })
                 )
@@ -172,21 +182,23 @@ class MyListings extends Component
                     'status'     => match((int)$p->status) {
                         1        => 'approved',
                         2        => 'rejected',
-                        default  => 'pending'
+                        3        => 'draft',
+                        default  => 'pending',
                     },
-                    'price'      => '₹' . number_format($p->min_price ?? 0)
-                                  . ' – ₹' . number_format($p->max_price ?? 0),
+                    'price'      => $p->min_price
+                                    ? '₹' . number_format($p->min_price) . ' – ₹' . number_format($p->max_price ?? $p->min_price)
+                                    : '—',
                     'meta'       => 'MOQ: ' . ($p->min_order ?? '—'),
-                    'edit_route'   => route('seller-product-edit', $p->id),
+                    'edit_route' => route('seller-product-edit', $p->id),
                     'created_at' => $p->created_at,
                 ]);
         }
 
         // ── Services ──────────────────────────────────────────
         $services = collect();
-        if ($this->servicesEnabled && in_array($this->activeTab, ['all', 'services'])) {
+        if ($this->servicesTableExists() && in_array($this->activeTab, ['all', 'services'])) {
             try {
-                $services = \App\Models\SellerService::where('customer_id', $sid)
+                $services = \App\Models\SellerService::where('customer_id', $cid)
                     ->when($this->search, fn($q) =>
                         $q->where('title', 'like', "%{$this->search}%")
                           ->orWhere('service_type', 'like', "%{$this->search}%")
@@ -201,20 +213,19 @@ class MyListings extends Component
                         'type'       => 'service',
                         'title'      => $s->title,
                         'image'      => $s->cover_image,
-                        'status'     => $s->status,
-                        'price'      => $s->price_display,
-                        'meta'       => $s->service_type
-                                      . ($s->delivery_mode ? ' · ' . $s->delivery_mode : ''),
-                        'edit_route'   => route('service_add') . '?edit=' . $s->id,
+                        'status'     => $s->status ?? 'pending',
+                        // FIXED: build price string directly — no accessor needed
+                        'price'      => $this->formatServicePrice($s),
+                        'meta'       => trim(($s->service_type ?? '') . ($s->delivery_mode ? ' · ' . $s->delivery_mode : '')),
+                        'edit_route' => route('service_add') . '?edit=' . $s->id,
                         'created_at' => $s->created_at,
                     ]);
             } catch (\Exception $e) {
-                Log::warning('MyListings: SellerService query failed — ' . $e->getMessage());
-                $this->servicesEnabled = false;
+                Log::error('[MyListings] SellerService query failed: ' . $e->getMessage());
             }
         }
 
-        // ── Merge + paginate ──────────────────────────────────
+        // ── Merge & paginate ──────────────────────────────────
         $merged = $products->merge($services)
             ->sortByDesc('created_at')
             ->values();

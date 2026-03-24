@@ -4,12 +4,13 @@
 namespace App\Livewire\Seller;
 
 use App\Models\Category;
+use App\Models\Customer;
 use App\Models\SellerService;
 use App\Models\Subcategory;
 use App\Models\SubSubCategory;
-use App\Models\Customer;
-use App\Models\ItemsModel;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -18,89 +19,56 @@ class ServiceAdd extends Component
 {
     use WithFileUploads;
 
-    public int $activeTab = 1;
+    // ── Step state (4 steps like ProductAdd) ─────────────────
+    public int $activeStep = 1;
+    public int $totalSteps = 4;
 
-    // ── Tab 1: Basic Details ──────────────────────────────────
-    public $title             = '';
-    public $price             = '';
-    public $price_unit        = '';
-    public $description       = '';
+    // ── Step 1: Basic Info ────────────────────────────────────
+    public $title       = '';
+    public $description = '';
+    public $keywords    = '';
+
+    // ── Step 2: Media ─────────────────────────────────────────
     public $cover_image;
-    public $gallery_images    = [];
-    public $new_gallery_images= [];
-    public $video_url         = '';
+    public $gallery_images     = [];
+    public $new_gallery_images = [];
+    public $video_url          = '';
     public $brochure_pdf;
 
-    // ── Tab 2: Specifications ─────────────────────────────────
+    // ── Step 3: Pricing & Delivery ───────────────────────────
+    public $price               = '';
+    public $price_unit          = 'per project';
+    public $pricing_model       = '';
+    public $delivery_mode       = 'Both';
+    public $turnaround_time     = '';
+    public $service_area        = '';
+    public $payment_terms       = '';
+    public $sample_consultation = 'no';
+
+    // ── Step 4: Specs & Category ──────────────────────────────
     public $category_id          = '';
     public $subcategory_id       = '';
     public $sub_subcategory_id   = '';
     public $subcategories        = [];
     public $sub_subcategories    = [];
-
     public $service_type         = '';
-    public $pricing_model        = '';
     public $contract_duration    = '';
     public $business_type_target = '';
     public array $industries_served = [];
-    public $delivery_mode        = '';
     public $experience_years     = '';
     public $certifications       = '';
-    public $keywords             = '';
 
-    // ── Product score ─────────────────────────────────────────
-    public function getProductScoreProperty(): int
-    {
-        $score = 0;
-        if (strlen($this->title) >= 3)                          $score += 10;
-        if ($this->price)                                       $score += 15;
-        if (strlen(strip_tags($this->description ?? '')) > 100) $score += 20;
-        if ($this->cover_image)                                 $score += 15;
-        if (!empty($this->gallery_images))                      $score += 10;
-        if ($this->video_url)                                   $score += 10;
-        if ($this->brochure_pdf)                                $score += 5;
-        if ($this->service_type)                                $score += 5;
-        if ($this->pricing_model)                               $score += 5;
-        if ($this->certifications)                              $score += 5;
-        return min($score, 100);
-    }
+    // ── UI state ──────────────────────────────────────────────
+    public string $alertMessage = '';
+    public string $alertType    = '';
 
-    public function getScoreColorProperty(): string
-    {
-        $s = $this->productScore;
-        if ($s >= 70) return '#059669';
-        if ($s >= 40) return '#f59e0b';
-        return '#ef4444';
-    }
-
-    public function getScoreLabelProperty(): string
-    {
-        $s = $this->productScore;
-        if ($s >= 70) return 'Good';
-        if ($s >= 40) return 'Low';
-        return 'Very Low';
-    }
-
-    // ── Toggle industry ───────────────────────────────────────
-    public function toggleIndustry(string $industry): void
-    {
-        if (in_array($industry, $this->industries_served)) {
-            $this->industries_served = array_values(
-                array_filter($this->industries_served, fn($i) => $i !== $industry)
-            );
-        } else {
-            $this->industries_served[] = $industry;
-        }
-    }
-
-    // ── Render ────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────
     public function render()
     {
         $categories = Category::all();
         return view('livewire.seller.service-add', compact('categories'));
     }
 
-    // ── Category watchers ─────────────────────────────────────
     public function updatedCategoryId($val)
     {
         $this->subcategories      = Subcategory::where('category_id', $val)->get();
@@ -115,7 +83,6 @@ class ServiceAdd extends Component
         $this->sub_subcategory_id = '';
     }
 
-    // ── Gallery accumulator ───────────────────────────────────
     public function updatedNewGalleryImages()
     {
         foreach ($this->new_gallery_images as $img) {
@@ -124,154 +91,264 @@ class ServiceAdd extends Component
         $this->new_gallery_images = [];
     }
 
-    // ── Tab 1 → Tab 2 ─────────────────────────────────────────
-    public function saveAndContinue()
+    public function removeGalleryImage(int $index): void
     {
-        $this->validate([
-            'title'       => 'required|string|min:3|max:255',
-            'price'       => 'nullable|numeric|min:0',
-            'description' => 'nullable|string',
-            'cover_image' => 'nullable|image|mimes:jpg,jpeg,webp,png|max:4096',
-            'video_url'   => 'nullable|url|max:500',
-        ], [
-            'title.required' => 'Service / Product name is required.',
-            'title.min'      => 'Name must be at least 3 characters.',
-        ]);
-
-        $this->activeTab = 2;
+        array_splice($this->gallery_images, $index, 1);
     }
 
-    // ── Final submit ──────────────────────────────────────────
-    public function submit()
+    // ── Step navigation ───────────────────────────────────────
+    public function nextStep()
     {
-        // ── 1. Validate ───────────────────────────────────────
-        $this->validate([
-            'title'       => 'required|string|min:3|max:255',
-            'category_id' => 'required',
-            'cover_image' => 'nullable|image|mimes:jpg,jpeg,webp,png|max:4096',
-            'video_url'   => 'nullable|url|max:500',
-        ], [
-            'title.required'    => 'Service name is required.',
-            'category_id.required' => 'Please select a category.',
-        ]);
+        $this->validateCurrentStep();
+        if ($this->activeStep < $this->totalSteps) $this->activeStep++;
+    }
 
-        // ── 2. Auth & session guard ───────────────────────────
-        // Try common session key variants used across different auth setups
-        $customerId = Session::get('id')
-            ?? Session::get('customer_id')
-            ?? Session::get('user_id')
-            ?? (auth()->check() ? auth()->id() : null);
+    public function prevStep()
+    {
+        if ($this->activeStep > 1) $this->activeStep--;
+    }
 
-        if (!$customerId) {
-            session()->flash('error', 'Session expired. Please log in again.');
-            return;
-        }
+    public function goToStep(int $step)
+    {
+        if ($step < $this->activeStep) $this->activeStep = $step;
+    }
 
-        $customer = Customer::find($customerId);
-        if (!$customer) {
-            session()->flash('error', 'Account not found (ID: ' . $customerId . '). Please contact support.');
-            return;
-        }
+    private function validateCurrentStep(): void
+    {
+        match ($this->activeStep) {
+            1 => $this->validate([
+                    'title'       => 'required|string|min:3|max:255',
+                    'description' => 'nullable|string',
+                    'keywords'    => 'nullable|string|max:500',
+                ], [
+                    'title.required' => 'Service name is required.',
+                    'title.min'      => 'Name must be at least 3 characters.',
+                ]),
 
-        // ── 3. Package / limit check ──────────────────────────
-        // Skip limit check if package system is not set up yet
-        if ($customer->package_id && $customer->package_id != 0) {
-            $existingCount = SellerService::where('customer_id', $customerId)
-                ->whereNotIn('status', ['rejected'])
-                ->count();
+            2 => $this->validate([
+                    'cover_image'    => 'nullable|image|mimes:jpg,jpeg,webp,png|max:4096',
+                    'gallery_images' => 'nullable|array|max:9',
+                    'video_url'      => 'nullable|url|max:500',
+                    'brochure_pdf'   => 'nullable|file|mimes:pdf|max:10240',
+                ], [
+                    'cover_image.max'    => 'Cover image must be under 4MB.',
+                    'brochure_pdf.max'   => 'PDF must be under 10MB.',
+                    'brochure_pdf.mimes' => 'Brochure must be a PDF file.',
+                ]),
 
-            $serviceLimit = $customer->product_upload_limit
-                ?? optional(ItemsModel::find($customer->package_id))->product_limit
-                ?? 0;
+            3 => $this->validate([
+                    'price' => 'nullable|numeric|min:0',
+                ]),
 
-            if ($serviceLimit > 0 && $existingCount >= $serviceLimit) {
-                session()->flash('error', 'You have reached your service listing limit for this package.');
-                return;
+            default => null,
+        };
+    }
+
+    // ── Resolve customer ID ───────────────────────────────────
+    // Supports both old (session 'id') and new (session 'seller_id' + 'seller_email')
+    private function resolveCustomerId(): mixed
+    {
+        // New seller system
+        if (Session::get('seller_id') && Session::get('seller_email')) {
+            $customer = Customer::where('email', Session::get('seller_email'))->first();
+            if ($customer) {
+                Session::put('id', $customer->id);
+                return $customer->id;
             }
+        }
+        return Session::get('id')
+            ?? Session::get('customer_id')
+            ?? (auth()->check() ? auth()->id() : null);
+    }
+
+    // ── Upload image ──────────────────────────────────────────
+    private function uploadImage($file): ?string
+    {
+        if (!$file) return null;
+        try {
+            $ext      = $file->getClientOriginalExtension();
+            $filename = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
+                        . '-' . time() . '-' . rand(100, 9999) . '.' . $ext;
+            try {
+                $file->storeAs('uploads/services', $filename, 's3');
+            } catch (\Exception $e) {
+                Storage::disk('public')->put('uploads/services/' . $filename, file_get_contents($file->getRealPath()));
+            }
+            return 'uploads/services/' . $filename;
+        } catch (\Exception $e) {
+            Log::warning('[ServiceAdd] uploadImage: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    // ── Upload PDF ────────────────────────────────────────────
+    private function uploadPdf($file): ?string
+    {
+        if (!$file) return null;
+        try {
+            $filename = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
+                        . '-' . time() . '-' . rand(100, 9999) . '.pdf';
+            $folder   = 'uploads/services/pdf';
+            try {
+                Storage::disk('s3')->putFileAs($folder, $file->getRealPath(), $filename);
+            } catch (\Exception $e) {
+                Storage::disk('public')->putFileAs($folder, $file->getRealPath(), $filename);
+            }
+            return $folder . '/' . $filename;
+        } catch (\Exception $e) {
+            Log::error('[ServiceAdd] uploadPdf: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    // ── Build DB data array ───────────────────────────────────
+    private function buildData(int $customerId, string $status, ?string $coverPath = null, array $galleryPaths = [], ?string $pdfPath = null): array
+    {
+        $pricingType = match ($this->pricing_model) {
+            'Hourly'           => 'hourly',
+            'Monthly Retainer' => 'fixed',
+            'Project Based'    => 'fixed',
+            default            => 'quote_based',
+        };
+
+        return [
+            'customer_id'         => $customerId,
+            'title'               => trim($this->title) ?: 'Draft - ' . now()->format('d M H:i'),
+            'slug'                => Str::slug($this->title ?: 'draft') . '-' . $customerId . '-' . rand(100, 99999),
+            'description'         => $this->description      ?: null,
+            'service_type'        => $this->service_type     ?: null,
+            'category_id'         => $this->category_id      ?: null,
+            'subcategory_id'      => $this->subcategory_id   ?: null,
+            'sub_subcategory_id'  => $this->sub_subcategory_id ?: null,
+            'keywords'            => $this->keywords          ?: null,
+            'pricing_type'        => $pricingType,
+            'min_price'           => is_numeric($this->price) ? $this->price : null,
+            'max_price'           => is_numeric($this->price) ? $this->price : null,
+            'price_unit'          => $this->price_unit        ?: $this->pricing_model ?: null,
+            'delivery_mode'       => $this->delivery_mode     ?: null,
+            'turnaround_time'     => $this->turnaround_time   ?: null,
+            'service_area'        => $this->service_area      ?: null,
+            'payment_terms'       => $this->payment_terms     ?: null,
+            'sample_consultation' => $this->sample_consultation,
+            'certifications'      => $this->certifications    ?: null,
+            'experience_years'    => $this->experience_years  ?: null,
+            'cover_image'         => $coverPath,
+            'portfolio_images'    => !empty($galleryPaths) ? json_encode($galleryPaths) : null,
+            'video_url'           => $this->video_url         ?: null,
+            'status'              => $status,
+            'inclusions'          => json_encode([
+                'pricing_model'        => $this->pricing_model,
+                'contract_duration'    => $this->contract_duration,
+                'business_type_target' => $this->business_type_target,
+                'industries_served'    => $this->industries_served,
+                'brochure_pdf'         => $pdfPath,
+            ]),
+        ];
+    }
+
+    // ── Save as Draft ─────────────────────────────────────────
+    public function saveDraft(): void
+    {
+        $this->alertMessage = '';
+
+        if (empty(trim($this->title))) {
+            $this->alertMessage = 'Please enter a service name to save as draft.';
+            $this->alertType    = 'error';
+            $this->activeStep   = 1;
+            return;
+        }
+
+        $customerId = $this->resolveCustomerId();
+        if (!$customerId) {
+            $this->alertMessage = 'Session expired. Please log in again.';
+            $this->alertType    = 'error';
+            return;
         }
 
         try {
-            // ── 4. Upload cover image ─────────────────────────
-            $coverPath = null;
-            if ($this->cover_image) {
-                $ext      = $this->cover_image->getClientOriginalExtension();
-                $uname    = 'svc-' . $customerId . '-' . rand(1000, 999999) . '.' . $ext;
-                $this->cover_image->storeAs('public/uploads/services', $uname, 's3');
-                $coverPath = 'uploads/services/' . $uname;
-            }
-
-            // ── 5. Upload gallery images ──────────────────────
+            $coverPath    = $this->cover_image  ? $this->uploadImage($this->cover_image)  : null;
+            $pdfPath      = $this->brochure_pdf ? $this->uploadPdf($this->brochure_pdf)   : null;
             $galleryPaths = [];
             foreach ($this->gallery_images as $gi) {
-                try {
-                    $ext   = $gi->getClientOriginalExtension();
-                    $uname = 'svc-g-' . $customerId . '-' . rand(1000, 999999) . '.' . $ext;
-                    $gi->storeAs('public/uploads/services', $uname, 's3');
-                    $galleryPaths[] = 'uploads/services/' . $uname;
-                } catch (\Exception $e) {
-                    // Skip failed gallery uploads — don't abort the whole save
-                }
+                $p = $this->uploadImage($gi);
+                if ($p) $galleryPaths[] = $p;
             }
 
-            // ── 6. Upload PDF brochure ────────────────────────
-            $pdfPath = null;
-            if ($this->brochure_pdf) {
-                $ext   = $this->brochure_pdf->getClientOriginalExtension();
-                $uname = 'svc-pdf-' . $customerId . '-' . rand(1000, 999999) . '.' . $ext;
-                $this->brochure_pdf->storeAs('public/uploads/services', $uname, 's3');
-                $pdfPath = 'uploads/services/' . $uname;
-            }
-
-            // ── 7. Derive slug ────────────────────────────────
-            $slug = Str::slug($this->title) . '-' . $customerId . '-' . rand(100, 99999);
-
-            // ── 8. Map pricing model → pricing_type ──────────
-            $pricingType = match ($this->pricing_model) {
-                'Hourly'           => 'hourly',
-                'Monthly Retainer' => 'fixed',
-                'Project Based'    => 'fixed',
-                default            => 'quote_based',
-            };
-
-            // ── 9. Persist ────────────────────────────────────
-            SellerService::create([
-                'customer_id'        => $customerId,
-                'title'              => $this->title,
-                'slug'               => $slug,
-                'description'        => $this->description ?: null,
-                'service_type'       => $this->service_type ?: null,
-                'category_id'        => $this->category_id ?: null,
-                'subcategory_id'     => $this->subcategory_id ?: null,
-                'sub_subcategory_id' => $this->sub_subcategory_id ?: null,
-                'keywords'           => $this->keywords ?: null,
-                'pricing_type'       => $pricingType,
-                'min_price'          => $this->price ?: null,
-                'max_price'          => $this->price ?: null,
-                'price_unit'         => $this->price_unit ?: $this->pricing_model ?: null,
-                'delivery_mode'      => $this->delivery_mode ?: null,
-                'certifications'     => $this->certifications ?: null,
-                'experience_years'   => $this->experience_years ?: null,
-                'cover_image'        => $coverPath,
-                'portfolio_images'   => !empty($galleryPaths) ? json_encode($galleryPaths) : null,
-                'video_url'          => $this->video_url ?: null,
-                // Extra spec fields stored as JSON in inclusions
-                'inclusions' => json_encode([
-                    'pricing_model'        => $this->pricing_model,
-                    'contract_duration'    => $this->contract_duration,
-                    'business_type_target' => $this->business_type_target,
-                    'industries_served'    => $this->industries_served,
-                    'brochure_pdf'         => $pdfPath,
-                ]),
-                'status' => 'pending',
-            ]);
+            SellerService::create($this->buildData($customerId, 'draft', $coverPath, $galleryPaths, $pdfPath));
 
             $this->reset();
-
-            return redirect()->route('my-listings')
-                ->with('message', '✅ Service listed successfully! Goes live once approved.');
+            redirect()->route('my-listings')
+                ->with('message', '📝 Service saved as draft. Publish anytime from My Listings.');
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Something went wrong: ' . $e->getMessage());
+            $this->alertMessage = 'Could not save draft: ' . $e->getMessage();
+            $this->alertType    = 'error';
+            Log::error('[ServiceAdd] saveDraft: ' . $e->getMessage());
+        }
+    }
+
+    // ── Submit ────────────────────────────────────────────────
+    public function submit(): void
+    {
+        $this->alertMessage = '';
+
+        try {
+            $this->validate([
+                'title'        => 'required|string|min:3|max:255',
+                'video_url'    => 'nullable|url|max:500',
+                'brochure_pdf' => 'nullable|file|mimes:pdf|max:10240',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->activeStep = 1;
+            throw $e;
+        }
+
+        $customerId = $this->resolveCustomerId();
+        if (!$customerId) {
+            $this->alertMessage = 'Session expired. Please log in again.';
+            $this->alertType    = 'error';
+            return;
+        }
+
+        // Duplicate check
+        if (SellerService::where('customer_id', $customerId)
+            ->where('title', trim($this->title))
+            ->where('status', '!=', 'draft')
+            ->exists()) {
+            $this->alertMessage = '⚠️ You already have a service with this name.';
+            $this->alertType    = 'error';
+            return;
+        }
+
+        try {
+            $coverPath    = $this->uploadImage($this->cover_image);
+            $pdfPath      = $this->uploadPdf($this->brochure_pdf);
+            $galleryPaths = [];
+            foreach ($this->gallery_images as $gi) {
+                $p = $this->uploadImage($gi);
+                if ($p) $galleryPaths[] = $p;
+            }
+
+            $service = SellerService::create(
+                $this->buildData($customerId, 'pending', $coverPath, $galleryPaths, $pdfPath)
+            );
+
+            if (!$service?->exists) {
+                $this->alertMessage = 'Service could not be saved. Please try again.';
+                $this->alertType    = 'error';
+                return;
+            }
+
+            $this->reset();
+            redirect()->route('my-listings')
+                ->with('message', '✅ Service submitted for review! Goes live once approved by admin.');
+
+        } catch (\Illuminate\Database\QueryException $dbEx) {
+            $this->alertMessage = 'Database error: ' . $dbEx->getMessage();
+            $this->alertType    = 'error';
+        } catch (\Exception $e) {
+            $this->alertMessage = 'Something went wrong: ' . $e->getMessage();
+            $this->alertType    = 'error';
         }
     }
 }
