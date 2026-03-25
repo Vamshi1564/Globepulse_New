@@ -209,15 +209,10 @@
         ⚡ Tip: Competitive pricing increases acceptance chances
     </small>
 
-@if($rfq->status === 'quoted' || 
-    \App\Models\Quotation::where('rfq_id', $rfq->id)
-    ->where('supplier_uuid', session('seller_id'))
-    ->exists())
-
+@if($rfq->status === 'quoted')
     <button class="btn btn-secondary px-4 fw-semibold" disabled>
         ✔ Already Quoted
     </button>
-
 @else
 
     <button type="submit"

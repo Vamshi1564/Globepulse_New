@@ -325,21 +325,16 @@ function updateRFQStatus(status) {
 
    
 
-    @if($rfq->status === 'quoted' || 
-    \App\Models\Quotation::where('rfq_id', $rfq->id)
-    ->where('supplier_uuid', session('seller_id'))
-    ->exists())
-
-    <button class="btn btn-secondary px-4 fw-semibold d-none" disabled>
+    @if($rfq->status === 'quoted')
+    <button class="btn btn-secondary px-4 fw-semibold" disabled>
         ✔ Already Quoted
     </button>
-
 @else
     <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
        class="btn btn-success px-4">
         💰 Send Quotation
     </a>
-    @endif
+@endif
 </div>
 
 </div>
