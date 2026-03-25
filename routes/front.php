@@ -198,8 +198,11 @@ Route::get('/buyer/quotations', Quotations::class)
 
 
 
-Route::get('/quotation/accept/{id}', [QuotationController::class, 'accept'])->name('quotation.accept');
-Route::get('/quotation/reject/{id}', [QuotationController::class, 'reject'])->name('quotation.reject');
+Route::post('/quotation/accept/{id}', [QuotationController::class, 'accept'])
+    ->name('quotation.accept');
+
+Route::post('/quotation/reject/{id}', [QuotationController::class, 'reject'])
+    ->name('quotation.reject');
 // ── Buyer Dashboard (temporary placeholder) ────────
 // Route::get('/buyer/dashboard', function () {
 

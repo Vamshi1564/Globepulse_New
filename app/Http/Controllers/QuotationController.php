@@ -28,17 +28,27 @@ class QuotationController extends Controller
 
         return redirect()->back()->with('message', 'Quotation accepted!');
     }
+public function reject($id)
+{
+    $buyerUuid = Session::get('buyer_uuid');
 
-    public function reject($id)
-    {
-        $buyerUuid = Session::get('buyer_uuid');
+    $quote = Quotation::where('id', $id)
+        ->where('buyer_uuid', $buyerUuid)
+        ->firstOrFail();
 
-        $quote = Quotation::where('id', $id)
-            ->where('buyer_uuid', $buyerUuid)
-            ->firstOrFail();
+    // ❌ Reject this quote
+    $quote->update(['status' => 2]);
 
-        $quote->update(['status' => 2]);
+    // 🔍 Check if any pending quotes still exist
+    $remainingQuotes = Quotation::where('rfq_id', $quote->rfq_id)
+        ->where('status', 0) // still pending
+        ->exists();
 
-        return redirect()->back()->with('message', 'Quotation rejected!');
+    // ❗ If no more quotes left → close RFQ
+    if (!$remainingQuotes) {
+        $quote->rfq->update(['status' => 'rejected']);
     }
+
+    return redirect()->back()->with('message', 'Quotation rejected!');
+}
 }

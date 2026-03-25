@@ -1,28 +1,3 @@
-<style>
-    .btn-cancel {
-    display: inline-block;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
-    color: #475569;
-    transition: all 0.25s ease;
-}
-
-/* Hover effect */
-.btn-cancel:hover {
-    background: #ef4444;       /* red */
-    color: #fff;
-    border-color: #ef4444;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
-}
-
-/* Optional: active click feel */
-.btn-cancel:active {
-    transform: scale(0.98);
-}
-</style>
-
 <div>
 
 <livewire:seller.layout.header />
@@ -239,16 +214,12 @@
         ✔ Already Quoted
     </button>
 @else
-<div class="d-flex gap-2">
-       <!-- Cancel Button -->
-    <button type="button"
-            onclick="history.back()"
-             class="btn-cancel px-4 fw-semibold">
-        ❌ Cancel
-    </button>
+
+    <div class="d-flex gap-2">
+
     <button type="submit"
-        class="btn btn-success px-4 fw-semibold"
-        wire:loading.attr="disabled">
+            class="btn btn-success px-4 fw-semibold"
+            wire:loading.attr="disabled">
 
         <span wire:loading.remove>
             🚀 Send Quotation
@@ -259,8 +230,16 @@
             Sending...
         </span>
     </button>
-  
+
+    <!-- Cancel Button -->
+    <button type="button"
+            onclick="history.back()"
+            class="btn btn-outline-secondary px-4 fw-semibold">
+        ❌ Cancel
+    </button>
+
 </div>
+
 @endif
 
 </div>

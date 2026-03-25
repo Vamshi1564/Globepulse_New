@@ -19,6 +19,15 @@
     border-radius: 10px;
     font-size: 18px;
 }
+.dashboard-sidebar {
+    background:#ffffff;
+    border-right:1px solid #e5e7eb;
+    padding:22px;
+
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
 </style>
 
 
@@ -97,23 +106,36 @@
                                             </td>
                                             
 
-                                            <td>
-                                                @if($rfq->status == 'pending')
-                                                    <span class="badge bg-warning text-dark">Pending</span>
+                                           <td>
 
-                                                @elseif($rfq->status == 'quoted')
-                                                    <span class="badge bg-success">Quoted</span>
+    @if($rfq->status == 'pending')
+        <span class="badge bg-warning text-dark">
+            ⏳ Waiting for Quotes
+        </span>
 
-                                                @elseif($rfq->status == 'accepted')
-                                                    <span class="badge bg-primary">Accepted</span>
+    @elseif($rfq->status == 'quoted')
+        <span class="badge bg-info text-dark">
+            📩 Quotes Received
+        </span>
 
-                                                @elseif($rfq->status == 'rejected')
-                                                    <span class="badge bg-danger">Rejected</span>
+    @elseif($rfq->status == 'accepted')
+        <span class="badge bg-success">
+            🏆 Deal Finalized
+        </span>
 
-                                                @elseif($rfq->status == 'closed')
-                                                    <span class="badge bg-secondary">Closed</span>
-                                                @endif
-                                            </td>
+    @elseif($rfq->status == 'rejected')
+        <span class="badge bg-danger">
+            ❌ No Deal
+        </span>
+
+    @elseif($rfq->status == 'closed')
+        <span class="badge bg-secondary">
+            🔒 Closed
+        </span>
+
+    @endif
+
+</td>
 
                                             <td>
                                                 {{ $rfq->created_at->format('d M Y') }}

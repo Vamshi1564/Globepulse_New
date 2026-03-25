@@ -168,21 +168,32 @@
         </div>
 
         <div>
-           @if($rfq->status == 'pending')
-    <span class="badge bg-warning text-dark">Pending</span>
+              @if($rfq->status == 'pending')
+        <span class="badge bg-warning text-dark">
+            ⏳ Waiting for Quotes
+        </span>
 
-@elseif($rfq->status == 'quoted')
-    <span class="badge bg-success">Quoted</span>
+    @elseif($rfq->status == 'quoted')
+        <span class="badge bg-info text-dark">
+            📩 Quotes Received
+        </span>
 
-@elseif($rfq->status == 'accepted')
-    <span class="badge bg-primary">Accepted</span>
+    @elseif($rfq->status == 'accepted')
+        <span class="badge bg-success">
+            🏆 Deal Finalized
+        </span>
 
-@elseif($rfq->status == 'rejected')
-    <span class="badge bg-danger">Rejected</span>
+    @elseif($rfq->status == 'rejected')
+        <span class="badge bg-danger">
+            ❌ No Deal
+        </span>
 
-@elseif($rfq->status == 'closed')
-    <span class="badge bg-secondary">Closed</span>
-@endif
+    @elseif($rfq->status == 'closed')
+        <span class="badge bg-secondary">
+            🔒 Closed
+        </span>
+
+    @endif
         </div>
     </div>
 

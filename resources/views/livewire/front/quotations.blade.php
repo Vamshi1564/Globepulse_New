@@ -78,6 +78,15 @@
     border-radius: 10px;
     border-left: 4px solid #3b82f6;
 }
+.dashboard-sidebar {
+    background:#ffffff;
+    border-right:1px solid #e5e7eb;
+    padding:22px;
+
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
 </style>
 
 
@@ -165,22 +174,30 @@
 
         <div>
             <h6 class="fw-bold mb-1">
-                💼 Offer from {{ optional($quote->supplier->detail)->legal_business_name ?? 'N/A' }}
+                💼 Offer from {{ $quote->supplier->legal_business_name ?? 'N/A' }}
             </h6>
             <small class="text-muted">
-                🏭 {{ optional($quote->supplier->detail)->legal_business_name ?? 'N/A' }}
+                🏭 {{ $quote->supplier->legal_business_name ?? 'N/A' }}
             </small>
         </div>
 
-        <div>
-            @if($quote->status == 0)
-                <span class="badge badge-pending">Pending</span>
-            @elseif($quote->status == 1)
-                <span class="badge badge-accepted">Accepted</span>
-            @else
-                <span class="badge badge-rejected">Rejected</span>
-            @endif
-        </div>
+       <div>
+    @if($quote->status == 0)
+        <span class="badge bg-warning text-dark">
+            ⏳ Waiting
+        </span>
+
+    @elseif($quote->status == 1)
+        <span class="badge bg-success">
+            🏆 Selected
+        </span>
+
+    @elseif($quote->status == 2)
+        <span class="badge bg-secondary">
+            ❌ Not Selected
+        </span>
+    @endif
+</div>
 
     </div>
 
@@ -245,19 +262,25 @@
 
     <!-- ACTION -->
     @if($quote->status == 0)
-    <div class="mt-3 d-flex gap-2">
+   <div class="mt-3 d-flex gap-2">
 
-        <button onclick="acceptQuote({{ $quote->id }})"
-    class="btn btn-success btn-sm px-3">
-    ✅ Accept
-</button>
+    <!-- ACCEPT -->
+    <form action="{{ route('quotation.accept', $quote->id) }}" method="POST">
+        @csrf
+        <button class="btn btn-success btn-sm px-3">
+            ✅ Accept
+        </button>
+    </form>
 
-<button onclick="rejectQuote({{ $quote->id }})"
-    class="btn btn-outline-danger btn-sm px-3">
-    ❌ Reject
-</button>
+    <!-- REJECT -->
+    <form action="{{ route('quotation.reject', $quote->id) }}" method="POST">
+        @csrf
+        <button class="btn btn-outline-danger btn-sm px-3">
+            ❌ Reject
+        </button>
+    </form>
 
-    </div>
+</div>
     @endif
 
 </div>
@@ -287,12 +310,3 @@
 </div>
 
 
-<script>
-function acceptQuote(id) {
-    window.location.href = "/quotation/accept/" + id;
-}
-
-function rejectQuote(id) {
-    window.location.href = "/quotation/reject/" + id;
-}
-</script>

@@ -53,15 +53,24 @@
             </div>
 
             <!-- STATUS -->
+             
             <div>
-                @if($quote->status == 0)
-                    <span class="badge bg-warning px-3 py-2">Pending</span>
-                @elseif($quote->status == 1)
-                    <span class="badge bg-success px-3 py-2">Accepted</span>
-                @else
-                    <span class="badge bg-danger px-3 py-2">Rejected</span>
-                @endif
-            </div>
+    @if($quote->status == 0)
+        <span class="badge bg-warning px-3 py-2">
+            ⏳ Waiting for Buyer
+        </span>
+
+    @elseif($quote->status == 1)
+        <span class="badge bg-success px-3 py-2">
+            🏆 Your Quote Accepted
+        </span>
+
+    @elseif($quote->status == 2)
+        <span class="badge bg-secondary px-3 py-2">
+            ❌ Not Selected
+        </span>
+    @endif
+</div>
 
         </div>
 

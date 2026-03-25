@@ -38,4 +38,9 @@ class Quotations extends Component
     {
         return view('livewire.front.quotations');
     }
+
+    
+
+
+
 }
