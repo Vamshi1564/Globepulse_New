@@ -170,13 +170,16 @@ class ServiceAdd extends Component
             $filename = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
                         . '-' . time() . '-' . rand(100, 9999) . '.' . $ext;
             try {
-                $file->storeAs('uploads/services', $filename, 's3');
+                $file->storeAs('public/uploads/services', $filename, 's3');
+                Log::info('[ServiceAdd] Image uploaded to S3: uploads/services/' . $filename);
             } catch (\Exception $e) {
+                // S3 failed — fall back to local public disk
+                Log::warning('[ServiceAdd] S3 upload FAILED, using local disk. Error: ' . $e->getMessage());
                 Storage::disk('public')->put('uploads/services/' . $filename, file_get_contents($file->getRealPath()));
             }
             return 'uploads/services/' . $filename;
         } catch (\Exception $e) {
-            Log::warning('[ServiceAdd] uploadImage: ' . $e->getMessage());
+            Log::warning('[ServiceAdd] uploadImage completely failed: ' . $e->getMessage());
             return null;
         }
     }
@@ -186,17 +189,20 @@ class ServiceAdd extends Component
     {
         if (!$file) return null;
         try {
-            $filename = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
-                        . '-' . time() . '-' . rand(100, 9999) . '.pdf';
-            $folder   = 'uploads/services/pdf';
+            $filename     = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
+                            . '-' . time() . '-' . rand(100, 9999) . '.pdf';
+            $s3Folder     = 'public/uploads/services/pdf';
+            $returnFolder = 'uploads/services/pdf';
             try {
-                Storage::disk('s3')->putFileAs($folder, $file->getRealPath(), $filename);
+                Storage::disk('s3')->putFileAs($s3Folder, $file->getRealPath(), $filename);
+                Log::info('[ServiceAdd] PDF uploaded to S3: ' . $returnFolder . '/' . $filename);
             } catch (\Exception $e) {
-                Storage::disk('public')->putFileAs($folder, $file->getRealPath(), $filename);
+                Log::warning('[ServiceAdd] S3 PDF upload FAILED, using local disk. Error: ' . $e->getMessage());
+                Storage::disk('public')->putFileAs('uploads/services/pdf', $file->getRealPath(), $filename);
             }
-            return $folder . '/' . $filename;
+            return $returnFolder . '/' . $filename;
         } catch (\Exception $e) {
-            Log::error('[ServiceAdd] uploadPdf: ' . $e->getMessage());
+            Log::error('[ServiceAdd] uploadPdf completely failed: ' . $e->getMessage());
             return null;
         }
     }
