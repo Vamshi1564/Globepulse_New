@@ -202,11 +202,11 @@
 
         📩 RFQs
 
-        @if($rfqCount > 0)
-            <span class="badge bg-danger ms-1" style="font-size:10px;">
-                {{ $rfqCount }}
-            </span>
-        @endif
+      @if($rfqCount > 0)
+    <span class="badge bg-primary ms-1" style="font-size:10px;">
+        {{ $rfqCount > 10 ? '10+' : $rfqCount }}
+    </span>
+@endif
 
         <i class="fa-solid fa-angle-down ms-2"></i>
     </a>
@@ -244,6 +244,61 @@
             <a href="{{ route('seller.rfqs') }}"
                class="btn btn-sm btn-outline-primary w-100">
                 View All RFQs
+            </a>
+        </li>
+
+    </ul>
+
+</li>
+<li class="nav-item dropdown">
+
+    <a class="nav-link dropdown-toggle position-relative" href="#!" role="button"
+        data-bs-toggle="dropdown" data-bs-auto-close="outside">
+
+        💰 Quotations
+
+        @if($quotationCount > 0)
+            <span class="badge bg-success ms-1" style="font-size:10px;">
+                {{ $quotationCount  > 10 ? '10+' :  $quotationCount}}
+            </span>
+        @endif
+
+        <i class="fa-solid fa-angle-down ms-2"></i>
+    </a>
+
+    <ul class="dropdown-menu navbar-dropdown-caret p-2" style="min-width: 300px;">
+
+        <li class="px-2 py-1 fw-bold text-dark">
+            Recent Quotations
+        </li>
+
+        @forelse($recentQuotations as $quote)
+
+            <li>
+                <a class="dropdown-item small py-2 border-bottom"
+                   href="{{ route('seller.quotations') }}">
+
+                    <div class="fw-semibold">
+                        {{ $quote->rfq->product->title ?? 'Product' }}
+                    </div>
+
+                    <div class="text-muted small">
+                        ₹ {{ number_format($quote->price) }}
+                    </div>
+
+                </a>
+            </li>
+
+        @empty
+            <li class="text-center text-muted small py-3">
+                No quotations found
+            </li>
+        @endforelse
+
+        <li class="mt-2 px-2">
+            <a href="{{ route('seller.quotations') }}"
+               class="btn btn-sm btn-outline-success w-100">
+                View All Quotations
             </a>
         </li>
 

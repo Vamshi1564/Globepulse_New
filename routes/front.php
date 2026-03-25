@@ -50,7 +50,7 @@ use App\Livewire\Front\BuyerDashboard;
 use App\Livewire\Front\MyRFQs;
 use App\Livewire\Front\ViewRFQ;
 use App\Livewire\Front\Quotations;
-
+use App\Http\Controllers\QuotationController;
 // public website / front routes (preserved exactly)
 
 // service & homepage
@@ -195,6 +195,11 @@ Route::get('/buyer/rfqs', MyRFQs::class)
     ->name('buyer.rfq.view');
 Route::get('/buyer/quotations', Quotations::class)
     ->name('buyer.quotations');
+
+
+
+Route::get('/quotation/accept/{id}', [QuotationController::class, 'accept'])->name('quotation.accept');
+Route::get('/quotation/reject/{id}', [QuotationController::class, 'reject'])->name('quotation.reject');
 // ── Buyer Dashboard (temporary placeholder) ────────
 // Route::get('/buyer/dashboard', function () {
 

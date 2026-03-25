@@ -4,7 +4,13 @@
     html, body {
     height: 100%;
 }
-
+.rfq-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    border: 1px solid #f1f5f9;
+    overflow: hidden;
+}
 .page-wrapper {
     min-height: 100vh;
     display: flex;
@@ -77,6 +83,7 @@
 @else
 
 <!-- CARD TABLE -->
+ <div class="rfq-card">
 <div class="card shadow-sm border-0 rounded-4" style="margin-bottom: 120px;">
 <div class="card-body p-0">
 
@@ -194,7 +201,7 @@
 
 </div>
 </div>
-
+</div>
 @endif
 
 </div>

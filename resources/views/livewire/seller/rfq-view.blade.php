@@ -274,17 +274,17 @@
 
             <div class="col-md-6">
                 <span>Company</span>
-                <strong>{{ $rfq->supplier->legal_business_name ?? '-' }}</strong>
+               <strong>{{ $rfq->supplier->legal_business_name ?? '-' }}</strong>
             </div>
 
             <div class="col-md-6">
                 <span>Email</span>
-                <strong>{{ $rfq->supplier->email ?? '-' }}</strong>
+                <strong>{{ $rfq->sellerAccount->email ?? '-' }}</strong>
             </div>
 
             <div class="col-md-6">
                 <span>Phone</span>
-                <strong>{{ $rfq->supplier->phone ?? '-' }}</strong>
+                <strong>{{ $rfq->sellerAccount->phone ?? '-' }}</strong>
             </div>
 
         </div>

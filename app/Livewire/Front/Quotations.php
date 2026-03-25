@@ -12,14 +12,24 @@ class Quotations extends Component
 
    public function mount()
 {
+    $sellerUuid = session('seller_uuid'); // ✅ make sure this exists
     $buyerUuid = Session::get('buyer_uuid');
 
     if (!$buyerUuid) {
         abort(403, 'Buyer not logged in');
     }
 
-    $this->quotations = Quotation::with(['rfq.product', 'supplier'])
-        ->where('buyer_uuid', $buyerUuid)
+  $this->quotations = Quotation::with(['rfq.product', 'buyer', 'supplier'])
+        ->where(function ($query) use ($sellerUuid, $buyerUuid) {
+            if ($sellerUuid && $buyerUuid) {
+                $query->where('supplier_uuid', $sellerUuid)
+                      ->orWhere('buyer_uuid', $buyerUuid);
+            } elseif ($sellerUuid) {
+                $query->where('supplier_uuid', $sellerUuid);
+            } elseif ($buyerUuid) {
+                $query->where('buyer_uuid', $buyerUuid);
+            }
+        })
         ->latest()
         ->get();
 }
@@ -28,21 +38,4 @@ class Quotations extends Component
     {
         return view('livewire.front.quotations');
     }
-
-    
-
-public function accept($id)
-{
-    Quotation::where('id', $id)->update(['status' => 1]);
-
-    $this->mount(); // refresh
-}
-
-public function reject($id)
-{
-    Quotation::where('id', $id)->update(['status' => 2]);
-
-    $this->mount();
-}
-
 }

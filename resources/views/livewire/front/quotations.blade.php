@@ -1,3 +1,86 @@
+<style>
+    .quote-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 18px;
+    /* 🔥 Thick shadow */
+    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+    transition: 0.3s ease;
+    border: 1px solid #f1f5f9;
+}
+
+.quote-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+
+/* PRICE BOX */
+.price-box {
+    display: flex;
+    justify-content: space-between;
+    background: #f8fafc;
+    padding: 12px 15px;
+    border-radius: 10px;
+}
+
+.label {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #16a34a;
+}
+
+.total {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* BADGES */
+.badge-pending {
+    background: #facc15;
+    color: #000;
+}
+
+.badge-accepted {
+    background: #22c55e;
+}
+
+.badge-rejected {
+    background: #ef4444;
+}
+
+/* BEST DEAL */
+.best-price-badge {
+    margin-top: 10px;
+    display: inline-block;
+    background: #16a34a;
+    color: #fff;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+/* MESSAGE */
+.quote-message {
+    background: #f1f5f9;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+.rfq-header-box {
+    background: #eff6ff;
+    padding: 12px 15px;
+    border-radius: 10px;
+    border-left: 4px solid #3b82f6;
+}
+</style>
+
+
 <div>
 
 <livewire:front.layout.header />
@@ -27,10 +110,17 @@
 @endphp
 
 {{-- ================= RFQ SUMMARY ================= --}}
+
+<div class="quote-card">
 <div class="card mb-3 border-0 shadow-sm">
 <div class="card-body">
 
-<h5 class="fw-bold mb-3">📄 RFQ #{{ $rfq->id }}</h5>
+<div class="rfq-header-box">
+    <h5 class="fw-bold mb-1">📄 Your Requirement (RFQ #{{ $rfq->id }})</h5>
+    <small class="text-muted">
+        This is what you requested from suppliers
+    </small>
+</div>
 
 <div class="row">
 
@@ -51,9 +141,10 @@
 
 </div>
 
-</div>
-</div>
-
+<hr>
+<h4 class="fw-bold mt-3 mb-5 text-success">
+    💰 Supplier Quotation
+</h4>
 {{-- ================= QUOTES ================= --}}
 @foreach($quotes as $quote)
 
@@ -66,97 +157,110 @@
     $total = $price * $qty;
 @endphp
 
-<div class="card mb-3 shadow-sm border-0">
-<div class="card-body">
 
-<div class="d-flex justify-content-between">
 
-    <div>
-        <h6 class="fw-bold mb-1">
-            {{ $rfq->product->title }}
-        </h6>
-        <small class="text-muted">
-            Supplier: {{ $quote->supplier->company ?? 'N/A' }}
-        </small>
+
+    <!-- TOP -->
+    <div class="d-flex justify-content-between align-items-start">
+
+        <div>
+            <h6 class="fw-bold mb-1">
+                💼 Offer from {{ optional($quote->supplier->detail)->legal_business_name ?? 'N/A' }}
+            </h6>
+            <small class="text-muted">
+                🏭 {{ optional($quote->supplier->detail)->legal_business_name ?? 'N/A' }}
+            </small>
+        </div>
+
+        <div>
+            @if($quote->status == 0)
+                <span class="badge badge-pending">Pending</span>
+            @elseif($quote->status == 1)
+                <span class="badge badge-accepted">Accepted</span>
+            @else
+                <span class="badge badge-rejected">Rejected</span>
+            @endif
+        </div>
+
     </div>
 
-    <div>
-        @if($quote->status == 0)
-            <span class="badge bg-warning">Pending</span>
-        @elseif($quote->status == 1)
-            <span class="badge bg-success">Accepted</span>
-        @else
-            <span class="badge bg-danger">Rejected</span>
-        @endif
-    </div>
+    <!-- PRICE SECTION -->
+    <div class="price-box mt-3">
 
-</div>
+        <div>
+            <span class="label">Unit Price</span>
+            <div class="price">
+                ₹ {{ number_format((float)$quote->price) }}
+                <small>/ {{ $unit }}</small>
+            </div>
+        </div>
 
-<hr>
+        <div>
+            <span class="label">Total</span>
+            <div class="total">
+                ₹ {{ number_format($total) }}
+            </div>
+        </div>
 
-<div class="row">
-
-<div class="col-md-3">
-    <small class="text-muted">Unit Price</small>
-    <div class="fw-bold text-success">
-       ₹ {{ number_format((float)$quote->price) }} / {{ $unit }}
     </div>
 
     @if($quote->price == $minPrice)
-        <span class="badge bg-success">Best Price</span>
+        <div class="best-price-badge">🔥 Best Deal</div>
     @endif
-</div>
 
-<div class="col-md-3">
-    <small class="text-muted">Total</small>
-    <div class="fw-bold">
-        ₹ {{ number_format($total) }}
+ <!-- DETAILS -->
+<div class="row mt-3">
+
+    <div class="col-md-6">
+        <small class="text-muted d-block">🚚 Delivery Time</small>
+        <div class="fw-semibold">
+            {{ $quote->delivery_time ?? '-' }}
+        </div>
     </div>
-</div>
 
-<div class="col-md-3">
-    <small class="text-muted">Delivery</small>
-    <div>{{ $quote->delivery_time }}</div>
-</div>
-
-<div class="col-md-3">
-    <small class="text-muted">Payment</small>
-    <div>{{ $quote->payment_terms }}</div>
-</div>
+    <div class="col-md-6">
+        <small class="text-muted d-block">💳 Payment Terms</small>
+        <div class="fw-semibold">
+            {{ $quote->payment_terms ?? '-' }}
+        </div>
+    </div>
 
 </div>
 
-{{-- PRICE COMPARISON --}}
-@if($rfq->target_price)
-<div class="mt-2">
-    @if($quote->price <= $rfq->target_price)
-        <small class="text-success">✔ Below target price</small>
-    @else
-        <small class="text-danger">⚠ Above target price</small>
+    <!-- TARGET CHECK -->
+    @if($rfq->target_price)
+        <div class="mt-2">
+            @if($quote->price <= $rfq->target_price)
+                <span class="text-success">✔ Below target</span>
+            @else
+                <span class="text-danger">⚠ Above target</span>
+            @endif
+        </div>
     @endif
-</div>
-@endif
 
-<p class="mt-3 mb-1">
-    {{ $quote->message }}
-</p>
+    <!-- MESSAGE -->
+    <p class="quote-message mt-3">
+        {{ $quote->message }}
+    </p>
 
-{{-- ACTION --}}
-@if($quote->status == 0)
-<div class="mt-3 d-flex gap-2">
+    <!-- ACTION -->
+    @if($quote->status == 0)
+    <div class="mt-3 d-flex gap-2">
 
-<button wire:click="accept({{ $quote->id }})"
+        <button onclick="acceptQuote({{ $quote->id }})"
     class="btn btn-success btn-sm px-3">
-    ✅ Accept Deal
+    ✅ Accept
 </button>
 
-<button wire:click="reject({{ $quote->id }})"
+<button onclick="rejectQuote({{ $quote->id }})"
     class="btn btn-outline-danger btn-sm px-3">
-    Reject
+    ❌ Reject
 </button>
+
+    </div>
+    @endif
 
 </div>
-@endif
 
 </div>
 </div>
@@ -181,3 +285,14 @@
 <livewire:front.layout.footer />
 
 </div>
+
+
+<script>
+function acceptQuote(id) {
+    window.location.href = "/quotation/accept/" + id;
+}
+
+function rejectQuote(id) {
+    window.location.href = "/quotation/reject/" + id;
+}
+</script>
