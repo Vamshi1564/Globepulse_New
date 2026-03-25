@@ -195,16 +195,27 @@
             <div class="col-md-3">
                 <div class="info-box highlight">
                     <span>Quantity</span>
-                    <strong>{{ $rfq->quantity }}</strong>
+                    <strong>{{ $rfq->quantity }} {{ $rfq->product->unit }}</strong>
                 </div>
             </div>
 
-            <div class="col-md-3">
-                <div class="info-box highlight-blue">
-                    <span>Target Price</span>
-                    <strong>{{ $rfq->target_price ?? '-' }}</strong>
-                </div>
-            </div>
+            @php
+    use Illuminate\Support\Str;
+@endphp
+
+<div class="col-md-3">
+    <div class="info-box highlight-blue">
+        <span class="info-label">Target Price (₹)</span>
+
+        <strong class="info-value">
+            {{ $rfq->target_price ? '₹ ' . number_format($rfq->target_price) : '-' }}/{{ isset($rfq->product->unit) ? Str::singular($rfq->product->unit) : '-' }}
+
+           
+              
+           
+        </strong>
+    </div>
+</div>
 
             <div class="col-md-3">
                 <div class="info-box">
@@ -260,7 +271,7 @@
 
                     <div class="col-md-6">
                         <span>Name</span>
-                        <strong>{{ $rfq->name }}</strong>
+                        <strong>{{ $rfq->buyer->full_name }}</strong>
                     </div>
 
                     <div class="col-md-6">

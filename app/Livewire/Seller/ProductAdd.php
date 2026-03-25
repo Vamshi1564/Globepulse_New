@@ -156,6 +156,7 @@ class ProductAdd extends Component
     public function saveDraft()
     {
         try {
+            $sellerId = Session::get('seller_id');
             $customerId = Session::get('id');
             $customer   = $customerId ? Customer::find($customerId) : null;
 
@@ -209,6 +210,7 @@ class ProductAdd extends Component
                 'slug'              => $this->slug,
                 'HSN'               => $this->HSN             ?: null,
                 'customer_id'       => $customerId,
+                'seller_id'   => $sellerId ?? null,
                 'country_id'        => $customer->country_id ?? null,
                 'status'            => 3, // 3 = draft (not visible to buyers)
                 'brand_name'        => $this->brand_name        ?: null,
@@ -303,6 +305,7 @@ class ProductAdd extends Component
         }
 
         try {
+            $sellerId = Session::get('seller_id');
             $customerId = Session::get('id');
             $customer   = $customerId ? Customer::find($customerId) : null;
 
@@ -378,6 +381,7 @@ class ProductAdd extends Component
                 'slug'              => $slug,
                 'HSN'               => $this->HSN,
                 'customer_id'       => $customerId,
+                'seller_id'         => $sellerId,
                 'country_id'        => $customer->country_id,
                 'status'            => 0,
                 'seo_title'         => $this->seo_title   ?: $this->title,

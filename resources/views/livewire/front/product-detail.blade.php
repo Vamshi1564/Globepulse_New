@@ -697,15 +697,21 @@ document.addEventListener('livewire:init', () => {
             <!-- Quantity -->
             <div class="col-md-6">
                 <label class="form-label fw-semibold text-start">Quantity</label>
-                <input type="text"
-                    wire:model="rfq_quantity"
-                    min="{{ $product->min_order }}"
-                    class="form-control"
-                    placeholder="e.g. 50 kg / 100 pcs">
+                <div class="input-group">
+    <input type="number"
+        wire:model="rfq_quantity"
+        min="{{ $product->min_order }}"
+        class="form-control"
+        placeholder="Enter quantity">
 
-                <small class="text-muted">
-                    MOQ: {{ $product->min_order }}
-                </small>
+    <span class="input-group-text">
+        {{ $product->unit ?? 'unit'  }}
+    </span>
+</div>
+
+<small class="text-muted">
+    MOQ: {{ $product->min_order }}
+</small>
                 @error('rfq_quantity') <small class="text-danger">{{ $message }}</small> @enderror
 
             </div>
@@ -713,10 +719,18 @@ document.addEventListener('livewire:init', () => {
             <!-- Target Price -->
             <div class="col-md-6">
                 <label class="form-label fw-semibold text-start">Target Price</label>
-                <input type="text"
-                    wire:model="rfq_target_price"
-                    class="form-control"
-                    placeholder="e.g. $5/unit">
+                <div class="input-group">
+    <span class="input-group-text">₹</span>
+
+    <input type="number"
+        wire:model="rfq_target_price"
+        class="form-control"
+        placeholder="Target price">
+
+    <span class="input-group-text">
+        / {{ $product->unit ?? 'unit' }}
+    </span>
+</div>
             </div>
 
             <!-- Shipping -->
@@ -756,11 +770,14 @@ document.addEventListener('livewire:init', () => {
 </div>
 
                         <div class="col-md-6">
-                <label class="form-label fw-semibold">Destination Port</label>
-                <input type="text"
-                    wire:model="rfq_destination_port"
-                    class="form-control"
-                    placeholder="e.g. Mumbai Port / Dubai Port">
+                <label class="form-label fw-semibold">
+    Delivery Location
+</label>
+
+<input type="text"
+    wire:model="rfq_destination_port"
+    class="form-control"
+    placeholder="Enter city, address or location (e.g. Hyderabad, India)">
             </div>
 
             <div class="col-md-6">
@@ -774,10 +791,10 @@ document.addEventListener('livewire:init', () => {
                 </select>
             </div>
 
-            <div class="col-12">
+            <!-- <div class="col-12">
                 <label class="form-label fw-semibold">Attachment (Optional)</label>
                 <input type="file" wire:model="rfq_attachment" class="form-control">
-            </div>
+            </div> -->
 
             <!-- Message -->
             <div class="col-12">

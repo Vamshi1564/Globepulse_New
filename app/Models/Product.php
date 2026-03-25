@@ -29,6 +29,7 @@ class Product extends Model
         'subcategory_id',
         'sub_subcategory_id',
         'customer_id',
+        'seller_id',
         'country_id',
         'status',
         'slug',

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use App\Models\Country;
 use App\Mail\BuyerOtpMail;
-
+use Propaganistas\LaravelPhone\Rules\Phone;
 
 class BuyerSignup extends Component
 {
@@ -29,11 +29,42 @@ class BuyerSignup extends Component
 
     public function submit()
     {
-        $this->validate([
-            'full_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:30',
-            'country_code' => 'required',
+       $this->validate([
+            'full_name' => [
+                'required','string','min:3','max:100',
+                'regex:/^[a-zA-Z\s]+$/'
+            ],
+
+            'email' => [
+                'required','email','max:150'
+            ],
+
+             'phone' => [
+                'required',
+                'regex:/^\+?[1-9]\d{7,14}$/'
+            ],
+
+            'company_name' => [
+                'nullable','string','max:150'
+            ],
+
+            'country_code' => [
+                'required','exists:countries,iso2'
+            ],
+
+        ], [
+            'full_name.required' => 'Full name is required',
+            'full_name.min' => 'Name must be at least 3 characters',
+            'full_name.regex' => 'Only letters allowed',
+
+            'email.required' => 'Email is required',
+            'email.email' => 'Enter a valid email',
+
+            'phone.required' => 'Mobile number is required',
+            'phone.phone' => 'Enter valid mobile number for selected country',
+
+            'country_code.required' => 'Please select your country',
+            'country_code.exists' => 'Invalid country selected',
         ]);
 
         $emailLower = strtolower(trim($this->email));

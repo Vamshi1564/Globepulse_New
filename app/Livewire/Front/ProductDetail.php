@@ -190,41 +190,36 @@ public $rfq_attachment;
         ]);
 
         // ✅ SAVE RFQ
-     $supplier = Customer::find($this->product->customer_id);
+      $supplier = Seller::find($this->product->seller_id);
     
 
 $rfq = RFQ::create([
-    'product_id' => $this->product->id,
+    'product_id'     => $this->product->id,
 
-    // ✅ seller UUID (id itself is UUID)
-    'supplier_uuid' => $supplier->id,
+    'supplier_id'    => $supplier->id,     // optional (keep for safety)
+    'supplier_uuid'  => $supplier->id,   // ✅ MAIN FIELD
 
-    // optional (can remove later)
-    'supplier_id' => $supplier->id,
+    'buyer_id'       => $buyer->id,
+    'buyer_uuid'     => $buyer->id,      // ✅ ADD THIS
 
-    // ✅ buyer
-    'buyer_id' => $buyerId,
-    'buyer_uuid' => $buyer->id, // your buyers table uses UUID as id
-
-    'quantity' => $this->rfq_quantity,
-    'target_price' => $this->rfq_target_price,
-    'delivery_time' => $this->rfq_delivery_time,
-    'shipping_terms' => $this->rfq_shipping_terms,
+    'quantity'        => $this->rfq_quantity,
+    'target_price'    => $this->rfq_target_price,
+    'delivery_time'   => $this->rfq_delivery_time,
+    'shipping_terms'  => $this->rfq_shipping_terms,
     'destination_port'=> $this->rfq_destination_port,
-    'payment_terms' => $this->rfq_payment_terms,
-    'message' => $this->rfq_message,
+    'payment_terms'   => $this->rfq_payment_terms,
+    'message'         => $this->rfq_message,
 
-    'name' => $buyer->full_name ?? null,
-    'email' => $buyer->email ?? null,
-    'phone' => $buyer->phone ?? null,
-    'company_name' => $buyer->company_name ?? null,
-
-    'status' => 'pending',
+    'name'          => $buyer->name ?? null,
+    'email'         => $buyer->email ?? null,
+    'phone'         => $buyer->phone ?? null,
+    'company_name'  => $buyer->company_name ?? null,
+    'status'        => 'pending',
 ]);
 
         // ✅ TEMP: disable mail (test DB first)
   
-        $supplier = Seller::find($this->product->customer_id);
+        $supplier = Seller::find($this->product->seller_id);
 
         if ($supplier?->email) {
             Mail::to($supplier->email)->send(
