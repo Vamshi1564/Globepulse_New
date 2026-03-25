@@ -123,19 +123,19 @@
 
 <!-- BUYER -->
 <td class="fw-medium">
-    {{ $rfq->name ?? '-' }}
+    {{ $rfq->buyer->full_name ?? 'N/A' }}
 </td>
 
 <!-- QUANTITY -->
 <td class="fw-semibold">
-    {{ $rfq->quantity }}
+    {{ $rfq->quantity }} {{ $rfq->product->unit }}
 </td>
-
+ 
 <!-- PRICE -->
-<td class="text-primary fw-bold">
-    {{ $rfq->target_price ?? '-' }}
-</td>
+                                        <td class="text-primary fw-bold">
+                                               {{ $rfq->target_price ? '₹ ' . $rfq->target_price : '-' }}/{{ isset($rfq->product->unit) ? Str::singular($rfq->product->unit) : '-' }}
 
+                                            </td>
 <!-- STATUS -->
 <td>
                                                 @if($rfq->status == 'pending')
@@ -168,10 +168,20 @@
         View
     </a>
 
+    @if($rfq->status === 'quoted')
+
+    <button class="btn btn-sm btn-secondary" disabled>
+        ✔ Quoted
+    </button>
+
+@else
+
     <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
        class="btn btn-sm btn-success">
         Quote
     </a>
+
+@endif
 
 </td>
 

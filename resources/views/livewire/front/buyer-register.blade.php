@@ -145,20 +145,23 @@ Start sourcing products from global suppliers
 </div>
 
 
-<form wire:submit.prevent="submit">
+<form wire:submit.prevent="submit" novalidate>
 
 <div class="sr-fg">
 <label class="form-label">Full Name *</label>
 <input type="text"
-       class="form-control"
+       class="form-control @error('name') is-invalid @enderror"
        wire:model="full_name"
        placeholder="e.g. Ramesh Gupta">
+       @error('full_name')
+<small class="text-danger">{{ $message }}</small>
+@enderror
 </div>
 
 
 <div class="sr-fg">
 <label class="form-label">Email Address *</label>
-<input type="email"
+<input type="text"
        class="form-control"
        wire:model="email"
        placeholder="you@email.com">
@@ -173,7 +176,10 @@ Start sourcing products from global suppliers
 <input type="tel"
        class="form-control"
        wire:model="phone"
-       placeholder="+91 98765 43210">
+       placeholder="e.g. +91 9876543210 or 9876543210">
+       @error('phone')
+<small class="text-danger">{{ $message }}</small>
+@enderror
 </div>
 
 
@@ -183,6 +189,9 @@ Start sourcing products from global suppliers
        class="form-control"
        wire:model="company_name"
        placeholder="Optional">
+       @error('company_name')
+<small class="text-danger">{{ $message }}</small>
+@enderror
 </div>
 
 
@@ -200,7 +209,9 @@ Start sourcing products from global suppliers
 @endforeach
 
 </select>
-
+@error('country_code')
+<small class="text-danger">{{ $message }}</small>
+@enderror
 </div>
 
 

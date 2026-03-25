@@ -108,7 +108,7 @@
                     </div>
                 @endif
 
-                <form wire:submit.prevent="submit">
+               <form wire:submit.prevent="submit" novalidate>
                     <div class="sr-fg">
                         <label class="form-label">Full Name *</label>
                         <input type="text" class="form-control @error('name') is-invalid @enderror"
@@ -118,7 +118,7 @@
 
                     <div class="sr-fg">
                         <label class="form-label">Business Email *</label>
-                        <input type="email" class="form-control @error('email') is-invalid @enderror"
+                        <input type="text" inputmode="email" class="form-control @error('email') is-invalid @enderror"
                             wire:model="email" placeholder="you@company.com" autocomplete="email">
                         @error('email')<small class="text-danger">{{ $message }}</small>@enderror
                     </div>
@@ -164,10 +164,13 @@
                     </div>
 
                     <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="sr-terms" required>
+                        <input class="form-check-input" type="checkbox" id="sr-terms" wire:model="accept_terms">
                         <label class="form-check-label small" for="sr-terms">
                             I accept the <a href="{{ route('term-conditions') }}" target="_blank" class="text-primary fw-semibold">Terms & Conditions</a>
                         </label>
+                        @error('accept_terms')
+                        <small class="text-danger">{{ $message }}</small>
+                        @enderror
                     </div>
 
                     <button type="submit" class="btn-sr-submit" wire:loading.attr="disabled">

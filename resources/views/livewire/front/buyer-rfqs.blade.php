@@ -88,12 +88,14 @@
                                             </td>
 
                                             <td class="fw-semibold">
-                                                {{ $rfq->quantity }}
+                                                {{ $rfq->quantity }} {{ $rfq->product->unit }}
                                             </td>
 
                                             <td class="text-primary fw-bold">
-                                                {{ $rfq->target_price ?? '-' }}
+                                               {{ $rfq->target_price ? '₹ ' . $rfq->target_price : '-' }}/{{ isset($rfq->product->unit) ? Str::singular($rfq->product->unit) : '-' }}
+
                                             </td>
+                                            
 
                                             <td>
                                                 @if($rfq->status == 'pending')

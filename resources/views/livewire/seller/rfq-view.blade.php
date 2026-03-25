@@ -167,16 +167,27 @@
     <div class="col-md-3">
         <div class="info-box highlight">
             <span>Quantity</span>
-            <strong>{{ $rfq->quantity }}</strong>
+            <strong>{{ $rfq->quantity }} {{ $rfq->product->unit }}</strong>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="info-box highlight-blue">
-            <span>Target Price</span>
-            <strong>{{ $rfq->target_price ?? '-' }}</strong>
-        </div>
+ @php
+    use Illuminate\Support\Str;
+@endphp
+
+<div class="col-md-3">
+    <div class="info-box highlight-blue">
+        <span class="info-label">Target Price (₹)</span>
+
+        <strong class="info-value">
+            {{ $rfq->target_price ? '₹ ' . number_format($rfq->target_price) : '-' }}/{{ isset($rfq->product->unit) ? Str::singular($rfq->product->unit) : '-' }}
+
+           
+                
+            
+        </strong>
     </div>
+</div>
 
     <div class="col-md-3">
         <div class="info-box">
@@ -232,22 +243,22 @@
 
             <div class="col-md-6">
                 <span>Name</span>
-                <strong>{{ $rfq->name }}</strong>
+                <strong> {{ $rfq->buyer->full_name ?? 'N/A' }}</strong>
             </div>
 
             <div class="col-md-6">
                 <span>Email</span>
-                <strong>{{ $rfq->email }}</strong>
+                <strong>{{ $rfq->buyer->email }}</strong>
             </div>
 
             <div class="col-md-6">
                 <span>Phone</span>
-                <strong>{{ $rfq->phone }}</strong>
+                <strong>{{ $rfq->buyer->phone }}</strong>
             </div>
 
             <div class="col-md-6">
                 <span>Company</span>
-                <strong>{{ $rfq->company_name }}</strong>
+                <strong>{{ $rfq->buyer->company_name }}</strong>
             </div>
 
         </div>
@@ -263,7 +274,7 @@
 
             <div class="col-md-6">
                 <span>Company</span>
-                <strong>{{ $rfq->supplier->company ?? '-' }}</strong>
+                <strong>{{ $rfq->supplier->legal_business_name ?? '-' }}</strong>
             </div>
 
             <div class="col-md-6">
@@ -310,11 +321,25 @@ function updateRFQStatus(status) {
 
 </div>
 <div class="mt-4 text-end">
-    
+
+
+   
+
+    @if($rfq->status === 'quoted' || 
+    \App\Models\Quotation::where('rfq_id', $rfq->id)
+    ->where('supplier_uuid', session('seller_id'))
+    ->exists())
+
+    <button class="btn btn-secondary px-4 fw-semibold d-none" disabled>
+        ✔ Already Quoted
+    </button>
+
+@else
     <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
        class="btn btn-success px-4">
         💰 Send Quotation
     </a>
+    @endif
 </div>
 
 </div>
