@@ -317,6 +317,9 @@
                             <li><a class="dropdown-item" href="{{ route('product_add') }}">
                                 <div class="dropdown-item-wrapper">Product Add</div></a>
                             </li>
+                            <li><a class="dropdown-item" href="{{ route('service_add') }}">
+                                <div class="dropdown-item-wrapper">Service Add</div></a>
+                            </li>
                             <li><a class="dropdown-item" href="{{ route('hotdealproductform') }}">
                                 <div class="dropdown-item-wrapper">Hot Deal Add</div></a>
                             </li>
