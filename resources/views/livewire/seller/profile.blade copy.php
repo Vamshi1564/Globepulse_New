@@ -164,10 +164,10 @@
               <i class="fas fa-circle" style="font-size:.4rem"></i>
               {{ ucfirst(str_replace('_',' ',$st)) }}
             </div>
-            @if($selectedPackage)
+            @if($seller?->activeSubscription)
               <div style="margin-bottom:.8rem;">
                 <span style="font-size:.72rem;background:#f0f2f8;padding:3px 10px;border-radius:20px;font-weight:600;">
-                  <i class="fas fa-crown text-warning me-1"></i>{{ is_array($selectedPackage) ? ($selectedPackage['package_name'] ?? 'Package Selected') : ($selectedPackage->package_name ?? 'Package Selected') }}
+                  <i class="fas fa-crown text-warning me-1"></i>{{ ucfirst($seller->activeSubscription->plan_name) }} Plan
                 </span>
               </div>
             @endif
@@ -182,7 +182,7 @@
                 ['Business address',    !empty($business_address)],
                 ['Company description', !empty($company_description)],
                 ['Main products',       !empty($main_products)],
-                ['Package selected',     !empty($selected_package_id)],
+                ['Plan selected',       !empty($selected_plan)],
                 ['Business Reg. doc',   $documents->has('business_registration')],
                 ['ID / Passport',       $documents->has('owner_id_passport')],
                 ['Tax ID',              $documents->has('tax_id')],
@@ -396,58 +396,15 @@
                           @endif
                         </div>
                         <div class="duz-hint">Upload your GST certificate, business incorporation, or trade license</div>
-
                         @if($brDoc)
-                        @php
-                            $brIsImage = str_starts_with($brDoc->mime_type, 'image/');
-                            $brIsPdf   = $brDoc->mime_type === 'application/pdf';
-                        @endphp
-                        <div class="file-preview" style="margin-bottom:.6rem;">
-                          <div class="file-preview-top">
-                            @if($brIsImage)
-                              <img src="{{ asset('storage/' . $brDoc->storage_url) }}" alt="{{ $brDoc->file_name }}"
-                                style="max-height:90px;max-width:100%;border-radius:6px;object-fit:cover;">
-                            @elseif($brIsPdf)
-                              <div class="file-preview-icon" style="color:#e02424;"><i class="fas fa-file-pdf"></i></div>
-                              <div class="file-preview-label">PDF DOCUMENT</div>
-                            @else
-                              <div class="file-preview-icon" style="color:#6b7280;"><i class="fas fa-file-alt"></i></div>
-                              <div class="file-preview-label">DOCUMENT</div>
-                            @endif
-                          </div>
-                          <div class="file-preview-bottom">
-                            <div class="file-preview-name">
-                              <i class="fas fa-paperclip" style="color:var(--blue);flex-shrink:0;font-size:.7rem;"></i>
-                              {{ $brDoc->file_name }}
-                            </div>
-                            <div style="display:flex;align-items:center;gap:.5rem;">
-                              <span class="file-preview-meta">{{ round($brDoc->file_size_bytes/1024) }} KB</span>
-                              <span class="ds ds-{{ $brDoc->review_status }}">{{ ucfirst($brDoc->review_status) }}</span>
-                            </div>
-                          </div>
-                        </div>
+                          <div class="file-accepted"><i class="fas fa-check-circle"></i>{{ $brDoc->file_name }} ({{ round($brDoc->file_size_bytes/1024) }} KB)</div>
                         @endif
-                        {{-- Local JS preview shown immediately on file select --}}
-                        <div id="br_local_prev" style="display:none;margin-top:.5rem;border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;">
-                          <div id="br_local_prev_top" style="background:#f4f6fb;padding:.8rem;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80px;"></div>
-                          <div style="padding:.4rem .85rem;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:.5rem;border-top:1px solid var(--bdr);">
-                            <div style="font-size:.76rem;color:#374151;display:flex;align-items:center;gap:5px;">
-                              <i class="fas fa-paperclip" style="color:var(--blue);font-size:.7rem;"></i>
-                              <span id="br_local_name"></span>
-                            </div>
-                            <div style="display:flex;align-items:center;gap:.5rem;">
-                              <span id="br_local_size" style="font-size:.71rem;color:#9ca3af;"></span>
-                              <span style="background:var(--blue);color:#fff;font-size:.65rem;font-weight:800;padding:3px 9px;border-radius:20px;">NEW SELECTION</span>
-                            </div>
-                          </div>
-                        </div>
                         @if(isset($docWarnings['business_registration']))
                           <div class="doc-warn"><i class="fas fa-exclamation-triangle mt-1"></i><span>{{ $docWarnings['business_registration'] }}</span></div>
                         @endif
                         <div>
                           <input type="file" wire:model="doc_business_registration" id="f_br"
                             style="display:none;" accept=".pdf,.jpg,.jpeg,.png"
-                            onchange="handleBrSelect(this)"
                             x-on:change="$wire.checkDocFile('business_registration', $event.target.files[0]?.name ?? '')">
                           <label for="f_br" class="ul-btn">
                             <i class="fas fa-upload"></i> {{ $brDoc?'Re-upload':'Upload Document' }}
@@ -854,105 +811,57 @@
                 </button>
             </div>
 
-            {{-- ── STEP 5: PACKAGE SELECTION (LAST) ── --}}
+            {{-- ── STEP 5: PLAN (LAST) ── --}}
             @elseif($activeStep===5)
-              <div class="stitle">Choose your membership package</div>
-              <div class="ssub">Select the package that best fits your business. You can upgrade anytime.</div>
-
-              @if(empty($packages))
-                <div class="gp-info" style="background:#fef9ec;color:#92400e;border-color:#fcd34d;">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  <span>Packages could not be loaded. Please refresh the page or contact support.</span>
+              <div class="stitle">Choose your plan</div>
+              <div class="ssub">You can upgrade or change anytime after registration</div>
+              <div class="plan-grid">
+                <div class="plan-card {{ $selected_plan==='free'?'sel':'' }}" wire:click="$set('selected_plan','free')">
+                  <div class="pname">Free</div>
+                  <div class="pprice">$0<span>/forever</span></div>
+                  <ul class="pfeat">
+                    <li><i class="fas fa-check-circle"></i> Up to 10 products</li>
+                    <li><i class="fas fa-check-circle"></i> Receive buyer inquiries</li>
+                    <li><i class="fas fa-check-circle"></i> Basic company profile</li>
+                  </ul>
                 </div>
-              @else
-                {{-- Package grid — dynamic from tbl_package_membership --}}
-                <div class="plan-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem;">
-                @foreach($packages as $pkg)
-                    @php
-                        $pkgId       = $pkg['id'] ?? 0;
-                        $pkgName     = $pkg['package_name'] ?? '';
-                        $pkgRawPrice = trim((string)($pkg['price'] ?? '0'));
-                        $pkgNumeric  = (float) str_replace(',', '', $pkgRawPrice);
-                        $pkgProd     = $pkg['product_limit'] ?? '';
-                        $pkgLead     = $pkg['buyer_lead'] ?? '';
-                        $pkgShip     = $pkg['shipmentdata'] ?? '';
-                        $pkgPriceFormatted = $pkgNumeric == 0 ? 'Free' : '₹' . $pkgRawPrice;
-                    @endphp
-                    <div class="plan-card {{ $selected_package_id == $pkgId ? 'sel' : '' }}"
-                        wire:click="$set('selected_package_id', {{ $pkgId }})">
+                <div class="plan-card {{ $selected_plan==='growth'?'sel':'' }}" wire:click="$set('selected_plan','growth')">
+                  <span class="pop-badge">Popular</span>
+                  <div class="pname">Growth</div>
+                  <div class="pprice">$49<span>/month</span></div>
+                  <ul class="pfeat">
+                    <li><i class="fas fa-check-circle"></i> Up to 100 products</li>
+                    <li><i class="fas fa-check-circle"></i> Verified seller badge</li>
+                    <li><i class="fas fa-check-circle"></i> RFQ priority</li>
+                    <li><i class="fas fa-check-circle"></i> Analytics dashboard</li>
+                  </ul>
+                </div>
+                <div class="plan-card {{ $selected_plan==='global'?'sel':'' }}" wire:click="$set('selected_plan','global')">
+                  <div class="pname">Global</div>
+                  <div class="pprice">$199<span>/month</span></div>
+                  <ul class="pfeat">
+                    <li><i class="fas fa-check-circle"></i> Unlimited products</li>
+                    <li><i class="fas fa-check-circle"></i> Global promotion</li>
+                    <li><i class="fas fa-check-circle"></i> AI buyer matching</li>
+                    <li><i class="fas fa-check-circle"></i> Premium supplier badge</li>
+                  </ul>
+                </div>
+              </div>
 
-                        <div class="pname" style="font-size:1rem;font-weight:800;color:var(--tx);margin-bottom:.4rem;">
-                            {{ $pkgName }}
-                        </div>
-
-                        <div class="pprice" style="font-size:1.4rem;font-weight:900;color:var(--blue);margin-bottom:.75rem;">
-                            {{ $pkgPriceFormatted }}
-                            @if($pkgNumeric > 0)
-                                <span style="font-size:.72rem;font-weight:600;color:var(--mu);">/year</span>
-                            @endif
-                        </div>
-
-                        <ul class="pfeat" style="list-style:none;padding:0;margin:0;text-align:left;font-size:.78rem;">
-                            @if(!empty($pkgProd))
-                                <li style="margin-bottom:5px;">
-                                    <i class="fas fa-check-circle text-success me-1"></i>
-                                    <strong>{{ $pkgProd }}</strong> Products
-                                </li>
-                            @endif
-                            @if(!empty($pkgLead))
-                                <li style="margin-bottom:5px;">
-                                    <i class="fas fa-check-circle text-success me-1"></i>
-                                    <strong>{{ $pkgLead }}</strong> Buyer Leads
-                                </li>
-                            @endif
-                            @if(!empty($pkgShip))
-                                <li style="margin-bottom:5px;">
-                                    <i class="fas fa-check-circle text-success me-1"></i>
-                                    <strong>{{ $pkgShip }}</strong> Shipment Tracking
-                                </li>
-                            @endif
-                        </ul>
-                    </div>
-                @endforeach
-            </div>
-
-                {{-- Selected package confirmation --}}
-                @if($selected_package_id && $selectedPackage)
-                @php
-                    $selName     = is_array($selectedPackage) ? ($selectedPackage['package_name'] ?? '') : ($selectedPackage->package_name ?? '');
-                    $selRawPrice = trim((string)(is_array($selectedPackage) ? ($selectedPackage['price'] ?? '0') : ($selectedPackage->price ?? '0')));
-                    $selNumeric  = (float) str_replace(',', '', $selRawPrice);
-                    $selPriceFormatted = $selNumeric == 0 ? 'Free' : '₹' . $selRawPrice;
-                @endphp
+              @if($selected_plan && $selected_plan !== 'free')
                 <div class="gp-info" style="background:#f0fdf9;color:#065f46;border-color:var(--green);">
-                  <i class="fas fa-check-circle"></i>
+                  <i class="fas fa-info-circle"></i>
                   <span>
-                    <strong>{{ $selName }}</strong> selected —
-                    {{ $selPriceFormatted }}{{ $selNumeric > 0 ? '/year' : '' }}.
+                    <strong>{{ ucfirst($selected_plan) }} Plan selected.</strong>
                     Payment will be collected after your account is approved.
+                    You can start listing products on the Free plan immediately.
                   </span>
                 </div>
-                @elseif(!$selected_package_id)
-                <div class="gp-info" style="background:#fef9ec;color:#92400e;border-color:#fcd34d;">
-                  <i class="fas fa-info-circle"></i>
-                  <span>Please select a package to continue.</span>
-                </div>
-                @endif
-
-                @error('selected_package_id')
-                <div class="gp-info" style="background:#FEF2F2;color:#991B1B;border-color:#FECACA;margin-top:.5rem;">
-                  <i class="fas fa-exclamation-circle"></i> <span>{{ $message }}</span>
-                </div>
-                @enderror
               @endif
 
               <div class="sfooter">
-                <button type="button" class="btn-o" wire:click="goToStep(4)">
-                  <i class="fas fa-arrow-left"></i> Back
-                </button>
-                <button type="button" class="btn-p" wire:click="saveStep5"
-                  wire:loading.attr="disabled"
-                  {{ empty($selected_package_id) ? 'disabled' : '' }}>
+                <button type="button" class="btn-o" wire:click="goToStep(4)"><i class="fas fa-arrow-left"></i> Back</button>
+                <button type="button" class="btn-p" wire:click="saveStep5" wire:loading.attr="disabled">
                   <span wire:loading wire:target="saveStep5" class="spinner-border spinner-border-sm me-1"></span>
                   <span wire:loading.remove wire:target="saveStep5">
                     <i class="fas fa-paper-plane me-1"></i> Submit for Review
@@ -981,33 +890,6 @@
             }
         };
         reader.readAsDataURL(file);
-    }
-
-    function handleBrSelect(input) {
-        if (!input.files || !input.files[0]) return;
-        var file = input.files[0];
-        var ext  = file.name.split('.').pop().toLowerCase();
-        var prev = document.getElementById('br_local_prev');
-        var top  = document.getElementById('br_local_prev_top');
-        var name = document.getElementById('br_local_name');
-        var size = document.getElementById('br_local_size');
-        if (!prev) return;
-        if (name) name.textContent = file.name;
-        if (size) size.textContent = (file.size / 1024).toFixed(0) + ' KB';
-        if (top) {
-            if (['jpg','jpeg','png','webp'].includes(ext)) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    top.innerHTML = '<img src="' + e.target.result + '" style="max-height:80px;max-width:100%;border-radius:6px;object-fit:cover;">';
-                };
-                reader.readAsDataURL(file);
-            } else if (ext === 'pdf') {
-                top.innerHTML = '<div style="font-size:2.2rem;color:#e02424;"><i class="fas fa-file-pdf"></i></div><div style="font-size:.72rem;color:var(--mu);font-weight:600;margin-top:.2rem;">PDF DOCUMENT</div>';
-            } else {
-                top.innerHTML = '<div style="font-size:2.2rem;color:#6b7280;"><i class="fas fa-file-alt"></i></div><div style="font-size:.72rem;color:var(--mu);font-weight:600;margin-top:.2rem;">DOCUMENT</div>';
-            }
-        }
-        prev.style.display = 'block';
     }
     </script>
     @endscript

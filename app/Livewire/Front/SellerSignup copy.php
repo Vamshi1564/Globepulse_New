@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class SellerSignup extends Component
 {
@@ -24,6 +25,7 @@ class SellerSignup extends Component
     public $company_website = '';
     public $country         = '';   // stores tblcountries.country_id
     public $countries       = [];
+    public $accept_terms = false;
 
     public function mount()
     {
@@ -37,16 +39,65 @@ class SellerSignup extends Component
     public function submit()
     {
         $this->validate([
-            'name'            => 'required|string|max:255',
-            'email'           => 'required|email|max:255',
-            'phonenumber'     => 'required|string|max:30',
-            'company'         => 'required|string|max:255',
-            'company_website' => 'nullable|url|max:255',
-            'country'         => 'required',
-        ], [
-            'country.required'    => 'Please select your country.',
-            'company_website.url' => 'Please enter a valid URL e.g. https://yoursite.com',
-        ]);
+    'name' => [
+        'required',
+        'string',
+        'min:3',
+        'max:100',
+        'regex:/^[a-zA-Z\s]+$/'
+    ],
+
+    'email' => [
+        'required',
+        'email',
+        'max:150'
+    ],
+
+    'phonenumber' => [
+        'required',
+        'regex:/^\+?[1-9]\d{7,14}$/'
+    ],
+
+    'company' => [
+        'required',
+        'string',
+        'min:2',
+        'max:150'
+    ],
+
+    'company_website' => [
+        'nullable',
+        'url',
+        'max:255'
+    ],
+
+    'country' => [
+        'required',
+        'exists:tblcountries,country_id'
+    ],
+
+    'accept_terms' => [
+        'accepted'
+    ],
+
+], [
+    'name.required' => 'Full name is required',
+    'name.regex' => 'Only letters allowed',
+
+    'email.required' => 'Email is required',
+    'email.email' => 'Enter valid email address',
+
+    'phonenumber.required' => 'Mobile number is required',
+    'phonenumber.regex' => 'Enter valid mobile number with country code',
+
+    'company.required' => 'Company name is required',
+
+    'company_website.url' => 'Enter valid website URL (https://example.com)',
+
+    'country.required' => 'Please select your country',
+
+    'accept_terms.accepted' => 'You must accept Terms & Conditions',
+]);
 
         $emailLower = strtolower(trim($this->email));
 
@@ -92,12 +143,12 @@ class SellerSignup extends Component
         $tempPassword = $this->generateTempPassword();
 
         $seller = Seller::create([
-            // id is INT AUTO_INCREMENT — do NOT set it manually
+            'id'                   => (string) Str::uuid(),
             'email'                => $emailLower,
             'phone'                => $this->phonenumber,
             'password_hash'        => Hash::make($tempPassword),
-            'country_id'           => $tblCountryId,
-            'country_code'         => $countryName,
+            'country_id'           => $tblCountryId,   // tblcountries.country_id integer (101 for India)
+            'country_code'         => $countryName,    // e.g. "India" — full country name
             'account_type'         => 'seller',
             'email_verified'       => 0,
             'status'               => 'pending',
@@ -106,7 +157,7 @@ class SellerSignup extends Component
         ]);
 
         SellerDetail::create([
-            // id is INT AUTO_INCREMENT — do NOT set it manually
+            'id'                  => (string) Str::uuid(),
             'seller_id'           => $seller->id,
             'legal_business_name' => trim($this->company),
             'company_website'     => $this->company_website ?: null,

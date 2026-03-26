@@ -42,7 +42,6 @@
 
 
 // FILE: app/Models/SellerDetail.php
-// UPDATED: Added business_country_id to fillable
 
 namespace App\Models;
 
@@ -51,12 +50,12 @@ use Illuminate\Database\Eloquent\Model;
 class SellerDetail extends Model
 {
     protected $table        = 'seller_details';
-    public    $incrementing = false;
-    protected $keyType      = 'string';
+    protected $keyType      = 'int';
+    public    $incrementing = true;     // AUTO_INCREMENT — must be public
     public    $timestamps   = true;
 
     protected $fillable = [
-        'id', 'seller_id', 'onboarding_step',
+        'seller_id', 'onboarding_step',
         'legal_business_name', 'business_type', 'year_established',
         'company_website', 'num_employees', 'business_address',
         'city', 'state_province', 'business_country_code', 'business_country_id',

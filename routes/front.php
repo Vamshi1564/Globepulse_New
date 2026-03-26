@@ -85,6 +85,7 @@ Route::get('/buyer/login', BuyerLogin::class)->name('buyer.login');
 Route::get('/buyer/signup', BuyerSignup::class)->name('buyer.signup');
 
 Route::get('/seller/login', SellerLogin::class)->name('seller.login');
+Route::get('/seller/set-first-password', \App\Livewire\Front\SellerSetFirstPassword::class)->name('seller.set-first-password');
 Route::get('/seller/signup', SellerSignup::class)->name('seller.signup');
 // Route::get('/profile', Profile::class)->name('profile');
 Route::get('/buyer/profile', BuyerProfile::class)->name('buyer.profile');

@@ -120,8 +120,13 @@ class SellerVerifyOtp extends Component
         if (!$cached) {
             $seller = Seller::where('email', $this->email)->where('email_verified', 0)->first();
             if (!$seller) {
-                $this->errorMsg = 'Account not found or already verified. Please login or register again.';
+                $this->errorMsg = 'Account not found or already verified. Please login instead.';
                 return;
+            }
+            // Extra guard: if they have no password, they should use set-first-password
+            if (empty($seller->password_hash)) {
+                return redirect()->route('seller.set-first-password')
+                    ->with('info', 'Please use the "Set Password" link to set up your account.');
             }
             $newTempPassword = $this->generateTempPassword($seller);
             $seller->password_hash        = Hash::make($newTempPassword);

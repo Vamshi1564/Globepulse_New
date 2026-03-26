@@ -118,12 +118,8 @@
                         @error('password')<small class="text-danger">{{ $message }}</small>@enderror
                     </div>
 
-                    <div class="sl-forgot" style="display:flex;justify-content:space-between;align-items:center;">
+                    <div class="sl-forgot">
                         <a href="{{ route('seller.forgot-password') }}">Forgot password?</a>
-                        <a href="{{ route('seller.set-first-password') }}"
-                           style="font-size:12px;color:#7c3aed;font-weight:700;text-decoration:none;">
-                           First time login? Set password →
-                        </a>
                     </div>
 
                     <div class="form-check mb-4">

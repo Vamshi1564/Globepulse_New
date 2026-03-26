@@ -6,11 +6,12 @@ namespace App\Livewire\Seller;
 use App\Models\Seller;
 use App\Models\SellerDetail;
 use App\Models\SellerDocument;
+use App\Models\SellerSubscription;
 use App\Models\Country;
-use App\Models\PackagesModel;
 use App\Services\DocumentVerifier;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -52,9 +53,8 @@ class Profile extends Component
     public $doc_tax_id;
     public $doc_selfie;
 
-    // Step 5 — Package Selection (from b2b_remote_db.tbl_package_membership)
-    public $selected_package_id = null;  // stores tbl_package_membership.id
-    public array $packages       = [];   // loaded in mount()
+    // Step 5
+    public $selected_plan = 'free';
 
     // UI state
     public $successMsg  = '';
@@ -70,7 +70,7 @@ class Profile extends Component
     public function mount()
     {
         $sellerId = Session::get('seller_id');
-        $seller   = Seller::with('details')->find($sellerId);
+        $seller   = Seller::with('details', 'activeSubscription')->find($sellerId);
         $details  = $seller?->details;
 
         $this->email      = $seller?->email ?? '';
@@ -94,11 +94,8 @@ class Profile extends Component
         $this->export_markets       = $details?->export_markets ?? '';
         $this->certifications       = $details?->certifications ?? '';
 
-        // Load packages from b2b_remote_db.tbl_package_membership via PackagesModel
-        $this->packages = PackagesModel::orderBy('id')->get()->toArray();
-
-        // Set currently selected package from sellers.package_id
-        $this->selected_package_id = $seller?->package_id ?? null;
+        $this->currentPlan   = $seller?->activeSubscription;
+        $this->selected_plan = $this->currentPlan?->plan_name ?? 'free';
 
         $this->countries = Country::orderBy('short_name')->get();
         $this->loadDocuments($sellerId);
@@ -136,7 +133,7 @@ class Profile extends Component
             !empty($this->phone), !empty($this->country_id),
             !empty($this->legal_business_name), !empty($this->business_type),
             !empty($this->business_address), !empty($this->city), !empty($this->num_employees),
-            !empty($this->company_description), !empty($this->main_products), !empty($this->selected_package_id),
+            !empty($this->company_description), !empty($this->main_products), !empty($this->selected_plan),
             $this->documents->has('business_registration'),
             $this->documents->has('owner_id_passport'),
             $this->documents->has('tax_id'),
@@ -158,7 +155,7 @@ class Profile extends Component
                   $this->documents->has('business_registration')],
             3 => [!empty($this->company_description), !empty($this->main_products), !empty($this->export_markets)],
             4 => [$this->documents->has('owner_id_passport'), $this->documents->has('tax_id')],
-            5 => [!empty($this->selected_package_id)],
+            5 => [!empty($this->selected_plan)],
             default => [],
         };
         if (empty($fields)) return 0;
@@ -177,20 +174,7 @@ class Profile extends Component
         $sellerId = Session::get('seller_id');
         $country  = Country::find($this->country_id);
         $update   = ['phone' => $this->phone];
-        if ($country) {
-            // Use dedicated ISO code column if available, otherwise skip overwriting country_code
-            // to avoid corrupting it with a substr hack (e.g. 'India' -> 'IN' coincidentally works
-            // but 'United States' -> 'UN' is wrong). country_id FK is the reliable reference.
-            $isoCode = $country->iso_code
-                ?? $country->code
-                ?? $country->iso2
-                ?? $country->alpha2
-                ?? null;
-            if ($isoCode) {
-                $update['country_code'] = strtoupper($isoCode);
-            }
-            // Always save country_id — that's the reliable FK
-        }
+        if ($country) $update['country_code'] = strtoupper(substr($country->short_name, 0, 2));
 
         try {
             if (DB::getSchemaBuilder()->hasColumn('sellers', 'country_id')) {
@@ -242,8 +226,7 @@ class Profile extends Component
                 $data['business_country_id'] = $this->business_country_id ?: null;
             } elseif ($this->business_country_id) {
                 $c = Country::find($this->business_country_id);
-                $isoC = $c->iso_code ?? $c->code ?? $c->iso2 ?? $c->alpha2 ?? null;
-                $data['business_country_code'] = $isoC ? strtoupper($isoC) : null;
+                $data['business_country_code'] = $c ? strtoupper(substr($c->short_name, 0, 2)) : null;
             }
         } catch (\Exception $e) {}
 
@@ -322,54 +305,38 @@ class Profile extends Component
         $this->activeStep = 5;
     }
 
-    // ── Step 5: Package Selection ──────────────────────────────
+    // ── Step 5 ────────────────────────────────────────────────
     public function saveStep5()
     {
-        $this->errorMsg = '';
-
-        $this->validate([
-            'selected_package_id' => 'required|integer',
-        ], [
-            'selected_package_id.required' => 'Please select a package to continue.',
-        ]);
-
+        $this->validate(['selected_plan' => 'required|in:free,growth,global']);
         $sellerId = Session::get('seller_id');
 
-        // Verify the selected package exists in tbl_package_membership
-        $package = PackagesModel::find($this->selected_package_id);
+        $existing = SellerSubscription::where('seller_id', $sellerId)->where('status','active')->first();
+        if (!$existing || $existing->plan_name !== $this->selected_plan) {
+            if ($existing) $existing->update(['status'=>'cancelled','cancelled_at'=>now()]);
+            $p = [
+                'free'   => ['price'=>0,  'max'=>10,  'badge'=>0,'rfq'=>0,'analytics'=>0,'global'=>0,'ai'=>0,'premium'=>0,'cycle'=>'lifetime'],
+                'growth' => ['price'=>49, 'max'=>100, 'badge'=>1,'rfq'=>1,'analytics'=>1,'global'=>0,'ai'=>0,'premium'=>0,'cycle'=>'monthly'],
+                'global' => ['price'=>199,'max'=>null,'badge'=>1,'rfq'=>1,'analytics'=>1,'global'=>1,'ai'=>1,'premium'=>1,'cycle'=>'monthly'],
+            ][$this->selected_plan];
 
-        if (!$package) {
-            $this->errorMsg = 'Selected package not found. Please choose again.';
-            return;
+            SellerSubscription::create([
+                'id'=>(string)Str::id(),'seller_id'=>$sellerId,'plan_name'=>$this->selected_plan,
+                'price_usd'=>$p['price'],'billing_cycle'=>$p['cycle'],'max_products'=>$p['max'],
+                'has_verified_badge'=>$p['badge'],'has_rfq_priority'=>$p['rfq'],'has_analytics'=>$p['analytics'],
+                'has_global_promotion'=>$p['global'],'has_ai_buyer_matching'=>$p['ai'],
+                'has_premium_badge'=>$p['premium'],'status'=>'active','started_at'=>now(),
+            ]);
         }
 
-        // Save package_id to sellers table
-        DB::table('sellers')
-            ->where('id', $sellerId)
-            ->update([
-                'package_id' => $this->selected_package_id,
-                'updated_at' => now(),
-            ]);
-
-        // Update seller status + kyc
-        SellerDetail::updateOrCreate(['seller_id' => $sellerId], [
-            'kyc_status'      => 'submitted',
-            'submitted_at'    => now(),
-            'onboarding_step' => 5,
+        SellerDetail::updateOrCreate(['seller_id'=>$sellerId], [
+            'kyc_status'=>'submitted','submitted_at'=>now(),'onboarding_step'=>5,
         ]);
-
-        DB::table('sellers')
-            ->where('id', $sellerId)
-            ->update(['status' => 'under_review']);
-
-        // Update session with package info
-        session([
-            'seller_name'       => $this->legal_business_name,
-            'seller_package_id' => $this->selected_package_id,
-        ]);
+        DB::table('sellers')->where('id',$sellerId)->update(['status'=>'under_review']);
+        session(['seller_name' => $this->legal_business_name]);
 
         return redirect()->route('seller.dashboard')
-            ->with('login_success', '🎉 Profile submitted for review! We\'ll notify you within 24–48 hrs.');
+            ->with('login_success','🎉 Profile submitted for review! We\'ll notify you within 24–48 hrs.');
     }
 
     // ── Upload with basic validation ─────────────────────────
@@ -412,7 +379,7 @@ class Profile extends Component
             ->update(['is_latest' => 0]);
 
         SellerDocument::create([
-            // id is INT AUTO_INCREMENT — do NOT set it manually
+            'id'              => (string) Str::id(),
             'seller_id'       => $sellerId,
             'document_type'   => $type,
             'file_name'       => $fileName,
@@ -436,9 +403,10 @@ class Profile extends Component
     public function render()
     {
         $sellerId = \Illuminate\Support\Facades\Session::get('seller_id');
-        $seller   = \App\Models\Seller::with('details', 'documents')
+        $seller   = \App\Models\Seller::with('details', 'documents', 'activeSubscription')
                         ->find($sellerId);
 
+        // Build missingDetails — list of fields the seller has not filled yet
         $missingDetails = [];
         if (empty($this->phone))               $missingDetails[] = 'Phone number';
         if (empty($this->country_id))          $missingDetails[] = 'Country';
@@ -450,26 +418,26 @@ class Profile extends Component
         if (empty($this->company_description)) $missingDetails[] = 'Company description';
         if (empty($this->main_products))       $missingDetails[] = 'Main products';
 
-        // Selected package object for sidebar display
-        $selectedPackage = $this->selected_package_id
-            ? collect($this->packages)->firstWhere('id', $this->selected_package_id)
-            : null;
-
         return view('livewire.seller.profile', [
+            // Core seller objects
             'seller'            => $seller,
-            'customer'          => $seller,
-            'countries'         => collect($this->countries ?? []),
-            'documents'         => $this->documents ?? collect(),
-            'docVerification'   => $this->docVerification ?? [],
+            'customer'          => $seller,           // blade uses $customer as alias
+
+            // Collections
+            'countries'         => collect($this->countries      ?? []),
+            'documents'         => $this->documents              ?? collect(),
+            'docVerification'   => $this->docVerification        ?? [],
+
+            // Computed
             'completion'        => $this->completion,
-            'profilePercentage' => $this->completion,
+            'profilePercentage' => $this->completion,  // blade uses $profilePercentage
             'stepScore'         => $this->stepScore,
             'missingDetails'    => $missingDetails,
-            'packages'          => $this->packages,         // all packages for Step 5
-            'selectedPackage'   => $selectedPackage,        // currently selected package object
-            'currentPlan'       => $selectedPackage,        // blade alias
-            'successMsg'        => $this->successMsg ?? '',
-            'errorMsg'          => $this->errorMsg ?? '',
+
+            // State
+            'currentPlan'       => $this->currentPlan   ?? null,
+            'successMsg'        => $this->successMsg    ?? '',
+            'errorMsg'          => $this->errorMsg      ?? '',
         ]);
     }
 }

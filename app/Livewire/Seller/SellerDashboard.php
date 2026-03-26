@@ -21,18 +21,8 @@ class SellerDashboard extends Component
         $sellerId = Session::get('seller_id');
         $seller   = Seller::find($sellerId);
 
-        // Get the seller's package_id from seller_subscriptions table
-        // (package_id equivalent for sellers is plan_id in seller_subscriptions)
-        $PackageId = null;
-        if ($seller) {
-            // Try to get active subscription plan
-            $activeSubscription = $seller->subscriptions()
-                ->where('status', 'active')
-                ->latest()
-                ->first();
-
-            $PackageId = $activeSubscription?->plan_id ?? null;
-        }
+        // Read package_id directly from sellers table (stored during profile Step 5)
+        $PackageId = $seller?->package_id ?? null;
 
         // ─── Rest of logic unchanged from original ───
 
@@ -72,7 +62,7 @@ class SellerDashboard extends Component
 
 public function mount()
 {
-    $sellerId = session('id'); // or auth()->id()
+    $sellerId = session('seller_id');
 
     $this->rfqs = RFQ::with('product')
         ->where('supplier_id', $sellerId)
