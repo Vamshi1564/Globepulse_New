@@ -144,17 +144,31 @@
     </div>
 
     <div>
-        @if($rfq->status == 'pending')
-            <span class="badge bg-warning text-dark">Pending</span>
-        @elseif($rfq->status == 'quoted')
-            <span class="badge bg-success">Quoted</span>
-        @elseif($rfq->status == 'accepted')
-            <span class="badge bg-primary">Accepted</span>
-        @elseif($rfq->status == 'rejected')
-            <span class="badge bg-danger">Rejected</span>
-        @elseif($rfq->status == 'closed')
-            <span class="badge bg-secondary">Closed</span>
+        @php
+$myQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
+    ->where('supplier_uuid', session('seller_id'))
+    ->first();
+
+$acceptedQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
+    ->where('status', 1)
+    ->first();
+@endphp
+    @if($acceptedQuote)
+
+        @if($myQuote && $myQuote->status == 1)
+            <span class="badge bg-success">🏆 Your Quote Accepted</span>
+
+        @else
+            <span class="badge bg-secondary">❌ Not Selected</span>
         @endif
+
+    @elseif($myQuote)
+        <span class="badge bg-info text-dark">✔ Quoted</span>
+
+    @else
+        <span class="badge bg-warning text-dark">Pending</span>
+
+    @endif
     </div>
 </div>
 
@@ -274,17 +288,17 @@
 
             <div class="col-md-6">
                 <span>Company</span>
-                <strong>{{ $rfq->supplier->legal_business_name ?? '-' }}</strong>
+               <strong>{{ $rfq->supplier->legal_business_name ?? '-' }}</strong>
             </div>
 
             <div class="col-md-6">
                 <span>Email</span>
-                <strong>{{ $rfq->supplier->email ?? '-' }}</strong>
+                <strong>{{ $rfq->sellerAccount->email ?? '-' }}</strong>
             </div>
 
             <div class="col-md-6">
                 <span>Phone</span>
-                <strong>{{ $rfq->supplier->phone ?? '-' }}</strong>
+                <strong>{{ $rfq->sellerAccount->phone ?? '-' }}</strong>
             </div>
 
         </div>
@@ -324,8 +338,13 @@ function updateRFQStatus(status) {
 
 
    
+@php
+$alreadyQuoted = \App\Models\Quotation::where('rfq_id', $rfq->id)
+    ->where('supplier_uuid', session('seller_id'))
+    ->exists();
+@endphp
 
-    @if($rfq->status === 'quoted')
+@if($alreadyQuoted)
     <button class="btn btn-secondary px-4 fw-semibold" disabled>
         ✔ Already Quoted
     </button>

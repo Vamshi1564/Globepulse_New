@@ -17,18 +17,22 @@ class ViewRFQ extends Component
         abort(403, 'Buyer not logged in');
     }
 
-    $this->rfq = RFQ::with(['product', 'supplier', 'quotations'])
-        ->where('buyer_uuid', $buyerUuid)
-        ->where('id', $id) // ✅ IMPORTANT
-        ->firstOrFail();
+   $this->rfq = RFQ::with([
+    'product',
+    'supplier',        // seller_details
+    'sellerAccount',   // sellers table
+    'quotations'
+])
+->where('buyer_uuid', $buyerUuid)
+->where('id', $id)
+->firstOrFail();
 }
 
     public function render()
     {
         return view('livewire.front.view-rfq');
     }
-
-    // ✅ ACCEPT QUOTE (SECURE)
+// ✅ ACCEPT QUOTE (SECURE)
     public function acceptQuote($id)
 {
     $buyerUuid = session('buyer_uuid') ?? session('buyer_id');
@@ -70,4 +74,5 @@ class ViewRFQ extends Component
 
     session()->flash('message', 'Quotation rejected!');
 }
+    
 }

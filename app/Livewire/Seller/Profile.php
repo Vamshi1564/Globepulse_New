@@ -165,13 +165,20 @@ class Profile extends Component
         return (int) round(count(array_filter($fields)) / count($fields) * 100);
     }
 
-    // ── Step 1 ────────────────────────────────────────────────
-    public function saveStep1()
-    {
-        $this->errorMsg = '';
-        $this->validate(
-            ['phone' => 'required|string|max:30', 'country_id' => 'required'],
-            ['phone.required' => 'Phone number is required.', 'country_id.required' => 'Please select your country.']
+        // ── Step 1 ────────────────────────────────────────────────
+        public function saveStep1()
+        {
+            $this->errorMsg = '';
+            $this->validate(
+        [
+            'phone' => ['required', 'regex:/^[0-9+\-\s]+$/', 'min:10', 'max:30'],
+            'country_id' => 'required',
+        ],
+        [
+            'phone.required' => 'Phone number is required.',
+            'phone.regex' => 'Phone must contain only numbers and + symbol',
+            'country_id.required' => 'Please select your country.',
+        ]
         );
 
         $sellerId = Session::get('seller_id');
@@ -215,14 +222,18 @@ class Profile extends Component
         }
 
         $this->validate([
-            'legal_business_name' => 'required|string|max:255',
+            'legal_business_name' => 'required|regex:/^[a-zA-Z0-9\s\.\-&]+$/|max:255',
             'business_type'       => 'required|string',
-            'business_address'    => 'required|string',
-            'city'                => 'required|string|max:100',
+            'business_address' => 'required|string|min:5|max:500',
+            'city' => 'required|regex:/^[a-zA-Z\s]+$/|max:100',
             'num_employees'       => 'required|string',
             'year_established'    => 'nullable|digits:4|integer|min:1800|max:' . date('Y'),
-            'company_website'     => 'nullable|string|max:255',
-        ]);
+            'company_website' => 'nullable|url|max:255',
+        ],
+        [
+            'legal_business_name.regex' => 'Only letters, numbers, . & - allowed',
+            'city.regex' => 'City must contain only alphabets',
+         ]);
 
         $sellerId = Session::get('seller_id');
         $data = [
@@ -263,14 +274,41 @@ class Profile extends Component
     {
         $this->errorMsg = '';
         $this->validate([
-            'company_description' => 'nullable|string|max:2000',
-            'main_products'       => 'nullable|string|max:500',
+            'company_description' => 'nullable|string|min:10|max:2000',
+            'main_products'       => 'nullable|regex:/^[a-zA-Z0-9,\s]+$/|max:500',
             'factory_size_sqm'    => 'nullable|integer|min:1',
             'production_capacity' => 'nullable|string|max:200',
-            'export_markets'      => 'nullable|string|max:500',
+            'export_markets'      => 'nullable|regex:/^[a-zA-Z,\s]+$/|max:500',
             'certifications'      => 'nullable|string|max:500',
             'logo_file'           => 'nullable|file|mimes:png,svg,jpg,jpeg|max:2048',
-        ]);
+        ],
+        [
+        // Company Description
+        'company_description.min' => 'Company description must be at least 10 characters',
+        'company_description.max' => 'Company description cannot exceed 2000 characters',
+
+        // Main Products
+        'main_products.regex' => 'Main products can only contain letters, numbers, and commas',
+        'main_products.max'   => 'Main products cannot exceed 500 characters',
+
+        // Factory Size
+        'factory_size_sqm.integer' => 'Factory size must be a valid number',
+        'factory_size_sqm.min'     => 'Factory size must be greater than 0',
+
+        // Production Capacity
+        'production_capacity.max' => 'Production capacity cannot exceed 200 characters',
+
+        // Export Markets
+        'export_markets.regex' => 'Export markets should contain only letters and commas',
+        'export_markets.max'   => 'Export markets cannot exceed 500 characters',
+
+        // Certifications
+        'certifications.max' => 'Certifications cannot exceed 500 characters',
+
+        // Logo File
+        'logo_file.mimes' => 'Logo must be a PNG, JPG, JPEG, or SVG file',
+        'logo_file.max'   => 'Logo size must be less than 2MB',
+    ]);
 
         $sellerId = Session::get('seller_id');
         $data = [
@@ -300,10 +338,17 @@ class Profile extends Component
     {
         $this->errorMsg = '';
         $rules = [];
+        $messages = [];
         foreach (['owner_id_passport','business_license','tax_id','selfie'] as $t) {
             if ($this->{'doc_'.$t}) $rules['doc_'.$t] = 'file|mimes:pdf,jpg,jpeg,png|max:5120';
+
+            // Custom messages
+            $messages['doc_'.$t.'.mimes'] = strtoupper(str_replace('_',' ', $t)) . ' must be PDF, JPG, JPEG or PNG';
+            $messages['doc_'.$t.'.max']   = strtoupper(str_replace('_',' ', $t)) . ' size must be less than 5MB';
         }
-        if ($rules) $this->validate($rules);
+        if (!empty($rules)) {
+        $this->validate($rules, $messages);
+        }
 
         $sellerId = Session::get('seller_id');
         $uploaded = 0;
@@ -472,6 +517,10 @@ class Profile extends Component
             'errorMsg'          => $this->errorMsg ?? '',
         ]);
     }
+    private function cleanInput($value)
+{
+    return trim(strip_tags($value));
+}
 }
 
 ?>

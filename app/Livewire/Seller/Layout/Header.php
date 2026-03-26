@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use App\Models\RFQ;
+use App\Models\Quotation;
 class Header extends Component
 {
     public $clientId;
@@ -47,6 +48,8 @@ class Header extends Component
     public $client_id;
      public $rfqCount = 0;
     public $recentRfqs = [];
+    public $quotationCount;
+public $recentQuotations;
 
     public function mount()
     {
@@ -95,15 +98,23 @@ class Header extends Component
         $this->emailAddress   = 'care@globpulse.com';
 
 
-        $this->recentRfqs = RFQ::with('product')
-            ->where('supplier_id', $sellerId)
-            ->latest()
-            ->take(5)
-            ->get();
+      $this->recentRfqs = RFQ::with('product')
+    ->where('supplier_uuid', $sellerId)
+    ->latest()
+    ->take(5)
+    ->get();
 
-        $this->rfqCount = RFQ::where('supplier_id', $sellerId)
-            ->where('status', 0)
-            ->count();
+$this->rfqCount = RFQ::where('supplier_uuid', $sellerId)
+    
+    ->count();
+
+      $this->quotationCount = Quotation::where('supplier_uuid', $sellerId)->count();
+
+$this->recentQuotations = Quotation::with('rfq.product')
+    ->where('supplier_uuid', $sellerId)
+    ->latest()
+    ->limit(5)
+    ->get();
     
     }
 

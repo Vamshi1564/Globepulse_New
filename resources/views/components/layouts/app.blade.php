@@ -290,9 +290,9 @@ window.isLoggedIn = @json(auth('customer')->check());
     </style>
 
 
-    <div id="page-content" style="display: none;">
-        {{ $slot }}
-    </div>
+   <div id="page-content">
+    {{ $slot }}
+</div>
 
     {{-- {{ $slot }} --}}
     <div class="modal fade overflow-y-hidden" id="exampleModal" tabindex="-1" role="dialog"
@@ -481,14 +481,15 @@ window.isLoggedIn = @json(auth('customer')->check());
     });
 }
     </script> -->
+    <script src="{{ asset('../../../vendors/lodash/lodash.min.js') }}"></script>
     <script src="{{ asset('../../../vendors/echarts/echarts.min.js') }}"></script>
-    <script src="{{ asset('../../../assets/js/crm-dashboard.js') }}"></script>
+    <!-- <script src="{{ asset('../../../assets/js/crm-dashboard.js') }}"></script> -->
     <script src="{{ asset('../../../vendors/popper/popper.min.js') }}"></script>
     <script src="{{ asset('../../../vendors/bootstrap/bootstrap.min.js') }}"></script>
     <script src="{{ asset('../../../vendors/anchorjs/anchor.min.js') }}"></script>
     <script src="{{ asset('../../../vendors/is/is.min.js') }}"></script>
     <script src="{{ asset('../../../vendors/fontawesome/all.min.js') }}"></script>
-    <script src="{{ asset('../../../vendors/lodash/lodash.min.js') }}"></script>
+    
     <script src="{{ asset('../../../vendors/list.js/list.min.js') }}"></script>
     <script src="{{ asset('../../../vendors/feather-icons/feather.min.js') }}"></script>
     <script src="{{ asset('../../../vendors/dayjs/dayjs.min.js') }}"></script>
@@ -554,11 +555,16 @@ window.isLoggedIn = @json(auth('customer')->check());
         }
     </script>
     <script>
-        new TomSelect("#country");
+       document.addEventListener("DOMContentLoaded", function () {
+    const el = document.querySelector("#country");
+    if (el) {
+        new TomSelect(el);
+    }
+});
     </script>
    
     <script>
-        document.addEventListener("livewire:load", function() {
+      document.addEventListener("livewire:navigated", function () {
             const alert = document.getElementById('alert');
             const errorAlert = document.getElementById('error-alert');
 
@@ -569,6 +575,7 @@ window.isLoggedIn = @json(auth('customer')->check());
             } else {
                 setTimeout(() => {
                     $('#alert').alert('close');
+                    $('#errorAlert').alert('close');
                 }, 5000);
             }
         });
@@ -855,7 +862,7 @@ document.addEventListener("click", function(e){
 
 });
 </script> -->
- <script defer src="https://unpkg.com/alpinejs"></script>
+ 
   @livewireScripts
 </body>
 

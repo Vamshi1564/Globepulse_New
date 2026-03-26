@@ -137,9 +137,16 @@
 
 <div class="av-wrap">
 
-<img class="av-img"
-src="{{ asset('assets/img/team/72x72/57.webp') }}">
+<span class="text-body-tertiary avatar avatar-xl" style="height:80px;width:80px;">
 
+    <span class="d-flex align-items-center justify-content-center rounded-circle bg-white shadow border"
+          style="height:80px;width:80px; font-weight:600; font-size:34px; color:#111827;">
+        
+        {{ strtoupper(substr($full_name ?? 'U', 0, 1)) }}
+    
+    </span>
+
+</span>
 </div>
 
 <div class="sname">{{ $full_name }}</div>
@@ -202,6 +209,7 @@ Preferences
 <div class="col-md-6 fg">
 <label>Full Name</label>
 <input class="form-control" wire:model="full_name">
+@error('full_name') <small class="text-danger">{{ $message }}</small> @enderror
 </div>
 
 <div class="col-md-6 fg">
@@ -212,11 +220,13 @@ Preferences
 <div class="col-md-6 fg">
 <label>Phone</label>
 <input class="form-control" wire:model="phone">
+@error('phone') <small class="text-danger">{{ $message }}</small> @enderror
 </div>
 
 <div class="col-md-6 fg">
 <label>Company</label>
 <input class="form-control" wire:model="company_name">
+@error('company_name') <small class="text-danger">{{ $message }}</small> @enderror
 </div>
 
 </div>
@@ -243,6 +253,7 @@ Continue
 <div class="col-md-4 fg">
 <label>City</label>
 <input class="form-control" wire:model="city">
+@error('city') <small class="text-danger">{{ $message }}</small> @enderror
 </div>
 
 <div class="col-md-4 fg">

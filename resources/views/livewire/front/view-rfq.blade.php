@@ -168,21 +168,32 @@
         </div>
 
         <div>
-           @if($rfq->status == 'pending')
-    <span class="badge bg-warning text-dark">Pending</span>
+              @if($rfq->status == 'pending')
+        <span class="badge bg-warning text-dark">
+            ⏳ Waiting for Quotes
+        </span>
 
-@elseif($rfq->status == 'quoted')
-    <span class="badge bg-success">Quoted</span>
+    @elseif($rfq->status == 'quoted')
+        <span class="badge bg-info text-dark">
+            📩 Quotes Received
+        </span>
 
-@elseif($rfq->status == 'accepted')
-    <span class="badge bg-primary">Accepted</span>
+    @elseif($rfq->status == 'accepted')
+        <span class="badge bg-success">
+            🏆 Deal Finalized
+        </span>
 
-@elseif($rfq->status == 'rejected')
-    <span class="badge bg-danger">Rejected</span>
+    @elseif($rfq->status == 'rejected')
+        <span class="badge bg-danger">
+            ❌ No Deal
+        </span>
 
-@elseif($rfq->status == 'closed')
-    <span class="badge bg-secondary">Closed</span>
-@endif
+    @elseif($rfq->status == 'closed')
+        <span class="badge bg-secondary">
+            🔒 Closed
+        </span>
+
+    @endif
         </div>
     </div>
 
@@ -293,7 +304,7 @@
             </div>
         </div>
 
-        <div class="mt-4">
+  <div class="mt-4">
     <h6 class="section-title">🏭 Supplier Information</h6>
 
     <div class="buyer-card">
@@ -301,86 +312,41 @@
 
             <div class="col-md-6">
                 <span>Company</span>
-                <strong>{{ $rfq->supplier->company ?? 'N/A' }}</strong>
+                <strong>
+                    {{ $rfq->supplier->legal_business_name ?? 'N/A' }}
+                </strong>
             </div>
 
             <div class="col-md-6">
                 <span>Email</span>
-                <strong>{{ $rfq->supplier->email ?? 'N/A' }}</strong>
+                <strong>
+                    {{ $rfq->sellerAccount->email ?? 'N/A' }}
+                </strong>
             </div>
 
             <div class="col-md-6">
                 <span>Phone</span>
-                <strong>{{ $rfq->supplier->phone ?? 'N/A' }}</strong>
+                <strong>
+                    {{ $rfq->sellerAccount->phone ?? 'N/A' }}
+                </strong>
             </div>
 
             <div class="col-md-6">
                 <span>Location</span>
                 <div class="d-flex align-items-center gap-2">
-   <img src="{{ asset('assets/'.$rfq->supplier?->country?->flag_img) }}" width="22">
+                    <img src="{{ asset('assets/'.$rfq->supplier?->country?->flag_img) }}" width="22">
 
-<span>
-{{ $rfq->supplier?->country?->short_name ?? 'N/A' }}
-</span>
-</div>
+                    <span>
+                        {{ $rfq->supplier?->country?->short_name ?? 'N/A' }}
+                    </span>
+                </div>
             </div>
 
         </div>
     </div>
 </div>
 
-        <!-- ATTACHMENT -->
-        @if($rfq->attachment)
-        <div class="mt-4">
-            <h6 class="section-title">Attachment</h6>
-            <a href="{{ asset('storage/'.$rfq->attachment) }}" target="_blank"
-               class="btn btn-primary btn-sm px-3">
-                📎 Download File
-            </a>
-        </div>
-        @endif
-
-        <div class="mt-4">
-<h6 class="section-title">💰 Quotations</h6>
-
-@foreach($rfq->quotations as $quote)
-<div class="card mb-3 border">
-
-    <div class="card-body">
-
-        <div class="d-flex justify-content-between">
-            <strong>₹ {{ $quote->price }}</strong>
-
-            @if($quote->status == 0)
-                <span class="badge bg-warning">Pending</span>
-            @elseif($quote->status == 1)
-                <span class="badge bg-success">Accepted</span>
-            @else
-                <span class="badge bg-danger">Rejected</span>
-            @endif
-        </div>
-
-        <p class="mt-2 mb-1">{{ $quote->message }}</p>
-
-        <small>Delivery: {{ $quote->delivery_time }}</small>
-
-        <!-- ACTION -->
-        @if($quote->status == 0)
-        <div class="mt-3">
-            <button wire:click="acceptQuote({{ $quote->id }})"
-                class="btn btn-success btn-sm">Accept</button>
-
-            <button wire:click="rejectQuote({{ $quote->id }})"
-                class="btn btn-danger btn-sm">Reject</button>
-        </div>
-        @endif
-
-    </div>
-
-</div>
-@endforeach
-
-</div>
+      
 
     </div>
 

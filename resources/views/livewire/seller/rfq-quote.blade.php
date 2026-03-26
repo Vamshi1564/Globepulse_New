@@ -215,9 +215,11 @@
     </button>
 @else
 
+    <div class="d-flex gap-2">
+
     <button type="submit"
-        class="btn btn-success px-4 fw-semibold"
-        wire:loading.attr="disabled">
+            class="btn btn-success px-4 fw-semibold"
+            wire:loading.attr="disabled">
 
         <span wire:loading.remove>
             🚀 Send Quotation
@@ -228,6 +230,15 @@
             Sending...
         </span>
     </button>
+
+    <!-- Cancel Button -->
+    <button type="button"
+            onclick="history.back()"
+            class="btn btn-outline-secondary px-4 fw-semibold">
+        ❌ Cancel
+    </button>
+
+</div>
 
 @endif
 

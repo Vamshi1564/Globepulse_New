@@ -104,25 +104,47 @@ margin-bottom:4px;
 </a>
 </li>
 
-<li class="nav-item">
+<!-- <li class="nav-item">
 <a class="nav-link" href="#">
 <i class="fas fa-plus-circle"></i> Post RFQ
 </a>
-</li>
+</li> -->
+@php
+    $buyerUuid = session('buyer_uuid');
 
+    $rfqCount = \App\Models\RFQ::where('buyer_uuid', $buyerUuid)->count();
+
+    $quotationCount = \App\Models\Quotation::where('buyer_uuid', $buyerUuid)->count();
+@endphp
 <li class="nav-item">
 <a class="nav-link {{ request()->routeIs('buyer.myrfqs') ? 'active' : '' }}"
    href="{{ route('buyer.myrfqs') }}">
-<i class="fas fa-list"></i> My RFQs
+
+    <i class="fas fa-list"></i> My RFQs
+
+    @if($rfqCount > 0)
+        <span class="badge bg-primary ms-2">
+            {{ $rfqCount > 10 ? '10+' : $rfqCount }}
+        </span>
+    @endif
+
 </a>
 </li>
 <li class="nav-item">
 <a class="nav-link {{ request()->routeIs('buyer.quotations') ? 'active' : '' }}"
    href="{{ route('buyer.quotations') }}">
-<i class="fas fa-file-invoice-dollar"></i> Quotations
+
+    <i class="fas fa-file-invoice-dollar"></i> Quotations
+
+    @if($quotationCount > 0)
+        <span class="badge bg-success ms-2">
+            {{ $quotationCount > 10 ? '10+' : $quotationCount }}
+        </span>
+    @endif
+
 </a>
 </li>
-<li class="nav-item">
+<!-- <li class="nav-item">
 <a class="nav-link" href="#">
 <i class="fas fa-search"></i> Find Suppliers
 </a>
@@ -138,7 +160,7 @@ margin-bottom:4px;
 <a class="nav-link" href="#">
 <i class="fas fa-bookmark"></i> Saved Suppliers
 </a>
-</li>
+</li> -->
 
 <!-- <li class="nav-item">
 <a class="nav-link" href="#">

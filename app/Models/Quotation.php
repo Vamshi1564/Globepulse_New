@@ -30,8 +30,9 @@ class Quotation extends Model
 
 public function supplier()
 {
-    return $this->belongsTo(\App\Models\Seller::class, 'supplier_uuid', 'id');
+    return $this->belongsTo(\App\Models\SellerDetail::class, 'supplier_uuid', 'seller_id');
 }
+
 public function buyer()
 {
     return $this->belongsTo(\App\Models\Buyer::class, 'buyer_uuid', 'id');
