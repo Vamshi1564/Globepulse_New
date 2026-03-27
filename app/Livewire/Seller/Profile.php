@@ -416,7 +416,32 @@ class Profile extends Component
         return redirect()->route('seller.dashboard')
             ->with('login_success', '🎉 Profile submitted for review! We\'ll notify you within 24–48 hrs.');
     }
+    
+    // ── Real-time doc file name preview/validation ──────────────
+    public function checkDocFile(string $type, string $fileName): void
+    {
+        // Just a lightweight client-side feedback method
+        // Heavy validation happens in uploadDocWithVerification() on actual upload
+        if (empty($fileName)) {
+            unset($this->docVerification[$type]);
+            return;
+        }
 
+        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $allowed = ['pdf', 'jpg', 'jpeg', 'png'];
+
+        if (!in_array($ext, $allowed)) {
+            $this->docVerification[$type] = [
+                'status'  => 'error',
+                'message' => 'Only PDF, JPG, JPEG, or PNG files are allowed.',
+            ];
+        } else {
+            $this->docVerification[$type] = [
+                'status'  => 'ok',
+                'message' => 'File looks good. Click Save to upload.',
+            ];
+        }
+    }
     // ── Upload with basic validation ─────────────────────────
     private function uploadDocWithVerification(string $type, $file): void
     {

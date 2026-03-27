@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
-use App\Models\Country;
 use App\Mail\BuyerOtpMail;
 use Propaganistas\LaravelPhone\Rules\Phone;
 
@@ -24,7 +23,11 @@ class BuyerSignup extends Component
 
     public function mount()
     {
-        $this->countries = Country::orderBy('short_name')->get();
+        // Use tblcountries — same table used by SellerSignup
+        $this->countries = DB::table('tblcountries')
+            ->select('country_id', 'short_name', 'iso2')
+            ->orderBy('short_name')
+            ->get();
     }
 
     public function submit()
@@ -49,7 +52,7 @@ class BuyerSignup extends Component
             ],
 
             'country_code' => [
-                'required','exists:countries,iso2'
+                'required','exists:tblcountries,iso2'
             ],
 
         ], [
@@ -108,29 +111,6 @@ if ($existingBuyer) {
 
     return redirect()->route('buyer.verify.otp')
         ->with('otp_success', 'Account already exists but not verified. A new OTP has been sent to your email.');
-
-
-            // Not verified → resend OTP
-            $newTempPassword = $this->generateTempPassword();
-
-            DB::table('buyers')
-                ->where('id', $existingBuyer->id)
-                ->update([
-                    'password_hash' => Hash::make($newTempPassword),
-                    'updated_at' => now()
-                ]);
-
-            $this->fireOtp(
-                $existingBuyer->id,
-                $emailLower,
-                $this->full_name,
-                $newTempPassword
-            );
-
-            session(['buyer_register_email' => $emailLower]);
-
-            return redirect()->route('buyer.verify.otp')
-                ->with('otp_success', 'Your account was not verified yet. A new OTP was sent.');
         }
 
         // 2️⃣ New Buyer Registration
