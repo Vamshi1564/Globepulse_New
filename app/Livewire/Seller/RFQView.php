@@ -10,10 +10,10 @@ class RFQView extends Component
 
    public function mount($id)
 {
-    $sellerUuid = session('seller_uuid');
+    $sellerId = session('seller_id');
 
     $this->rfq = RFQ::with(['product', 'buyer'])
-        ->where('supplier_uuid', $sellerUuid)
+        ->where('supplier_uuid', $sellerId)
         ->findOrFail($id);
 }
 
@@ -28,9 +28,9 @@ public function updateStatusAndRedirect($status)
         return;
     }
 
-    $sellerUuid = session('seller_uuid');
+    $sellerId = session('seller_id');
 
-    $rfq = RFQ::where('supplier_uuid', $sellerUuid)
+    $rfq = RFQ::where('supplier_uuid', $sellerId)
         ->findOrFail($this->rfq->id);
 
     $rfq->update([

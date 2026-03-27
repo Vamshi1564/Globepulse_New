@@ -10,12 +10,12 @@ class RFQList extends Component
 
     public function mount()
     {
-        $sellerUuid = session('seller_uuid');
+        $sellerId = session('seller_id');
 
         
 
         $this->rfqs = RFQ::with(['product', 'buyer'])
-            ->where('supplier_uuid', $sellerUuid)
+            ->where('supplier_uuid', $sellerId)
             ->latest()
             ->get();
     }

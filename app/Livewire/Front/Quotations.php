@@ -12,7 +12,7 @@ class Quotations extends Component
 
    public function mount()
 {
-    $sellerUuid = session('seller_uuid'); // ✅ make sure this exists
+    $sellerId = session('seller_id'); // ✅ make sure this exists
     $buyerUuid = Session::get('buyer_uuid');
 
     if (!$buyerUuid) {
@@ -20,12 +20,12 @@ class Quotations extends Component
     }
 
   $this->quotations = Quotation::with(['rfq.product', 'buyer', 'supplier'])
-        ->where(function ($query) use ($sellerUuid, $buyerUuid) {
-            if ($sellerUuid && $buyerUuid) {
-                $query->where('supplier_uuid', $sellerUuid)
+        ->where(function ($query) use ($sellerId, $buyerUuid) {
+            if ($sellerId && $buyerUuid) {
+                $query->where('supplier_uuid', $sellerId)
                       ->orWhere('buyer_uuid', $buyerUuid);
-            } elseif ($sellerUuid) {
-                $query->where('supplier_uuid', $sellerUuid);
+            } elseif ($sellerId) {
+                $query->where('supplier_uuid', $sellerId);
             } elseif ($buyerUuid) {
                 $query->where('buyer_uuid', $buyerUuid);
             }

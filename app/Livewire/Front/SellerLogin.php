@@ -76,6 +76,7 @@ class SellerLogin extends Component
         // tbl_products.customer_id and seller_services.customer_id reference this directly
         session([
             'seller_id'    => $seller->id,   // sellers.id (= tblleads.id integer)
+            'seller_uuid'  => $seller->id,
             'id'           => $seller->id,   // same value — old pages use Session::get('id')
             'seller_email' => $seller->email,
             'seller_name'  => $seller->details?->legal_business_name ?? $seller->email,

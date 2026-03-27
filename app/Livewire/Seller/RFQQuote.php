@@ -19,13 +19,13 @@ class RFQQuote extends Component
 
     public function mount($id)
 {
-    $sellerUuid = session('seller_uuid');
+    $sellerId = session('seller_id');
 
    
 
     // 🔒 SECURITY: ensure seller owns this RFQ
     $this->rfq = RFQ::where('id', $id)
-        ->where('supplier_uuid', $sellerUuid)
+        ->where('supplier_uuid', $sellerId)
         ->firstOrFail();
 }
 
@@ -36,11 +36,11 @@ class RFQQuote extends Component
         'message' => 'required|min:5',
     ]);
 
-    $sellerUuid = session('seller_uuid');
+    $sellerId = session('seller_id');
 
     // ✅ CHECK FIRST
     $exists = Quotation::where('rfq_id', $this->rfq->id)
-        ->where('supplier_uuid', $sellerUuid)
+        ->where('supplier_uuid', $sellerId)
         ->exists();
 
     if ($exists) {
@@ -51,7 +51,7 @@ class RFQQuote extends Component
     // ✅ CREATE
     $quotation = Quotation::create([
         'rfq_id' => $this->rfq->id,
-        'supplier_uuid' => $sellerUuid,
+        'supplier_uuid' => $sellerId,
         'buyer_uuid' => $this->rfq->buyer_uuid,
         'price' => $this->price,
         'delivery_time' => $this->delivery_time,
