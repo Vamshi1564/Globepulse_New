@@ -24,6 +24,7 @@ class SellerSignup extends Component
     public $company_website = '';
     public $country         = '';   // stores tblcountries.country_id
     public $countries       = [];
+    public $accept_terms = false;
 
     public function mount()
     {
