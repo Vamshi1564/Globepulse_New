@@ -50,8 +50,8 @@
 .img-drop-zone{border:2px dashed #d1d5db;border-radius:14px;padding:28px 20px;text-align:center;
   cursor:pointer;transition:all .2s;background:#fff;}
 .img-drop-zone:hover{border-color:#1d4ed8;background:#f0f4ff;}
-.img-preview-main{width:100%;max-height:240px;object-fit:cover;border-radius:12px;display:block;
-  box-shadow:0 4px 16px rgba(0,0,0,.1);}
+.img-preview-main{width:100%;max-height:300px;object-fit:contain;border-radius:12px;display:block;
+  background:#f8fafc;padding:12px;box-shadow:0 4px 16px rgba(0,0,0,.08);}
 .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin-top:10px;}
 .gallery-thumb{aspect-ratio:1;border-radius:10px;overflow:hidden;border:1.5px solid #e5e9f2;background:#f8fafc;}
 .gallery-thumb img{width:100%;height:100%;object-fit:cover;}
@@ -95,8 +95,8 @@
 /* ── Live preview card ── */
 .preview-card{background:#fff;border-radius:14px;border:1px solid #e8ecf4;
   box-shadow:0 4px 20px rgba(0,0,0,.06);position:sticky;top:70px;overflow:hidden;}
-.preview-img-wrap{position:relative;}
-.preview-img-wrap img{width:100%;height:200px;object-fit:cover;}
+.preview-img-wrap{position:relative;background:#f8fafc;}
+.preview-img-wrap img{width:100%;height:200px;object-fit:contain;background:#f8fafc;padding:8px;}
 .preview-live-badge{position:absolute;top:10px;right:10px;background:#1d4ed8;color:#fff;
   font-size:.68rem;font-weight:800;padding:3px 10px;border-radius:20px;}
 .preview-body{padding:14px;}
@@ -721,7 +721,8 @@
       <div class="preview-card">
         <div class="preview-img-wrap">
           @if($product_img)
-            <img src="{{ $product_img->temporaryUrl() }}" style="width:100%;height:200px;object-fit:cover;">
+            <img src="{{ $product_img->temporaryUrl() }}"
+              style="width:100%;height:200px;object-fit:contain;background:#f8fafc;padding:8px;display:block;">
           @else
             <div style="width:100%;height:200px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);
               display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;">

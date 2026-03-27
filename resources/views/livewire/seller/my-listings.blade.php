@@ -1,5 +1,5 @@
-{{-- FILE: resources/views/livewire/seller/my-listings.blade.php --}}
 <div>
+{{-- FILE: resources/views/livewire/seller/my-listings.blade.php --}}
 <livewire:seller.layout.header />
 
 <style>
@@ -73,7 +73,78 @@
 .st-draft   {background:#f0f4ff;color:#4338ca;border:1px dashed #a5b4fc;}
 
 /* ── Action buttons ── */
-.btn-edit{font-size:.74rem;padding:5px 12px;border-radius:8px;border:1.5px solid #1d4ed8;
+/* ── Action buttons ── */
+.btn-edit,
+.btn-publish-now,
+.btn-del,
+.btn-view-detail {
+    font-size: .74rem;
+    padding: 4px 7px;
+    border-radius: 8px;
+    border: 1.5px solid;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 25px;
+    height: 29px;
+    white-space: nowrap;
+}
+
+.btn-edit {
+    border-color: #1d4ed8;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.btn-edit:hover {
+    background: #1d4ed8;
+    color: #fff;
+}
+
+.btn-publish-now {
+    border-color: #059669;
+    background: #f0fdf4;
+    color: #059669;
+}
+
+.btn-publish-now:hover {
+    background: #059669;
+    color: #fff;
+}
+
+.btn-del {
+    border-color: #ef4444;
+    background: #fff;
+    color: #ef4444;
+}
+
+.btn-del:hover {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.btn-view-detail {
+    border-color: #6d28d9;
+    background: #f5f3ff;
+    color: #6d28d9;
+}
+
+.btn-view-detail:hover {
+    background: #6d28d9;
+    color: #fff;
+}
+
+/* Make icons consistent */
+.btn-edit i,
+.btn-publish-now i,
+.btn-del i,
+.btn-view-detail i {
+    font-size: .82rem;
+}
+/* .btn-edit{font-size:.74rem;padding:5px 12px;border-radius:8px;border:1.5px solid #1d4ed8;
   background:#eff6ff;color:#1d4ed8;font-weight:700;cursor:pointer;text-decoration:none;transition:all .15s;display:inline-block;}
 .btn-edit:hover{background:#1d4ed8;color:#fff;}
 .btn-publish-now{font-size:.74rem;padding:5px 12px;border-radius:8px;
@@ -82,7 +153,7 @@
 .btn-publish-now:hover{background:#059669;color:#fff;}
 .btn-del{font-size:.74rem;padding:5px 12px;border-radius:8px;border:1.5px solid #ef4444;
   background:#fff;color:#ef4444;font-weight:700;cursor:pointer;transition:all .15s;display:inline-block;}
-.btn-del:hover{background:#fee2e2;}
+.btn-del:hover{background:#fee2e2;} */
 
 /* ── Empty state ── */
 .ml-empty{text-align:center;padding:4rem 2rem;}
@@ -101,6 +172,26 @@
 /* ── Alert ── */
 .ml-alert{border-radius:10px;padding:12px 16px;margin-bottom:1rem;font-size:.84rem;font-weight:600;display:flex;align-items:center;gap:8px;}
 .ml-alert.success{background:#d1fae5;border:1.5px solid #6ee7b7;color:#065f46;}
+
+/* ── View detail button ── */
+.btn-view-detail{font-size:.74rem;padding:5px 10px;border-radius:8px;border:1.5px solid #6d28d9;
+  background:#f5f3ff;color:#6d28d9;font-weight:700;cursor:pointer;transition:all .15s;display:inline-block;}
+.btn-view-detail:hover{background:#6d28d9;color:#fff;}
+
+/* ── Detail modal ── */
+.ld-overlay{position:fixed;inset:0;z-index:1040;background:rgba(15,23,42,.5);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .25s;}
+.ld-overlay.open{opacity:1;pointer-events:all;}
+.ld-drawer{position:fixed;top:0;right:0;bottom:0;width:min(480px,100vw);background:#fff;z-index:1050;
+  display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+  box-shadow:-6px 0 40px rgba(0,0,0,.15);}
+.ld-drawer.open{transform:translateX(0);}
+.ld-header{padding:1.1rem 1.3rem;border-bottom:1px solid #e8ecf4;background:#f8fafc;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.ld-body{flex:1;overflow-y:auto;padding:1.25rem;}
+.ld-img{width:100%;height:220px;object-fit:contain;border-radius:12px;border:1.5px solid #e8ecf4;background:#f8fafc;margin-bottom:1rem;}
+.ld-img-placeholder{width:100%;height:180px;border-radius:12px;border:1.5px solid #e8ecf4;background:#f8fafc;display:flex;align-items:center;justify-content:center;font-size:3rem;margin-bottom:1rem;}
+.ld-field{margin-bottom:.85rem;}
+.ld-field label{font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px;}
+.ld-field .val{font-size:.88rem;font-weight:600;color:#1e293b;}
 </style>
 
 <div class="ml-wrap">
@@ -211,8 +302,22 @@
           </td>
 
           <td>
-            @if($item->image)
-              <img src="{{ $item->image && str_starts_with($item->image, 'http') ? $item->image : asset('storage/' . $item->image) }}" class="ml-thumb"
+            @php
+              $imgSrc = null;
+              if ($item->image) {
+                  if (str_starts_with($item->image, 'http')) {
+                      $imgSrc = $item->image; // S3 or absolute URL
+                  } elseif (str_starts_with($item->image, 'uploads/')) {
+                      // Stored as 'uploads/product/xxx.jpg' — try S3 URL config first
+                      $awsBase = config('app.pub_aws_url');
+                      $imgSrc  = $awsBase ? rtrim($awsBase,'/').'/'.$item->image : asset('storage/'.$item->image);
+                  } else {
+                      $imgSrc = asset('storage/' . $item->image);
+                  }
+              }
+            @endphp
+            @if($imgSrc)
+              <img src="{{ $imgSrc }}" class="ml-thumb"
                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
               <div class="ml-thumb-placeholder" style="display:none;">
                 {{ $item->type === 'product' ? '📦' : '🛠️' }}
@@ -267,33 +372,73 @@
           </td>
 
           <td>
-            <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
-              {{-- Publish Now button for drafts --}}
-              @if($item->status === 'draft' && $item->type === 'product')
-                <button class="btn-publish-now"
-                  wire:click="publishProduct({{ $item->id }})"
-                  title="Submit for admin review">
-                  <i class="bi bi-send-fill" style="font-size:.7rem;"></i> Publish
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+                
+                {{-- Publish / Resubmit Button for Products --}}
+                @if($item->type === 'product' && in_array($item->status, ['draft', 'pending', 'rejected']))
+                    @if($item->status === 'draft')
+                        <button class="btn-publish-now"
+                            wire:click="publishProduct({{ $item->id }})"
+                            wire:confirm="Submit this product for admin review?"
+                            title="Submit for admin review">
+                            <i class="bi bi-send-fill" style="font-size:.75rem;"></i> Publish
+                        </button>
+                    @elseif($item->status === 'rejected')
+                        <button class="btn-publish-now" 
+                            style="border-color:#f59e0b; background:#fffbeb; color:#92400e;"
+                            wire:click="publishProduct({{ $item->id }})"
+                            wire:confirm="Re-submit this product for review?"
+                            title="Re-submit for review">
+                            <i class="bi bi-arrow-clockwise" style="font-size:.75rem;"></i> Resubmit
+                        </button>
+                    @elseif($item->status === 'pending')
+                        <span class="ml-status st-pending" style="font-size:.72rem; padding:4px 10px;">
+                            ⏳ Under Review
+                        </span>
+                    @endif
+                @endif
+
+                {{-- View Detail Button --}}
+                <button class="btn-view-detail"
+                    data-item="{{ htmlspecialchars(json_encode([
+                        'id'         => $item->id,
+                        'type'       => $item->type,
+                        'title'      => $item->title,
+                        'image'      => $item->image,
+                        'status'     => $item->status,
+                        'price'      => $item->price,
+                        'meta'       => $item->meta,
+                        'edit_route' => $item->edit_route,
+                        'created_at' => $item->created_at ? (string)$item->created_at : null,
+                    ]), ENT_QUOTES, 'UTF-8') }}"
+                    onclick="openListingDetail(this)"
+                    title="View full details">
+                    <i class="bi bi-eye" style="font-size:.78rem;"></i>
                 </button>
-              @endif
-              <a href="{{ $item->edit_route }}" class="btn-edit">
-                <i class="bi bi-pencil" style="font-size:.7rem;"></i> Edit
-              </a>
-              @if($item->type === 'product')
-                <button class="btn-del"
-                  wire:click="deleteProduct({{ $item->id }})"
-                  onclick="return confirm('Delete this product?')">
-                  <i class="bi bi-trash" style="font-size:.7rem;"></i>
-                </button>
-              @else
-                <button class="btn-del"
-                  wire:click="deleteService({{ $item->id }})"
-                  onclick="return confirm('Delete this service?')">
-                  <i class="bi bi-trash" style="font-size:.7rem;"></i>
-                </button>
-              @endif
+
+                {{-- Edit Button --}}
+                <a href="{{ $item->edit_route }}" class="btn-edit" title="Edit listing">
+                    <i class="bi bi-pencil" style="font-size:.78rem;"></i>
+                </a>
+
+                {{-- Delete Button --}}
+                @if($item->type === 'product')
+                    <button class="btn-del"
+                        wire:click="deleteProduct({{ $item->id }})"
+                        onclick="return confirm('Delete this product? Permanently remove this listing?')"
+                        title="Delete product">
+                        <i class="bi bi-trash" style="font-size:.78rem;"></i>
+                    </button>
+                @else
+                    <button class="btn-del"
+                        wire:click="deleteService({{ $item->id }})"
+                        onclick="return confirm('Delete this service? Permanently remove this listing?')"
+                        title="Delete service">
+                        <i class="bi bi-trash" style="font-size:.78rem;"></i>
+                    </button>
+                @endif
             </div>
-          </td>
+        </td>
         </tr>
         @empty
         <tr>
@@ -335,7 +480,206 @@
     @endif
   </div>
 
+{{-- ── LISTING DETAIL DRAWER ── --}}
+<div wire:ignore>
+<div class="ld-overlay" id="ld-overlay" onclick="closeListingDetail()"></div>
+<div class="ld-drawer" id="ld-drawer">
+  <div class="ld-header">
+    <div style="font-weight:800;font-size:.95rem;color:#0f172a;" id="ld-title">Product Details</div>
+    <button onclick="closeListingDetail()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#64748b;padding:4px 8px;border-radius:7px;transition:background .15s;" onmouseover="this.style.background='#fee2e2';this.style.color='#dc2626'" onmouseout="this.style.background='none';this.style.color='#64748b'">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+  <div class="ld-body" id="ld-body">
+    {{-- Filled by JS --}}
+  </div>
 </div>
+
+<script>
+function openListingDetail(btn) {
+    var item;
+    try {
+        item = JSON.parse(btn.getAttribute('data-item'));
+    } catch(e) {
+        console.error('View drawer parse error:', e);
+        alert('Could not load item details. Check console.');
+        return;
+    }
+
+    // ── Title ──────────────────────────────────────────────
+    document.getElementById('ld-title').textContent =
+        item.type === 'product' ? 'Product Details' : 'Service Details';
+
+    // ── Build image ────────────────────────────────────────
+    var awsBase = '{{ rtrim(config("app.pub_aws_url",""), "/") }}';
+    var storageBase = '{{ asset("storage") }}';
+    var imgSrc = '';
+    if (item.image) {
+        if (item.image.startsWith('http')) {
+            imgSrc = item.image;
+        } else if (awsBase && item.image.startsWith('uploads/')) {
+            imgSrc = awsBase + '/' + item.image;
+        } else {
+            imgSrc = storageBase + '/' + item.image;
+        }
+    }
+
+    // ── Status badge ───────────────────────────────────────
+    var statusMap = {
+        approved : {bg:'#d1fae5', color:'#065f46', icon:'check-circle-fill',  label:'Approved'},
+        pending  : {bg:'#fef3c7', color:'#92400e', icon:'hourglass-split',     label:'Under Review'},
+        rejected : {bg:'#fee2e2', color:'#991b1b', icon:'x-circle-fill',       label:'Rejected'},
+        draft    : {bg:'#f0f4ff', color:'#4338ca', icon:'pencil-square',       label:'Draft'},
+    };
+    var st = statusMap[item.status] || statusMap['pending'];
+
+    // ── Build body using DOM (no innerHTML string quoting issues) ──
+    var body = document.getElementById('ld-body');
+    body.innerHTML = '';
+
+    // Image
+    var imgWrap = document.createElement('div');
+    imgWrap.style.cssText = 'margin-bottom:1rem;border-radius:12px;overflow:hidden;border:1.5px solid #e8ecf4;background:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:140px;';
+    if (imgSrc) {
+        var img = document.createElement('img');
+        img.src = imgSrc;
+        img.style.cssText = 'width:100%;max-height:220px;object-fit:contain;';
+        img.onerror = function() {
+            this.style.display = 'none';
+            var ph = document.createElement('div');
+            ph.style.cssText = 'font-size:3rem;padding:2rem;';
+            ph.textContent = item.type === 'product' ? '📦' : '🛠️';
+            imgWrap.appendChild(ph);
+        };
+        imgWrap.appendChild(img);
+    } else {
+        var ph = document.createElement('div');
+        ph.style.cssText = 'font-size:3rem;padding:2rem;';
+        ph.textContent = item.type === 'product' ? '📦' : '🛠️';
+        imgWrap.appendChild(ph);
+    }
+    body.appendChild(imgWrap);
+
+    // Status banner
+    if (item.status === 'pending') {
+        var banner = mkBanner('#fef3c7','#92400e','hourglass-split','Under admin review — will go live once approved.');
+        body.appendChild(banner);
+    } else if (item.status === 'rejected') {
+        var banner = mkBanner('#fee2e2','#991b1b','x-circle','Rejected. Edit the listing and resubmit for review.');
+        body.appendChild(banner);
+    } else if (item.status === 'approved') {
+        var banner = mkBanner('#d1fae5','#065f46','check-circle-fill','Live — visible to buyers worldwide.');
+        body.appendChild(banner);
+    } else if (item.status === 'draft') {
+        var banner = mkBanner('#f0f4ff','#4338ca','pencil-square','Draft — click Publish to submit for admin review.');
+        body.appendChild(banner);
+    }
+
+    // Info card
+    var card = document.createElement('div');
+    card.style.cssText = 'background:#f8fafc;border-radius:10px;padding:1rem;margin-bottom:1rem;border:1px solid #e8ecf4;';
+
+    addField(card, 'Title', item.title || '—', 'font-size:.95rem;font-weight:700;color:#0f172a;');
+    
+    var grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.5rem;';
+
+    // Type
+    var typeEl = document.createElement('div');
+    typeEl.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px;">Type</span>' +
+        '<span style="font-size:.82rem;font-weight:600;color:#1e293b;">' + (item.type === 'product' ? '📦 Product' : '🛠️ Service') + '</span>';
+    grid.appendChild(typeEl);
+
+    // Status badge
+    var stEl = document.createElement('div');
+    stEl.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px;">Status</span>' +
+        '<span style="font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;background:' + st.bg + ';color:' + st.color + ';">' + st.label + '</span>';
+    grid.appendChild(stEl);
+
+    // Price
+    var prEl = document.createElement('div');
+    prEl.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px;">Price / Rate</span>' +
+        '<span style="font-size:.9rem;font-weight:700;color:#059669;">' + (item.price || '—') + '</span>';
+    grid.appendChild(prEl);
+
+    // Details
+    var dtEl = document.createElement('div');
+    dtEl.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px;">Details</span>' +
+        '<span style="font-size:.82rem;font-weight:600;color:#1e293b;">' + (item.meta || '—') + '</span>';
+    grid.appendChild(dtEl);
+
+    // Date
+    var dateStr = item.created_at ? item.created_at.substring(0,10) : '—';
+    var daEl = document.createElement('div');
+    daEl.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px;">Date Added</span>' +
+        '<span style="font-size:.82rem;font-weight:600;color:#1e293b;">' + dateStr + '</span>';
+    grid.appendChild(daEl);
+
+    card.appendChild(grid);
+    body.appendChild(card);
+
+    // Action buttons
+    var actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.25rem;';
+
+    // Publish button for draft products
+    if (item.type === 'product' && (item.status === 'draft' || item.status === 'rejected')) {
+        var pubBtn = document.createElement('button');
+        pubBtn.style.cssText = 'flex:1;min-width:120px;display:flex;align-items:center;justify-content:center;gap:6px;padding:.55rem 1rem;background:#059669;color:#fff;border-radius:10px;font-size:.84rem;font-weight:700;border:none;cursor:pointer;';
+        pubBtn.innerHTML = '<i class="bi bi-send-fill"></i> ' + (item.status === 'draft' ? 'Publish Now' : 'Resubmit');
+        pubBtn.onclick = function() {
+            if (confirm('Submit this product for admin review?')) {
+                // Call Livewire publish method
+                var lwEl = document.querySelector('[wire\\:id]');
+                if (lwEl) {
+                    Livewire.find(lwEl.getAttribute('wire:id')).call('publishProduct', item.id);
+                    closeListingDetail();
+                }
+            }
+        };
+        actions.appendChild(pubBtn);
+    }
+
+    // Edit button
+    var editBtn = document.createElement('a');
+    editBtn.href = item.edit_route;
+    editBtn.style.cssText = 'flex:1;min-width:120px;display:flex;align-items:center;justify-content:center;gap:6px;padding:.55rem 1rem;background:#1d4ed8;color:#fff;border-radius:10px;font-size:.84rem;font-weight:700;text-decoration:none;';
+    editBtn.innerHTML = '<i class="bi bi-pencil"></i> Edit Listing';
+    actions.appendChild(editBtn);
+
+    body.appendChild(actions);
+
+    // Open the drawer
+    document.getElementById('ld-overlay').classList.add('open');
+    document.getElementById('ld-drawer').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function mkBanner(bg, color, icon, text) {
+    var d = document.createElement('div');
+    d.style.cssText = 'background:' + bg + ';border-radius:8px;padding:.65rem .9rem;font-size:.78rem;color:' + color + ';font-weight:600;margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem;';
+    d.innerHTML = '<i class="bi bi-' + icon + '"></i> ' + text;
+    return d;
+}
+
+function addField(parent, label, value, valStyle) {
+    var d = document.createElement('div');
+    d.style.cssText = 'margin-bottom:.5rem;';
+    d.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px;">' + label + '</span>' +
+        '<span style="' + (valStyle || 'font-size:.88rem;font-weight:600;color:#1e293b;') + '">' + value + '</span>';
+    parent.appendChild(d);
+}
+
+function closeListingDetail() {
+    document.getElementById('ld-overlay').classList.remove('open');
+    document.getElementById('ld-drawer').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeListingDetail(); });
+</script>
+
+</div>{{-- end wire:ignore --}}
 
 <livewire:seller.layout.footer />
 </div>

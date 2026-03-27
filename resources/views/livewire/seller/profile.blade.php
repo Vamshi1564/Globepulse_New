@@ -182,6 +182,7 @@
                 ['Business address',    !empty($business_address)],
                 ['Company description', !empty($company_description)],
                 ['Main products',       !empty($main_products)],
+                ['Logo uploaded',       !empty($logo_url)],
                 ['Package selected',     !empty($selected_package_id)],
                 ['Business Reg. doc',   $documents->has('business_registration')],
                 ['ID / Passport',       $documents->has('owner_id_passport')],
@@ -552,12 +553,53 @@
                   <div class="col-md-6">
                     <div class="fg">
                       <label>Company Video <small class="text-muted">(optional · MP4, MOV · max 50MB)</small></label>
-                      <div class="duz">
-                        <div class="text-center py-1">
-                          <i class="fas fa-video text-muted" style="font-size:1.2rem;"></i>
-                          <div class="duz-hint mt-1">Showcase your factory / products to buyers</div>
+                      <div class="duz" id="video-duz">
+
+                        {{-- Show saved video if already uploaded --}}
+                        @if(!empty($video_url))
+                          <div class="text-center py-2" id="video-saved-wrap">
+                            <video controls
+                              style="max-width:100%;max-height:130px;border-radius:8px;border:1.5px solid #e5e9f2;">
+                              <source src="{{ asset('storage/' . $video_url) }}">
+                              Your browser does not support video.
+                            </video>
+                            <div class="duz-hint mt-1" style="color:#059669;font-weight:600;">
+                              <i class="bi bi-check-circle-fill me-1"></i>Video uploaded — upload again to replace
+                            </div>
+                          </div>
+                        @else
+                          <div class="text-center py-1" id="video-placeholder">
+                            <i class="fas fa-video text-muted" style="font-size:1.2rem;"></i>
+                            <div class="duz-hint mt-1">Showcase your factory / products to buyers</div>
+                          </div>
+                        @endif
+
+                        {{-- Local JS preview shown immediately after picking file --}}
+                        <div id="video-preview-wrap" style="display:none;margin-top:.5rem;">
+                          <video id="video-preview-player" controls
+                            style="max-width:100%;max-height:130px;border-radius:8px;border:1.5px solid var(--bdr);"></video>
+                          <div class="duz-hint mt-1" id="video-preview-name"
+                            style="color:#1a56db;font-weight:600;font-size:.76rem;"></div>
                         </div>
-                        <label class="ul-btn"><i class="fas fa-upload"></i> Upload Video</label>
+
+                        {{-- Hidden file input wired to Livewire --}}
+                        <input type="file" wire:model="video_file" id="f_video"
+                          style="display:none;" accept=".mp4,.mov,.avi,.webm"
+                          onchange="previewVideo(this)">
+
+                        <label for="f_video" class="ul-btn" style="margin-top:.5rem;">
+                          <i class="fas fa-upload"></i>
+                          {{ !empty($video_url) ? 'Replace Video' : 'Upload Video' }}
+                        </label>
+
+                        <span wire:loading wire:target="video_file" class="ms-2 text-muted" style="font-size:.76rem;">
+                          <span class="spinner-border spinner-border-sm"></span> Uploading...
+                        </span>
+
+                        @error('video_file')
+                          <small class="text-danger d-block mt-1">{{ $message }}</small>
+                        @enderror
+
                       </div>
                     </div>
                   </div>
@@ -970,6 +1012,27 @@
 
     @script
     <script>
+    function previewVideo(input) {
+        if (!input.files || !input.files[0]) return;
+        const file    = input.files[0];
+        const wrap    = document.getElementById('video-preview-wrap');
+        const player  = document.getElementById('video-preview-player');
+        const label   = document.getElementById('video-preview-name');
+        const saved   = document.getElementById('video-saved-wrap');
+        const pholder = document.getElementById('video-placeholder');
+
+        // Hide existing saved/placeholder so local preview takes over
+        if (saved)   saved.style.display   = 'none';
+        if (pholder) pholder.style.display = 'none';
+
+        if (player) player.src = URL.createObjectURL(file);
+        if (label) {
+            const kb = (file.size / 1024).toFixed(0);
+            label.innerHTML = '<i class="fas fa-film me-1"></i>' + file.name + ' (' + kb + ' KB)';
+        }
+        if (wrap) wrap.style.display = 'block';
+    }
+
     function previewLogo(input) {
         if (!input.files || !input.files[0]) return;
         const file = input.files[0];

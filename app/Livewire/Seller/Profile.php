@@ -45,6 +45,9 @@ class Profile extends Component
     public $export_markets      = '';
     public $certifications      = '';
     public $logo_file;
+    public $video_file;
+    public $logo_url  = '';   // persisted path — drives step score
+    public $video_url = '';   // persisted path — drives step score
 
     // Step 4
     public $doc_owner_id_passport;
@@ -93,6 +96,8 @@ class Profile extends Component
         $this->production_capacity  = $details?->production_capacity ?? '';
         $this->export_markets       = $details?->export_markets ?? '';
         $this->certifications       = $details?->certifications ?? '';
+        $this->logo_url             = $details?->logo_url ?? '';
+        $this->video_url            = $details?->video_url ?? '';
 
         // Load packages from b2b_remote_db.tbl_package_membership via PackagesModel
         $this->packages = PackagesModel::orderBy('id')->get()->toArray();
@@ -136,7 +141,9 @@ class Profile extends Component
             !empty($this->phone), !empty($this->country_id),
             !empty($this->legal_business_name), !empty($this->business_type),
             !empty($this->business_address), !empty($this->city), !empty($this->num_employees),
-            !empty($this->company_description), !empty($this->main_products), !empty($this->selected_package_id),
+            !empty($this->company_description), !empty($this->main_products),
+            !empty($this->logo_url),
+            !empty($this->selected_package_id),
             $this->documents->has('business_registration'),
             $this->documents->has('owner_id_passport'),
             $this->documents->has('tax_id'),
@@ -156,7 +163,13 @@ class Profile extends Component
             2 => [!empty($this->legal_business_name), !empty($this->business_type),
                   !empty($this->business_address), !empty($this->city), !empty($this->num_employees),
                   $this->documents->has('business_registration')],
-            3 => [!empty($this->company_description), !empty($this->main_products), !empty($this->export_markets)],
+            3 => [
+                !empty($this->company_description),
+                !empty($this->main_products),
+                !empty($this->export_markets),
+                !empty($this->logo_url),
+                !empty($this->video_url),
+            ],
             4 => [$this->documents->has('owner_id_passport'), $this->documents->has('tax_id')],
             5 => [!empty($this->selected_package_id)],
             default => [],
@@ -325,7 +338,16 @@ class Profile extends Component
             $path = $this->logo_file->storeAs('seller-assets/'.$sellerId,
                 'logo.'.$this->logo_file->getClientOriginalExtension(), 'public');
             $data['logo_url'] = $path;
+            $this->logo_url   = $path;
             $this->reset('logo_file');
+        }
+
+        if ($this->video_file) {
+            $path = $this->video_file->storeAs('seller-assets/'.$sellerId,
+                'video.'.$this->video_file->getClientOriginalExtension(), 'public');
+            $data['video_url'] = $path;
+            $this->video_url   = $path;
+            $this->reset('video_file');
         }
 
         SellerDetail::updateOrCreate(['seller_id' => $sellerId], $data);
@@ -416,32 +438,7 @@ class Profile extends Component
         return redirect()->route('seller.dashboard')
             ->with('login_success', '🎉 Profile submitted for review! We\'ll notify you within 24–48 hrs.');
     }
-    
-    // ── Real-time doc file name preview/validation ──────────────
-    public function checkDocFile(string $type, string $fileName): void
-    {
-        // Just a lightweight client-side feedback method
-        // Heavy validation happens in uploadDocWithVerification() on actual upload
-        if (empty($fileName)) {
-            unset($this->docVerification[$type]);
-            return;
-        }
 
-        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-        $allowed = ['pdf', 'jpg', 'jpeg', 'png'];
-
-        if (!in_array($ext, $allowed)) {
-            $this->docVerification[$type] = [
-                'status'  => 'error',
-                'message' => 'Only PDF, JPG, JPEG, or PNG files are allowed.',
-            ];
-        } else {
-            $this->docVerification[$type] = [
-                'status'  => 'ok',
-                'message' => 'File looks good. Click Save to upload.',
-            ];
-        }
-    }
     // ── Upload with basic validation ─────────────────────────
     private function uploadDocWithVerification(string $type, $file): void
     {
@@ -496,6 +493,28 @@ class Profile extends Component
         $this->loadDocuments($sellerId);
     }
 
+    // ── Real-time doc file name preview / validation ─────────
+    public function checkDocFile(string $type, string $fileName): void
+    {
+        if (empty($fileName)) {
+            unset($this->docVerification[$type]);
+            return;
+        }
+        $ext     = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $allowed = ['pdf', 'jpg', 'jpeg', 'png'];
+        if (!in_array($ext, $allowed)) {
+            $this->docVerification[$type] = [
+                'status'  => 'error',
+                'message' => 'Only PDF, JPG, JPEG, or PNG files are allowed.',
+            ];
+        } else {
+            $this->docVerification[$type] = [
+                'status'  => 'ok',
+                'message' => 'File looks good — click Save to upload.',
+            ];
+        }
+    }
+
     public function goToStep(int $step): void
     {
         $this->activeStep  = $step;
@@ -535,9 +554,11 @@ class Profile extends Component
             'profilePercentage' => $this->completion,
             'stepScore'         => $this->stepScore,
             'missingDetails'    => $missingDetails,
-            'packages'          => $this->packages,         // all packages for Step 5
-            'selectedPackage'   => $selectedPackage,        // currently selected package object
-            'currentPlan'       => $selectedPackage,        // blade alias
+            'packages'          => $this->packages,
+            'selectedPackage'   => $selectedPackage,
+            'currentPlan'       => $selectedPackage,
+            'logo_url'          => $this->logo_url,
+            'video_url'         => $this->video_url,
             'successMsg'        => $this->successMsg ?? '',
             'errorMsg'          => $this->errorMsg ?? '',
         ]);

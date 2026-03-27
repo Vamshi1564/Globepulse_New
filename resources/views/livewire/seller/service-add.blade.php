@@ -179,9 +179,9 @@
                 </div>
 
                 <div class="pa-actions">
-                    <button class="btn-draft" type="button" wire:click="saveDraft">
+                    <!-- <button class="btn-draft" type="button" wire:click="saveDraft">
                         <i class="bi bi-floppy"></i> Save Draft
-                    </button>
+                    </button> -->
                     <button class="btn-next" type="button" wire:click="nextStep"
                         wire:loading.attr="disabled" wire:target="nextStep">
                         Next: Media <i class="bi bi-arrow-right"></i>
@@ -290,9 +290,9 @@
                     <button class="btn-back" type="button" wire:click="prevStep">
                         <i class="bi bi-arrow-left"></i> Back
                     </button>
-                    <button class="btn-draft" type="button" wire:click="saveDraft">
+                    <!-- <button class="btn-draft" type="button" wire:click="saveDraft">
                         <i class="bi bi-floppy"></i> Save Draft
-                    </button>
+                    </button> -->
                     <button class="btn-next" type="button" wire:click="nextStep"
                         wire:loading.attr="disabled" wire:target="nextStep">
                         Next: Pricing <i class="bi bi-arrow-right"></i>
@@ -397,9 +397,9 @@
                     <button class="btn-back" type="button" wire:click="prevStep">
                         <i class="bi bi-arrow-left"></i> Back
                     </button>
-                    <button class="btn-draft" type="button" wire:click="saveDraft">
+                    <!-- <button class="btn-draft" type="button" wire:click="saveDraft">
                         <i class="bi bi-floppy"></i> Save Draft
-                    </button>
+                    </button> -->
                     <button class="btn-next" type="button" wire:click="nextStep"
                         wire:loading.attr="disabled" wire:target="nextStep">
                         Next: Specs <i class="bi bi-arrow-right"></i>

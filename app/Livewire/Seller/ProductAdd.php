@@ -6,8 +6,10 @@ namespace App\Livewire\Seller;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\ItemsModel;
+use App\Models\PackagesModel;
 use App\Models\Product;
 use App\Models\Productgallery;
+use App\Models\Seller;
 use App\Models\Subcategory;
 use App\Models\SubSubCategory;
 use Carbon\Carbon;
@@ -210,7 +212,7 @@ class ProductAdd extends Component
                 'slug'              => $this->slug,
                 'HSN'               => $this->HSN             ?: null,
                 'customer_id'       => $customerId,
-                'seller_id'   => $sellerId ?? null,
+                'seller_id'         => $sellerId ?? null,
                 'country_id'        => $customer->country_id ?? null,
                 'status'            => 3, // 3 = draft (not visible to buyers)
                 'brand_name'        => $this->brand_name        ?: null,
@@ -316,16 +318,15 @@ class ProductAdd extends Component
                 if ($customerId) Session::put('id', $customerId);
             }
 
-            // New seller system uses subscription plans, not package_id
-            // Check subscription plan product limit instead
+            // Check product limit via seller's package
             $sellerId = Session::get('seller_id');
             if ($sellerId) {
-                $sub = \App\Models\SellerSubscription::where('seller_id', $sellerId)
-                    ->where('status', 'active')->first();
-                $maxProducts = $sub?->max_products ?? 10; // free plan default
+                $seller      = Seller::find($sellerId);
+                $package     = $seller?->package_id ? PackagesModel::find($seller->package_id) : null;
+                $maxProducts = $package?->product_limit ?? 999;
                 $existingProducts = Product::where('customer_id', $customerId)->count();
-                if ($maxProducts !== null && $existingProducts >= $maxProducts) {
-                    session()->flash('error', 'You have reached your plan product limit. Upgrade to add more.');
+                if ($maxProducts !== 999 && $existingProducts >= $maxProducts) {
+                    session()->flash('error', 'You have reached your plan product limit. Please upgrade your package to add more products.');
                     return;
                 }
             } elseif ($customer) {

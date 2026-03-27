@@ -323,7 +323,7 @@
                             <li><a class="dropdown-item" href="{{ route('hotdealproductform') }}">
                                 <div class="dropdown-item-wrapper">Hot Deal Add</div></a>
                             </li>
-                            <li><a class="dropdown-item" href="{{ route('product_list') }}">
+                            <li><a class="dropdown-item" href="{{ route('my-listings') }}">
                                 <div class="dropdown-item-wrapper">My Products List</div></a>
                             </li>
                             <li><a class="dropdown-item" href="{{ route('slider-image') }}">
