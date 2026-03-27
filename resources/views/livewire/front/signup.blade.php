@@ -173,6 +173,7 @@
                                     class="text-decoration-underline">Terms &
                                     Conditions</a>
                             </label>
+                            @error('user_type')<span class="error-message">{{ $message }}</span>@enderror
                         </div>
 
                         <!-- Submit -->
