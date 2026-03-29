@@ -272,7 +272,7 @@
 
     <div style="margin-left:auto;" class="ml-search-wrap">
       <i class="bi bi-search ml-search-icon"></i>
-      <input wire:model.debounce.400ms="search" class="ml-search"
+      <input wire:model.live.debounce.400ms="search" class="ml-search"
              placeholder="Search listings...">
     </div>
   </div>
@@ -304,15 +304,15 @@
           <td>
             @php
               $imgSrc = null;
-              if ($item->image) {
-                  if (str_starts_with($item->image, 'http')) {
-                      $imgSrc = $item->image; // S3 or absolute URL
-                  } elseif (str_starts_with($item->image, 'uploads/')) {
+              if ($item['image']) {
+                  if (str_starts_with($item['image'], 'http')) {
+                      $imgSrc = $item['image']; // S3 or absolute URL
+                  } elseif (str_starts_with($item['image'], 'uploads/')) {
                       // Stored as 'uploads/product/xxx.jpg' — try S3 URL config first
                       $awsBase = config('app.pub_aws_url');
-                      $imgSrc  = $awsBase ? rtrim($awsBase,'/').'/'.$item->image : asset('storage/'.$item->image);
+                      $imgSrc  = $awsBase ? rtrim($awsBase,'/').'/'.$item['image'] : asset('storage/'.$item['image']);
                   } else {
-                      $imgSrc = asset('storage/' . $item->image);
+                      $imgSrc = asset('storage/' . $item['image']);
                   }
               }
             @endphp
@@ -320,46 +320,48 @@
               <img src="{{ $imgSrc }}" class="ml-thumb"
                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
               <div class="ml-thumb-placeholder" style="display:none;">
-                {{ $item->type === 'product' ? '📦' : '🛠️' }}
+                {{ $item['type'] === 'product' ? '📦' : '🛠️' }}
               </div>
             @else
               <div class="ml-thumb-placeholder">
-                {{ $item->type === 'product' ? '📦' : '🛠️' }}
+                {{ $item['type'] === 'product' ? '📦' : '🛠️' }}
               </div>
             @endif
           </td>
 
           <td>
             <div style="font-weight:700;color:#0f172a;font-size:.86rem;line-height:1.3;">
-              {{ Str::limit($item->title, 55) }}
+              {{ Str::limit($item['title'], 55) }}
             </div>
           </td>
 
           <td>
-            <span class="ml-type-badge {{ $item->type === 'product' ? 'type-product' : 'type-service' }}">
-              {{ $item->type === 'product' ? '📦 Product' : '🛠️ Service' }}
+            <span class="ml-type-badge {{ $item['type'] === 'product' ? 'type-product' : 'type-service' }}">
+              {{ $item['type'] === 'product' ? '📦 Product' : '🛠️ Service' }}
             </span>
           </td>
 
           <td>
-            <span style="font-weight:700;color:#059669;font-size:.84rem;">{{ $item->price }}</span>
+            <span style="font-weight:700;color:#059669;font-size:.84rem;">{{ $item['price'] }}</span>
           </td>
 
           <td style="font-size:.76rem;color:#64748b;max-width:160px;">
-            {{ $item->meta }}
+            {{ $item['meta'] }}
           </td>
 
           <td>
             @php
-              $statusClass = match($item->status) {
+              $statusClass = match($item['status']) {
                 'approved' => 'st-approved',
                 'rejected' => 'st-rejected',
+                'draft'    => 'st-draft',
                 'inactive' => 'st-inactive',
                 default    => 'st-pending',
               };
-              $statusLabel = match($item->status) {
+              $statusLabel = match($item['status']) {
                 'approved' => '✅ Approved',
                 'rejected' => '❌ Rejected',
+                'draft'    => '📝 Draft',
                 'inactive' => '⏸ Inactive',
                 default    => '⏳ Pending',
               };
@@ -368,30 +370,30 @@
           </td>
 
           <td style="font-size:.76rem;color:#94a3b8;white-space:nowrap;">
-            {{ $item->created_at ? \Carbon\Carbon::parse($item->created_at)->format('d M Y') : '—' }}
+            {{ $item['created_at'] ? \Carbon\Carbon::parse($item['created_at'])->format('d M Y') : '—' }}
           </td>
 
           <td>
             <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
                 
                 {{-- Publish / Resubmit Button for Products --}}
-                @if($item->type === 'product' && in_array($item->status, ['draft', 'pending', 'rejected']))
-                    @if($item->status === 'draft')
+                @if($item['type'] === 'product' && in_array($item['status'], ['draft', 'pending', 'rejected']))
+                    @if($item['status'] === 'draft')
                         <button class="btn-publish-now"
-                            wire:click="publishProduct({{ $item->id }})"
+                            wire:click="publishProduct({{ $item['id'] }})"
                             wire:confirm="Submit this product for admin review?"
                             title="Submit for admin review">
                             <i class="bi bi-send-fill" style="font-size:.75rem;"></i> Publish
                         </button>
-                    @elseif($item->status === 'rejected')
+                    @elseif($item['status'] === 'rejected')
                         <button class="btn-publish-now" 
                             style="border-color:#f59e0b; background:#fffbeb; color:#92400e;"
-                            wire:click="publishProduct({{ $item->id }})"
+                            wire:click="publishProduct({{ $item['id'] }})"
                             wire:confirm="Re-submit this product for review?"
                             title="Re-submit for review">
                             <i class="bi bi-arrow-clockwise" style="font-size:.75rem;"></i> Resubmit
                         </button>
-                    @elseif($item->status === 'pending')
+                    @elseif($item['status'] === 'pending')
                         <span class="ml-status st-pending" style="font-size:.72rem; padding:4px 10px;">
                             ⏳ Under Review
                         </span>
@@ -401,15 +403,15 @@
                 {{-- View Detail Button --}}
                 <button class="btn-view-detail"
                     data-item="{{ htmlspecialchars(json_encode([
-                        'id'         => $item->id,
-                        'type'       => $item->type,
-                        'title'      => $item->title,
-                        'image'      => $item->image,
-                        'status'     => $item->status,
-                        'price'      => $item->price,
-                        'meta'       => $item->meta,
-                        'edit_route' => $item->edit_route,
-                        'created_at' => $item->created_at ? (string)$item->created_at : null,
+                        'id'         => $item['id'],
+                        'type'       => $item['type'],
+                        'title'      => $item['title'],
+                        'image'      => $item['image'],
+                        'status'     => $item['status'],
+                        'price'      => $item['price'],
+                        'meta'       => $item['meta'],
+                        'edit_route' => $item['edit_route'],
+                        'created_at' => $item['created_at'] ? (string)$item['created_at'] : null,
                     ]), ENT_QUOTES, 'UTF-8') }}"
                     onclick="openListingDetail(this)"
                     title="View full details">
@@ -417,21 +419,21 @@
                 </button>
 
                 {{-- Edit Button --}}
-                <a href="{{ $item->edit_route }}" class="btn-edit" title="Edit listing">
+                <a href="{{ $item['edit_route'] }}" class="btn-edit" title="Edit listing">
                     <i class="bi bi-pencil" style="font-size:.78rem;"></i>
                 </a>
 
                 {{-- Delete Button --}}
-                @if($item->type === 'product')
+                @if($item['type'] === 'product')
                     <button class="btn-del"
-                        wire:click="deleteProduct({{ $item->id }})"
+                        wire:click="deleteProduct({{ $item['id'] }})"
                         onclick="return confirm('Delete this product? Permanently remove this listing?')"
                         title="Delete product">
                         <i class="bi bi-trash" style="font-size:.78rem;"></i>
                     </button>
                 @else
                     <button class="btn-del"
-                        wire:click="deleteService({{ $item->id }})"
+                        wire:click="deleteService({{ $item['id'] }})"
                         onclick="return confirm('Delete this service? Permanently remove this listing?')"
                         title="Delete service">
                         <i class="bi bi-trash" style="font-size:.78rem;"></i>

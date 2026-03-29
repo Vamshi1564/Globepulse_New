@@ -58,16 +58,20 @@ class MyListings extends Component
         }
     }
 
-    // ── Format service price safely (no accessor needed) ──────
-    private function formatServicePrice(\App\Models\SellerService $s): string
+    // ── Format service price safely — works with Eloquent model OR stdClass ──
+    private function formatServicePrice($s): string
     {
-        if ($s->min_price && $s->price_unit) {
-            return '₹' . number_format($s->min_price) . ' / ' . $s->price_unit;
+        $minPrice    = is_object($s) ? ($s->min_price    ?? null) : null;
+        $priceUnit   = is_object($s) ? ($s->price_unit   ?? null) : null;
+        $pricingType = is_object($s) ? ($s->pricing_type ?? null) : null;
+
+        if ($minPrice && $priceUnit) {
+            return '₹' . number_format($minPrice) . ' / ' . $priceUnit;
         }
-        if ($s->min_price) {
-            return '₹' . number_format($s->min_price);
+        if ($minPrice) {
+            return '₹' . number_format($minPrice);
         }
-        if ($s->pricing_type === 'quote_based') {
+        if ($pricingType === 'quote_based') {
             return 'Get Quote';
         }
         return '—';
@@ -160,7 +164,7 @@ class MyListings extends Component
         // ── Products ──────────────────────────────────────────
         $products = collect();
         if (in_array($this->activeTab, ['all', 'products'])) {
-            $products = Product::where('customer_id', $cid)
+            $products = collect(Product::where('customer_id', $cid)
                 ->when($this->search, fn($q) =>
                     $q->where('title', 'like', "%{$this->search}%")
                 )
@@ -174,7 +178,7 @@ class MyListings extends Component
                 )
                 ->orderByDesc('created_at')
                 ->get()
-                ->map(fn($p) => (object)[
+                ->map(fn($p) => [
                     'id'         => $p->id,
                     'type'       => 'product',
                     'title'      => $p->title,
@@ -191,14 +195,14 @@ class MyListings extends Component
                     'meta'       => 'MOQ: ' . ($p->min_order ?? '—'),
                     'edit_route' => route('seller-product-edit', $p->id),
                     'created_at' => $p->created_at,
-                ]);
+                ]));
         }
 
         // ── Services ──────────────────────────────────────────
         $services = collect();
         if ($this->servicesTableExists() && in_array($this->activeTab, ['all', 'services'])) {
             try {
-                $services = \App\Models\SellerService::where('customer_id', $cid)
+                $services = collect(\App\Models\SellerService::where('customer_id', $cid)
                     ->when($this->search, fn($q) =>
                         $q->where('title', 'like', "%{$this->search}%")
                           ->orWhere('service_type', 'like', "%{$this->search}%")
@@ -208,25 +212,29 @@ class MyListings extends Component
                     )
                     ->orderByDesc('created_at')
                     ->get()
-                    ->map(fn($s) => (object)[
+                    ->map(fn($s) => [
                         'id'         => $s->id,
                         'type'       => 'service',
                         'title'      => $s->title,
                         'image'      => $s->cover_image,
                         'status'     => $s->status ?? 'pending',
-                        // FIXED: build price string directly — no accessor needed
                         'price'      => $this->formatServicePrice($s),
                         'meta'       => trim(($s->service_type ?? '') . ($s->delivery_mode ? ' · ' . $s->delivery_mode : '')),
                         'edit_route' => route('service_add') . '?edit=' . $s->id,
                         'created_at' => $s->created_at,
-                    ]);
+                    ]));
             } catch (\Exception $e) {
                 Log::error('[MyListings] SellerService query failed: ' . $e->getMessage());
             }
         }
 
         // ── Merge & paginate ──────────────────────────────────
-        $merged = $products->merge($services)
+        // CRITICAL: wrap in collect() (base Collection) before merge.
+        // Product::get()->map() returns an Eloquent Collection whose merge()
+        // calls getKey() on each item — which fails on plain arrays.
+        // collect() converts to a base Illuminate\Support\Collection
+        // whose merge() works correctly with plain arrays.
+        $merged = collect($products)->merge(collect($services))
             ->sortByDesc('created_at')
             ->values();
 
@@ -236,7 +244,11 @@ class MyListings extends Component
 
         $listings = new \Illuminate\Pagination\LengthAwarePaginator(
             $paginated, $total, $this->perPage, $page,
-            ['path' => request()->url()]
+            [
+                'path'     => request()->url(),
+                'query'    => request()->query(),
+                'pageName' => 'page',
+            ]
         );
 
         return view('livewire.seller.my-listings', compact('listings'));
