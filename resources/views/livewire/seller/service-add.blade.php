@@ -440,7 +440,7 @@
 
                 {{-- Service Type --}}
                 <div style="margin-bottom:1rem;">
-                    <label class="pa-label">Service Type</label>
+                    <label class="pa-label">Service Type111</label>
                     <div class="spec-grid">
                         @foreach(['Full Service','Consulting Only','Implementation','Managed Service','On-Demand','Subscription','One-Time Project','Retainer','Other'] as $opt)
                         <button type="button" class="spec-chip {{ $service_type === $opt ? 'sel' : '' }}"
