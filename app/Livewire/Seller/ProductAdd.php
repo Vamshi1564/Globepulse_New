@@ -89,21 +89,41 @@ class ProductAdd extends Component
     public string $existingImagePath = '';  // saved product_img path for edit
 
     // ─────────────────────────────────────────────────────────
+    // FIX: Centralised, robust customer/seller resolver.
+    // Previously submit() and saveDraft() only checked Session::get('id'),
+    // while mount() also checked 'customer_id' and auth(). That mismatch
+    // caused "Session expired" errors when session key was 'customer_id'
+    // instead of 'id', or when Laravel auth was the active guard.
+    // ─────────────────────────────────────────────────────────
+    private function resolveCustomer(): array
+    {
+        $sellerId   = Session::get('seller_id');
+        $customerId = Session::get('id')
+                   ?? Session::get('customer_id')
+                   ?? (auth()->check() ? auth()->id() : null);
+
+        $customer = $customerId ? Customer::find($customerId) : null;
+
+        // Fallback: new seller system stores email in session
+        if (!$customer && Session::get('seller_email')) {
+            $customer   = Customer::where('email', Session::get('seller_email'))->first();
+            $customerId = $customer?->id;
+            if ($customerId) {
+                Session::put('id', $customerId);
+            }
+        }
+
+        return [$customerId, $customer, $sellerId];
+    }
+
+    // ─────────────────────────────────────────────────────────
     public function mount(): void
     {
         $editId = request()->query('edit');
         if (!$editId) return;
 
-        $customerId = Session::get('id')
-            ?? Session::get('customer_id')
-            ?? (auth()->check() ? auth()->id() : null);
-
-        // Fallback for new seller system
-        if (!$customerId && Session::get('seller_email')) {
-            $customer = Customer::where('email', Session::get('seller_email'))->first();
-            $customerId = $customer?->id;
-            if ($customerId) Session::put('id', $customerId);
-        }
+        [, $customer, ] = $this->resolveCustomer();   // use shared helper
+        $customerId = $customer?->id;
 
         $product = Product::where('id', $editId)
             ->where('customer_id', $customerId)
@@ -124,9 +144,8 @@ class ProductAdd extends Component
         $this->existingImagePath = $product->product_img ?? '';
         $this->product_video_url = $product->product_video_url ?? '';
 
-        // Load existing gallery
+        // Load existing gallery — store as string paths (not file objects)
         $gallery = Productgallery::where('product_id', $editId)->get();
-        // We store paths as strings for edit mode (not file objects)
         $this->gallery_images = $gallery->pluck('gallery_images')->toArray();
 
         // Step 3 — Pricing
@@ -238,7 +257,6 @@ class ProductAdd extends Component
 
     public function goToStep(int $step)
     {
-        // Allow jumping to any step freely
         if ($step >= 1 && $step <= $this->totalSteps) {
             $this->activeStep = $step;
         }
@@ -248,16 +266,9 @@ class ProductAdd extends Component
     public function saveDraft()
     {
         try {
-            $sellerId = Session::get('seller_id');
-            $customerId = Session::get('id');
-            $customer   = $customerId ? Customer::find($customerId) : null;
-
-            // Fallback: new seller system uses seller_email
-            if (!$customer && Session::get('seller_email')) {
-                $customer   = Customer::where('email', Session::get('seller_email'))->first();
-                $customerId = $customer?->id;
-                if ($customerId) Session::put('id', $customerId);
-            }
+            // FIX: Use shared resolver so all fallbacks (session 'id',
+            // 'customer_id', auth, seller_email) are tried consistently.
+            [$customerId, $customer, $sellerId] = $this->resolveCustomer();
 
             if (!$customer) {
                 session()->flash('error', 'Session expired. Please login again.');
@@ -266,7 +277,7 @@ class ProductAdd extends Component
 
             // Auto-generate slug if not set
             if (empty($this->slug) && !empty($this->title)) {
-                $this->slug = \Illuminate\Support\Str::slug($this->title) . '-' . rand(100, 999999);
+                $this->slug = Str::slug($this->title) . '-' . rand(100, 999999);
             } elseif (empty($this->slug)) {
                 $this->slug = 'draft-' . $customerId . '-' . time();
             }
@@ -275,7 +286,7 @@ class ProductAdd extends Component
             $imagePath = null;
             if ($this->product_img && is_object($this->product_img)) {
                 $ext        = $this->product_img->getClientOriginalExtension();
-                $baseName   = \Illuminate\Support\Str::slug(pathinfo($this->product_img->getClientOriginalName(), PATHINFO_FILENAME));
+                $baseName   = Str::slug(pathinfo($this->product_img->getClientOriginalName(), PATHINFO_FILENAME));
                 $uniqueName = $baseName . '-' . rand(1000, 999999) . '.' . $ext;
                 $this->product_img->storeAs('public/uploads/product', $uniqueName, 's3');
                 $imagePath  = 'uploads/product/' . $uniqueName;
@@ -303,8 +314,9 @@ class ProductAdd extends Component
                 'HSN'               => $this->HSN             ?: null,
                 'customer_id'       => $customerId,
                 'seller_id'         => $sellerId ?? null,
-                'country_id'        => $customer->country_id ?? null,
-                'status'            => 3, // 3 = draft (not visible to buyers)
+                // FIX: use ?-> so this is null-safe even if $customer resolves late
+                'country_id'        => $customer?->country_id ?? null,
+                'status'            => 3, // 3 = draft
                 'brand_name'        => $this->brand_name        ?: null,
                 'keywords'          => $this->keywords           ?: null,
                 'supply_ability'    => $this->supply_ability     ?: null,
@@ -319,10 +331,11 @@ class ProductAdd extends Component
                 'seo_keywords'      => $this->seo_keywords        ?: null,
             ]);
 
-            // Upload gallery if any
+            // Upload gallery if any — skip string paths (already saved in edit mode)
             foreach ($this->gallery_images as $gi) {
+                if (!is_object($gi)) continue; // skip string paths from edit mode
                 try {
-                    $gName = \Illuminate\Support\Str::slug(pathinfo($gi->getClientOriginalName(), PATHINFO_FILENAME));
+                    $gName = Str::slug(pathinfo($gi->getClientOriginalName(), PATHINFO_FILENAME));
                     $gExt  = $gi->getClientOriginalExtension();
                     $gFile = $gName . '-' . rand(1000, 999999) . '.' . $gExt;
                     $gi->storeAs('public/uploads/gallery', $gFile, 's3');
@@ -346,48 +359,43 @@ class ProductAdd extends Component
     // ── Final submit ──────────────────────────────────────────
     public function submit()
     {
-        // Reset to step 1 if basic fields missing, step 3 if pricing missing
-        // This way seller sees exactly where the error is
         try {
-        // ── Validate all required fields at submit ────────────
-        $this->validate([
-            'title'          => 'required|string|min:5|max:255',
-            'description'    => 'required|string|min:20',
-            'category_id'    => 'required',
-            'subcategory_id' => 'required',
-            // Image required only when adding new product, not when editing
-            'product_img'    => ($this->isEditMode && $this->existingImagePath)
-                                    ? 'nullable|image|mimes:webp,jpg,jpeg,png|max:4096'
-                                    : 'required|image|mimes:webp,jpg,jpeg,png|max:4096',
-            'price_type'     => 'required|in:range,fixed,negotiable,quote',
-            'min_price'      => 'required_if:price_type,range|nullable|numeric|min:0',
-            'max_price'      => 'required_if:price_type,range|nullable|numeric|gte:min_price',
-            'fixed_price'    => 'required_if:price_type,fixed|nullable|numeric|min:0',
-            'unit'           => 'required|string',
-            'min_order'      => 'required|string|max:100',
-            'business_type'  => 'required|string',
-            'HSN'            => 'required|string|max:20',
-            'sample_available' => 'required|in:yes,no',
-            'product_video_url'=> 'nullable|url|max:500',
-            'seo_title'      => 'nullable|string|max:255',
-        ], [
-            'title.required'              => 'Product title is required.',
-            'title.min'                   => 'Title must be at least 5 characters.',
-            'description.required'        => 'Product description is required.',
-            'description.min'             => 'Description must be at least 20 characters.',
-            'category_id.required'        => 'Please select a category.',
-            'subcategory_id.required'     => 'Please select a sub category.',
-            'product_img.required'        => 'Please upload a main product image.',
-            'min_price.required_if'       => 'Min price is required for price range.',
-            'max_price.required_if'       => 'Max price is required for price range.',
-            'fixed_price.required_if'     => 'Please enter the fixed price.',
-            'unit.required'               => 'Please select a unit.',
-            'min_order.required'          => 'Minimum order quantity is required.',
-            'business_type.required'      => 'Please select your business type.',
-            'HSN.required'                => 'HSN/SAC code is required.',
-        ]);
+            $this->validate([
+                'title'          => 'required|string|min:5|max:255',
+                'description'    => 'required|string|min:20',
+                'category_id'    => 'required',
+                'subcategory_id' => 'required',
+                'product_img'    => ($this->isEditMode && $this->existingImagePath)
+                                        ? 'nullable|image|mimes:webp,jpg,jpeg,png|max:4096'
+                                        : 'required|image|mimes:webp,jpg,jpeg,png|max:4096',
+                'price_type'     => 'required|in:range,fixed,negotiable,quote',
+                'min_price'      => 'required_if:price_type,range|nullable|numeric|min:0',
+                'max_price'      => 'required_if:price_type,range|nullable|numeric|gte:min_price',
+                'fixed_price'    => 'required_if:price_type,fixed|nullable|numeric|min:0',
+                'unit'           => 'required|string',
+                'min_order'      => 'required|string|max:100',
+                'business_type'  => 'required|string',
+                'HSN'            => 'required|string|max:20',
+                'sample_available' => 'required|in:yes,no',
+                'product_video_url'=> 'nullable|url|max:500',
+                'seo_title'      => 'nullable|string|max:255',
+            ], [
+                'title.required'              => 'Product title is required.',
+                'title.min'                   => 'Title must be at least 5 characters.',
+                'description.required'        => 'Product description is required.',
+                'description.min'             => 'Description must be at least 20 characters.',
+                'category_id.required'        => 'Please select a category.',
+                'subcategory_id.required'     => 'Please select a sub category.',
+                'product_img.required'        => 'Please upload a main product image.',
+                'min_price.required_if'       => 'Min price is required for price range.',
+                'max_price.required_if'       => 'Max price is required for price range.',
+                'fixed_price.required_if'     => 'Please enter the fixed price.',
+                'unit.required'               => 'Please select a unit.',
+                'min_order.required'          => 'Minimum order quantity is required.',
+                'business_type.required'      => 'Please select your business type.',
+                'HSN.required'                => 'HSN/SAC code is required.',
+            ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            // Auto-navigate to the step that has errors
             $errors = $e->errors();
             if (array_intersect_key($errors, array_flip(['title','description','category_id','subcategory_id','sub_subcategory_id']))) {
                 $this->activeStep = 1;
@@ -396,23 +404,24 @@ class ProductAdd extends Component
             } elseif (array_intersect_key($errors, array_flip(['min_price','max_price','fixed_price','unit','min_order','business_type','HSN']))) {
                 $this->activeStep = 3;
             }
-            throw $e; // Re-throw so Livewire shows the errors
+            throw $e;
         }
 
         try {
-            $sellerId = Session::get('seller_id');
-            $customerId = Session::get('id');
-            $customer   = $customerId ? Customer::find($customerId) : null;
+            // FIX: Use shared resolver — same fallbacks as mount() and saveDraft().
+            // Previously submit() only checked Session::get('id'), missing
+            // 'customer_id' and auth() fallbacks, causing null customer errors.
+            [$customerId, $customer, $sellerId] = $this->resolveCustomer();
 
-            // Fallback: resolve customer from seller_email session (new seller system)
-            if (!$customer && Session::get('seller_email')) {
-                $customer   = Customer::where('email', Session::get('seller_email'))->first();
-                $customerId = $customer?->id;
-                if ($customerId) Session::put('id', $customerId);
+            // FIX: Guard against null customer BEFORE accessing any property.
+            // Previously $customer->country_id was used with no null check,
+            // causing "Something went wrong: country_id / null" errors.
+            if (!$customer) {
+                session()->flash('error', 'Session expired. Please login again.');
+                return;
             }
 
             // Check product limit via seller's package
-            $sellerId = Session::get('seller_id');
             if ($sellerId) {
                 $seller      = Seller::find($sellerId);
                 $package     = $seller?->package_id ? PackagesModel::find($seller->package_id) : null;
@@ -422,19 +431,19 @@ class ProductAdd extends Component
                     session()->flash('error', 'You have reached your plan product limit. Please upgrade your package to add more products.');
                     return;
                 }
-            } elseif ($customer) {
-                // Legacy GFE system: use package_id check
+            } else {
+                // Legacy GFE system
                 $existingProducts = Product::where('customer_id', $customerId)->count();
                 $productLimit = !empty($customer->product_upload_limit)
                     ? $customer->product_upload_limit
-                    : 999; // no limit if no package system
+                    : 999;
                 if ($existingProducts >= $productLimit) {
                     session()->flash('error', 'You have reached your product upload limit.');
                     return;
                 }
             }
 
-            // Check for duplicate product title (exclude self in edit mode)
+            // Check for duplicate product title
             $dupQuery = Product::where('customer_id', $customerId)
                 ->where('title', $this->title)
                 ->where('status', '!=', 3);
@@ -455,7 +464,7 @@ class ProductAdd extends Component
                 $imagePath = $this->existingImagePath ?: null;
             }
 
-            // Auto-generate slug (only for new products)
+            // Auto-generate slug
             $slug = $this->isEditMode
                 ? (Product::find($this->editId)?->slug ?? Str::slug($this->title) . '-' . rand(100, 999999))
                 : Str::slug($this->title) . '-' . rand(100, 999999);
@@ -482,8 +491,10 @@ class ProductAdd extends Component
                 'HSN'               => $this->HSN,
                 'customer_id'       => $customerId,
                 'seller_id'         => $sellerId,
-                'country_id'        => $customer->country_id,
-                'status'            => $this->isEditMode ? 0 : 0, // resubmit for review
+                // FIX: null-safe access — $customer is guaranteed non-null above,
+                // but ?? null guards against the column itself being unset on model.
+                'country_id'        => $customer->country_id ?? null,
+                'status'            => 0,
                 'seo_title'         => $this->seo_title   ?: $this->title,
                 'seo_description'   => $this->seo_description ?: null,
                 'seo_keywords'      => $this->seo_keywords ?: $this->keywords,
@@ -512,8 +523,9 @@ class ProductAdd extends Component
                 $product = Product::create($productData);
             }
 
-            // Upload gallery images
+            // Upload gallery images — skip string paths (edit mode existing images)
             foreach ($this->gallery_images as $gi) {
+                if (!is_object($gi)) continue; // FIX: skip string paths from edit mode
                 $gName = Str::slug(pathinfo($gi->getClientOriginalName(), PATHINFO_FILENAME));
                 $gExt  = $gi->getClientOriginalExtension();
                 $gFile = $gName . '-' . rand(1000, 999999) . '.' . $gExt;
@@ -525,13 +537,12 @@ class ProductAdd extends Component
                 ]);
             }
 
-            // Upload documents (brochure, spec sheet, etc.)
+            // Upload documents
             foreach ($this->document_list as $doc) {
                 if (!empty($doc['file'])) {
                     $dExt  = $doc['file']->getClientOriginalExtension();
                     $dName = Str::slug($doc['label']) . '-' . rand(1000, 999999) . '.' . $dExt;
                     $doc['file']->storeAs('public/uploads/product-docs', $dName, 's3');
-                    // Store in product_documents table if it exists, otherwise skip
                     try {
                         \App\Models\ProductDocument::create([
                             'product_id'  => $product->id,

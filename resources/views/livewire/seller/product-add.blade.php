@@ -378,8 +378,26 @@
 
           @if(!empty($gallery_images))
           <div class="gallery-grid mb-3">
+            {{-- FIX: gallery_images can be string paths (edit mode) OR
+                 Livewire TemporaryUploadedFile objects (new uploads).
+                 Previously calling ->temporaryUrl() on a string crashed
+                 with "Call to a member function temporaryUrl() on string". --}}
             @foreach($gallery_images as $gi)
-            <div class="gallery-thumb"><img src="{{ $gi->temporaryUrl() }}"></div>
+            <div class="gallery-thumb">
+              @if(is_string($gi))
+                {{-- Edit mode: $gi is a stored file path --}}
+                @php
+                  $giUrl = str_starts_with($gi, 'http') ? $gi
+                      : (config('app.pub_aws_url')
+                          ? rtrim(config('app.pub_aws_url'), '/') . '/' . $gi
+                          : asset('storage/' . $gi));
+                @endphp
+                <img src="{{ $giUrl }}" onerror="this.style.display='none'">
+              @else
+                {{-- New upload: use temporaryUrl() --}}
+                <img src="{{ $gi->temporaryUrl() }}">
+              @endif
+            </div>
             @endforeach
           </div>
           @endif
