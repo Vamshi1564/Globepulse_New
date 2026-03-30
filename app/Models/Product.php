@@ -19,6 +19,7 @@ class Product extends Model
     protected $fillable = [
         // ── Existing fields (unchanged) ──
         'title',
+        'brand_name', 
         'description',
         'product_img',
         'max_price',
@@ -29,7 +30,6 @@ class Product extends Model
         'subcategory_id',
         'sub_subcategory_id',
         'customer_id',
-        'seller_id',
         'country_id',
         'status',
         'slug',

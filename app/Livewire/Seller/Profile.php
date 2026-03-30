@@ -335,10 +335,22 @@ class Profile extends Component
         ];
 
         if ($this->logo_file) {
-            $path = $this->logo_file->storeAs('seller-assets/'.$sellerId,
-                'logo.'.$this->logo_file->getClientOriginalExtension(), 'public');
-            $data['logo_url'] = $path;
-            $this->logo_url   = $path;
+            $ext      = $this->logo_file->getClientOriginalExtension();
+            $filename = 'logo.' . $ext;
+            $destPath = 'seller-assets/' . $sellerId . '/' . $filename;
+
+            // Use S3 on production, public disk locally
+            $disk = config('filesystems.default', 'public') === 's3' ? 's3' : 'public';
+
+            $this->logo_file->storeAs(
+                'seller-assets/' . $sellerId,
+                $filename,
+                $disk
+            );
+
+            // Store relative path only — blade resolves correct URL
+            $data['logo_url']  = $destPath;
+            $this->logo_url    = $destPath;
             $this->reset('logo_file');
         }
 

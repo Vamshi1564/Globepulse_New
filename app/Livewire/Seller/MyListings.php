@@ -179,22 +179,30 @@ class MyListings extends Component
                 ->orderByDesc('created_at')
                 ->get()
                 ->map(fn($p) => [
-                    'id'         => $p->id,
-                    'type'       => 'product',
-                    'title'      => $p->title,
-                    'image'      => $p->product_img,
-                    'status'     => match((int)$p->status) {
-                        1        => 'approved',
-                        2        => 'rejected',
-                        3        => 'draft',
-                        default  => 'pending',
+                    'id'            => $p->id,
+                    'type'          => 'product',
+                    'title'         => $p->title,
+                    'brand_name'    => $p->brand_name ?? '',
+                    'description'   => $p->description ?? '',
+                    'image'         => $p->product_img,
+                    'status'        => match((int)$p->status) {
+                        1           => 'approved',
+                        2           => 'rejected',
+                        3           => 'draft',
+                        default     => 'pending',
                     },
-                    'price'      => $p->min_price
-                                    ? '₹' . number_format($p->min_price) . ' – ₹' . number_format($p->max_price ?? $p->min_price)
-                                    : '—',
-                    'meta'       => 'MOQ: ' . ($p->min_order ?? '—'),
-                    'edit_route' => route('seller-product-edit', $p->id),
-                    'created_at' => $p->created_at,
+                    'price'         => $p->min_price
+                                        ? '₹' . number_format($p->min_price) . ' – ₹' . number_format($p->max_price ?? $p->min_price) . ($p->unit ? ' / ' . $p->unit : '')
+                                        : '—',
+                    'meta'          => 'MOQ: ' . ($p->min_order ?? '—'),
+                    'keywords'      => $p->keywords ?? '',
+                    'certifications'=> $p->certifications ?? '',
+                    'lead_time'     => $p->lead_time ?? '',
+                    'supply_ability'=> $p->supply_ability ?? '',
+                    'country_of_origin' => $p->country_of_origin ?? '',
+                    'rejection_reason'  => $p->rejection_reason ?? '',
+                    'edit_route'    => route('product_add') . '?edit=' . $p->id,
+                    'created_at'    => $p->created_at,
                 ]));
         }
 
@@ -213,15 +221,23 @@ class MyListings extends Component
                     ->orderByDesc('created_at')
                     ->get()
                     ->map(fn($s) => [
-                        'id'         => $s->id,
-                        'type'       => 'service',
-                        'title'      => $s->title,
-                        'image'      => $s->cover_image,
-                        'status'     => $s->status ?? 'pending',
-                        'price'      => $this->formatServicePrice($s),
-                        'meta'       => trim(($s->service_type ?? '') . ($s->delivery_mode ? ' · ' . $s->delivery_mode : '')),
-                        'edit_route' => route('service_add') . '?edit=' . $s->id,
-                        'created_at' => $s->created_at,
+                        'id'            => $s->id,
+                        'type'          => 'service',
+                        'title'         => $s->title,
+                        'brand_name'    => '',
+                        'description'   => $s->description ?? '',
+                        'image'         => $s->cover_image,
+                        'status'        => $s->status ?? 'pending',
+                        'price'         => $this->formatServicePrice($s),
+                        'meta'          => trim(($s->service_type ?? '') . ($s->delivery_mode ? ' · ' . $s->delivery_mode : '')),
+                        'keywords'      => $s->keywords ?? '',
+                        'certifications'=> $s->certifications ?? '',
+                        'lead_time'     => $s->turnaround_time ?? '',
+                        'supply_ability'=> $s->service_area ?? '',
+                        'country_of_origin' => '',
+                        'rejection_reason'  => $s->rejection_reason ?? '',
+                        'edit_route'    => route('service_add') . '?edit=' . $s->id,
+                        'created_at'    => $s->created_at,
                     ]));
             } catch (\Exception $e) {
                 Log::error('[MyListings] SellerService query failed: ' . $e->getMessage());
