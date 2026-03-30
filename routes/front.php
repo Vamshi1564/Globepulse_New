@@ -51,6 +51,9 @@ use App\Livewire\Front\MyRFQs;
 use App\Livewire\Front\ViewRFQ;
 use App\Livewire\Front\Quotations;
 use App\Http\Controllers\QuotationController;
+use App\Livewire\Front\BuyerInfo;  // ✅ updated namespace
+
+
 // public website / front routes (preserved exactly)
 
 // service & homepage
@@ -256,4 +259,7 @@ Route::get('/product-not-found', function () {
 
 // payment
 Route::post('/store-payment', [PaymentController::class, 'storePayment'])->name('store.payment');
+
+
+Route::get('/buyer_info/{id}', BuyerInfo::class)->name('buyer.info');
 

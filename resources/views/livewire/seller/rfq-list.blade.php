@@ -144,34 +144,22 @@
 
                                             </td>
 <!-- STATUS -->
-
-    @php
+<td>
+         @php
 $myQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
     ->where('supplier_uuid', session('seller_id'))
     ->first();
-
-$acceptedQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
-    ->where('status', 1)
-    ->first();
 @endphp
-                                               <td>
 
-    @if($acceptedQuote)
+@if($rfq->status === 'rejected')
+    <span class="badge bg-danger">❌ Rejected</span>
 
-        @if($myQuote && $myQuote->status == 1)
-            <span class="badge bg-success">🏆 Your Quote Accepted</span>
+@elseif($myQuote)
+    <span class="badge bg-success">✔ Quotation Sent</span>
 
-        @else
-            <span class="badge bg-secondary">❌ Not Selected</span>
-        @endif
-
-    @elseif($myQuote)
-        <span class="badge bg-info text-dark">✔ Quoted</span>
-
-    @else
-        <span class="badge bg-warning text-dark">Pending</span>
-
-    @endif
+@else
+    <span class="badge bg-warning text-dark">⏳ Pending</span>
+@endif
 
 </td>
 
@@ -183,25 +171,39 @@ $acceptedQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
 <!-- ACTION -->
 <td class="text-end">
 
+    {{-- VIEW --}}
     <a href="{{ route('seller.rfq.view', $rfq->id) }}"
        class="btn btn-sm btn-outline-primary me-2">
         View
     </a>
-@php
-$alreadyQuoted = \App\Models\Quotation::where('rfq_id', $rfq->id)
-    ->where('supplier_uuid', session('seller_id'))
-    ->exists();
-@endphp
-    @if($alreadyQuoted)
-    <button class="btn btn-secondary" disabled>
-        ✔ Already Quoted
-    </button>
-@else
-    <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
-       class="btn btn-success">
-        💰 Quote
-    </a>
-@endif
+
+    @php
+    $alreadyQuoted = \App\Models\Quotation::where('rfq_id', $rfq->id)
+        ->where('supplier_uuid', session('seller_id'))
+        ->exists();
+    @endphp
+
+    {{-- STATUS BASED ACTION --}}
+    @if($rfq->status === 'rejected')
+
+        <button class="btn btn-secondary btn-sm" disabled>
+            ❌ Rejected
+        </button>
+
+    @elseif($alreadyQuoted)
+
+        <button class="btn btn-secondary btn-sm" disabled>
+            ✔ Already Quoted
+        </button>
+
+    @else
+
+        <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
+           class="btn btn-success btn-sm">
+            💰 Quote
+        </a>
+
+    @endif
 
 </td>
 

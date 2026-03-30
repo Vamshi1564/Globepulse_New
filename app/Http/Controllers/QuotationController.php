@@ -51,4 +51,59 @@ public function reject($id)
 
     return redirect()->back()->with('message', 'Quotation rejected!');
 }
+public function export()
+{
+    $quotes = Quotation::with(['rfq.product', 'buyer'])->get();
+
+    $fileName = "quotations.csv";
+
+    $headers = [
+        "Content-type" => "text/csv",
+        "Content-Disposition" => "attachment; filename=$fileName",
+    ];
+
+    $callback = function () use ($quotes) {
+    $file = fopen('php://output', 'w');
+
+    // HEADER ROW
+    fputcsv($file, [
+        'Product',
+        'Buyer',
+        'Unit Price (₹)',
+        'Quantity',
+        'Total Value (₹)',
+        'Delivery',
+        'Payment Terms',
+        'Status',
+        'Date'
+    ]);
+
+    foreach ($quotes as $q) {
+
+        $statusText = match($q->status) {
+            0 => 'Pending',
+            1 => 'Accepted',
+            2 => 'Rejected',
+            default => 'Unknown'
+        };
+
+        fputcsv($file, [
+            $q->rfq->product->title ?? '',
+            $q->buyer->full_name ?? '',
+            $q->price,
+            $q->rfq->quantity,
+            $q->price * $q->rfq->quantity,
+            $q->delivery_time ?? '-',
+            $q->payment_terms ?? '-',
+            $statusText,
+            $q->created_at->format('d-m-Y')
+        ]);
+    }
+
+    fclose($file);
+};
+
+    return response()->stream($callback, 200, $headers);
+}
+
 }
