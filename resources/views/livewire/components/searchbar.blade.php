@@ -27,7 +27,7 @@
     }
 }"
 x-init="
-    $wire.on('searchbarUpdated', () => {
+    $wire.on('suggestionsUpdated', () => {
         const valid = ($wire.suggestions || []).filter(s => s && s.name && s.url);
         open = valid.length > 0 || $wire.searchTerm.length >= 2;
         activeIdx = -1;
@@ -38,15 +38,18 @@ style="position:relative;width:100%;">
 
     <form wire:submit.prevent="submitSearch">
 
-        <div id="sb-bar-main"
+        <div id="sb-bar"
              :style="open
                 ? 'display:flex;align-items:center;background:#fff;border:2px solid #0d1a94;border-radius:12px 12px 0 0;height:52px;overflow:hidden;transition:all .2s;'
                 : 'display:flex;align-items:center;background:#fff;border:2px solid #e0dbd4;border-radius:12px;height:52px;overflow:hidden;transition:all .2s;'">
 
             {{-- Category Select --}}
             <select wire:model.live="searchType"
-                    style="height:100%;padding:0 10px 0 14px;font-size:14px;font-weight:500;color:#444;background:transparent;outline:none;min-width:108px;cursor:pointer;border:none;flex-shrink:0;border-right:1px solid #e0dbd4;">
+                    style="height:100%;padding:0 10px 0 14px;font-size:14px;font-weight:500;color:#444;background:transparent;outline:none;min-width:115px;cursor:pointer;border:none;flex-shrink:0;border-right:1px solid #e0dbd4;">
                 <option value="product">Product</option>
+                <option value="service">Service</option>
+                <option value="buyer">Buyer</option>
+                <option value="seller">Seller</option>
                 <!-- <option value="buylead">BuyLead</option> -->
             </select>
 
@@ -59,12 +62,17 @@ style="position:relative;width:100%;">
                 @keydown.enter.prevent="enterKey()"
                 @keydown.escape="open = false; activeIdx = -1"
                 @focus="open = items.length > 0"
-                placeholder="Search products"
+                :placeholder="
+                    $wire.searchType === 'service' ? 'Search services...' :
+                    $wire.searchType === 'buyer'   ? 'Search buyers...'   :
+                    $wire.searchType === 'seller'  ? 'Search sellers...'  :
+                    'Search products...'
+                "
                 autocomplete="off"
                 style="flex:1;height:100%;padding:0 14px;border:none;outline:none;font-size:15px;color:#111;background:transparent;caret-color:#ff6a00;"
             />
 
-            {{-- Original Search Button --}}
+            {{-- Submit Button --}}
             <button class="search-icon border-0" type="submit" title="search">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
                     <path d="M0 0h24v24H0z" fill="none"></path>
@@ -96,13 +104,15 @@ style="position:relative;width:100%;">
                        @mouseleave="activeIdx = -1">
 
                         {{-- Type Badge --}}
-                        <!-- <span :style="item.type === 'Product'
+                        <span :style="item.type === 'Product' || item.type === 'Service'
                                   ? 'font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:#fff5ee;color:#ff6a00;flex-shrink:0;white-space:nowrap;'
-                                  : item.type === 'Category'
+                                  : item.type === 'Category' || item.type === 'Service Category'
                                   ? 'font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:#eef0ff;color:#0d1a94;flex-shrink:0;white-space:nowrap;'
-                                  : 'font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:#efffef;color:#1a8a1a;flex-shrink:0;white-space:nowrap;'"
+                                  : item.type === 'Seller'
+                                  ? 'font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:#efffef;color:#1a8a1a;flex-shrink:0;white-space:nowrap;'
+                                  : 'font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:#fef9ee;color:#b45309;flex-shrink:0;white-space:nowrap;'"
                               x-text="item.type">
-                        </span> -->
+                        </span>
 
                         {{-- Item Name with highlight --}}
                         <span style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"

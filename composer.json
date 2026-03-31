@@ -20,7 +20,8 @@
         "propaganistas/laravel-phone": "^6.0",
         "razorpay/razorpay": "^2.9",
         "setasign/fpdf": "^1.8",
-        "setasign/fpdi": "^2.6"
+        "setasign/fpdi": "^2.6",
+        "symfony/mailer": "^7.1"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",
