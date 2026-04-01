@@ -97,6 +97,10 @@
     color: #fff;
     border-color: #1e3a8a;
 }
+.summary-box {
+    background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+}
 </style>
 
 <div>
@@ -148,27 +152,17 @@
 $myQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
     ->where('supplier_uuid', session('seller_id'))
     ->first();
-
-$acceptedQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
-    ->where('status', 1)
-    ->first();
 @endphp
-    @if($acceptedQuote)
 
-        @if($myQuote && $myQuote->status == 1)
-            <span class="badge bg-success">🏆 Your Quote Accepted</span>
+@if($rfq->status === 'rejected')
+    <span class="badge bg-danger">❌ Rejected</span>
 
-        @else
-            <span class="badge bg-secondary">❌ Not Selected</span>
-        @endif
+@elseif($myQuote)
+    <span class="badge bg-success">✔ Quotation Sent</span>
 
-    @elseif($myQuote)
-        <span class="badge bg-info text-dark">✔ Quoted</span>
-
-    @else
-        <span class="badge bg-warning text-dark">Pending</span>
-
-    @endif
+@else
+    <span class="badge bg-warning text-dark">⏳ Pending</span>
+@endif
     </div>
 </div>
 
@@ -306,17 +300,47 @@ $acceptedQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
 </div>
 
 <!-- ACTION -->
-<div class="mt-4 d-flex justify-content-end gap-2">
+<div class="mt-4 d-flex justify-content-between align-items-center">
 
-    @if($rfq->status == 'pending')
+    {{-- LEFT SIDE --}}
+    @if($rfq->status === 'rejected')
+        <button class="btn btn-danger px-4" disabled>
+            ❌ Rejected
+        </button>
 
-       <button onclick="updateRFQStatus('accepted')" class="btn btn-primary">
-    ✅ Accept RFQ
-</button>
+    @else
+        <button onclick="updateRFQStatus('rejected')" 
+                class="btn btn-outline-danger px-4">
+            ❌ Reject
+        </button>
+    @endif
 
-<button onclick="updateRFQStatus('rejected')" class="btn btn-danger">
-    ❌ Reject RFQ
-</button>
+
+    {{-- RIGHT SIDE --}}
+    @php
+    $alreadyQuoted = \App\Models\Quotation::where('rfq_id', $rfq->id)
+        ->where('supplier_uuid', session('seller_id'))
+        ->exists();
+    @endphp
+
+    @if($rfq->status === 'rejected')
+        <button class="btn btn-secondary px-4" disabled>
+            🚫 RFQ Closed
+        </button>
+
+    @elseif($alreadyQuoted)
+        <button class="btn btn-secondary px-4 fw-semibold" disabled>
+            ✔ Already Quoted
+        </button>
+
+    @else
+        <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
+           class="btn btn-success px-4 fw-semibold">
+            💰 Send Quotation
+        </a>
+    @endif
+
+</div>
 
 <script>
 function updateRFQStatus(status) {
@@ -331,30 +355,7 @@ function updateRFQStatus(status) {
 }
 </script>
 
-    @endif
-
-</div>
-<div class="mt-4 text-end">
-
-
-   
-@php
-$alreadyQuoted = \App\Models\Quotation::where('rfq_id', $rfq->id)
-    ->where('supplier_uuid', session('seller_id'))
-    ->exists();
-@endphp
-
-@if($alreadyQuoted)
-    <button class="btn btn-secondary px-4 fw-semibold" disabled>
-        ✔ Already Quoted
-    </button>
-@else
-    <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
-       class="btn btn-success px-4">
-        💰 Send Quotation
-    </a>
-@endif
-</div>
+    
 
 </div>
 </div>

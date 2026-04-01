@@ -6,250 +6,202 @@
 
 <h3 class="fw-bold mb-4">💰 Send Quotation</h3>
 
-<div class="card shadow-sm border-0 rounded-4">
-<div class="card-body">
-
-{{-- ================= RFQ SUMMARY ================= --}}
-<div class="card border-0 shadow-sm rounded-4 mb-4">
-    <div class="card-body">
-
-        <h5 class="fw-bold mb-3">📄 RFQ Summary</h5>
-
-        <div class="row g-3">
-
-            <div class="col-md-4">
-                <small class="text-muted">Product</small>
-                <div class="fw-semibold">
-                    {{ $rfq->product->title ?? 'N/A' }}
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <small class="text-muted">Quantity</small>
-                <div class="fw-semibold">
-                    {{ $rfq->quantity }} {{ $rfq->product->unit ?? '' }}
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <small class="text-muted">Target Price</small>
-                <div class="fw-semibold text-primary">
-                    @if($rfq->target_price)
-                        ₹ {{ $rfq->target_price }} / {{ $rfq->product->unit }}
-                    @else
-                        -
-                    @endif
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <small class="text-muted">Delivery</small>
-                <div class="fw-semibold">
-                    {{ $rfq->delivery_time ?? '-' }}
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <small class="text-muted">Shipping</small>
-                <div class="fw-semibold">
-                    {{ $rfq->shipping_terms ?? '-' }}
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <small class="text-muted">Payment</small>
-                <div class="fw-semibold">
-                    {{ $rfq->payment_terms ?? '-' }}
-                </div>
-            </div>
-
-            <div class="col-md-12">
-                <small class="text-muted">Requirement</small>
-                <div class="p-2 bg-light rounded mt-1">
-                    {{ $rfq->message }}
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-</div>
-
-{{-- ================= QUOTATION FORM ================= --}}
-<form wire:submit.prevent="submitQuote" class="rfq-quote-form">
-
-<div class="card border-0 shadow-sm rounded-4">
-<div class="card-body p-4">
-
-{{-- HEADER --}}
-<div class="mb-4">
-    <h5 class="fw-bold mb-1">💰 Create Quotation</h5>
-    <small class="text-muted">
-        Quoting for 
-        <strong>{{ $rfq->quantity }} {{ $rfq->product->unit ?? 'units' }}</strong>
-    </small>
-</div>
-
 <div class="row g-4">
 
-{{-- PRICE --}}
-<div class="col-md-6">
-    <label class="form-label fw-semibold">
-        Price per {{ $rfq->product->unit ?? 'unit' }}
-        <span class="text-danger">*</span>
-    </label>
+    {{-- LEFT SIDE --}}
+    <div class="col-lg-8">
 
-    <div class="input-group">
-        <span class="input-group-text">₹</span>
+        {{-- RFQ SUMMARY --}}
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body">
 
-        <input type="number"
-               wire:model.live="price"
-               class="form-control"
-               placeholder="Enter price">
+                <h5 class="fw-bold mb-3">📄 RFQ Details</h5>
 
-        <span class="input-group-text">
-            / {{ $rfq->product->unit ?? 'unit' }}
-        </span>
-    </div>
+                <div class="row g-3">
 
-    @if($rfq->target_price)
-        <small class="text-muted">
-            Buyer target: ₹{{ $rfq->target_price }} / {{ $rfq->product->unit }}
-        </small>
-    @endif
-</div>
+                    <div class="col-md-6">
+                        <small class="text-muted">Product</small>
+                        <div class="fw-semibold fs-6">
+                            {{ $rfq->product->title ?? 'N/A' }}
+                        </div>
+                    </div>
 
-{{-- DELIVERY --}}
-<div class="col-md-6">
-    <label class="form-label fw-semibold">
-        Delivery Time <span class="text-danger">*</span>
-    </label>
+                    <div class="col-md-6">
+                        <small class="text-muted">Quantity</small>
+                        <div class="fw-semibold fs-6">
+                            {{ $rfq->quantity }} {{ $rfq->product->unit ?? '' }}
+                        </div>
+                    </div>
 
-    <select wire:model="delivery_time" class="form-select">
-        <option value="">Select delivery time</option>
-        <option>1-3 days</option>
-        <option>3-5 days</option>
-        <option>7 days</option>
-        <option>10 days</option>
-        <option>14 days</option>
-        <option>21 days</option>
-        <option>30 days</option>
-        <option>45 days</option>
-        <option>60 days</option>
-        <option>90 days</option>
-    </select>
-</div>
+                    <div class="col-md-6">
+                        <small class="text-muted">Target Price</small>
+                        <div class="fw-semibold text-primary">
+                            ₹ {{ $rfq->target_price ?? '-' }}
+                        </div>
+                    </div>
 
-{{-- PAYMENT --}}
-<div class="col-md-6">
-    <label class="form-label fw-semibold">
-        Payment Terms
-    </label>
+                    <div class="col-md-6">
+                        <small class="text-muted">Delivery</small>
+                        <div class="fw-semibold">
+                            {{ $rfq->delivery_time ?? '-' }}
+                        </div>
+                    </div>
 
-    <select wire:model="payment_terms" class="form-select">
-        <option value="">Select payment terms</option>
-        <option>Advance</option>
-        <option>50% Advance</option>
-        <option>LC</option>
-        <option>Net 30</option>
-        <option>Net 60</option>
-    </select>
-</div>
+                    <div class="col-md-12">
+                        <small class="text-muted">Requirement</small>
+                        <div class="p-3 bg-light rounded mt-1 small">
+                            {{ $rfq->message }}
+                        </div>
+                    </div>
 
-{{-- MESSAGE --}}
-<div class="col-12">
-    <label class="form-label fw-semibold">
-        Message / Notes
-    </label>
+                </div>
 
-    <textarea wire:model="message"
-              rows="4"
-              class="form-control"
-              placeholder="Add offer details, negotiation terms..."></textarea>
-</div>
-
-</div>
-
-
-
-<div class="mt-4 p-3 border rounded bg-light">
-
-    <h6 class="fw-bold mb-2">📊 Deal Summary</h6>
-
-    <div class="d-flex justify-content-between">
-        <span>Total Value:</span>
-        <strong>
-            ₹ {{ $this->priceVal ? number_format($this->total) : '0' }}
-        </strong>
-    </div>
-
-    @if($rfq->target_price && $this->priceVal)
-        <div class="mt-2">
-            @if($this->priceVal <= $rfq->target_price)
-                <span class="text-success">✔ Competitive price</span>
-            @else
-                <span class="text-danger">⚠ Higher than buyer expectation</span>
-            @endif
+            </div>
         </div>
-    @endif
 
-    @if(!$this->priceVal)
-        <small class="text-muted d-block mt-2">
-            Enter price to see calculation
-        </small>
-    @endif
+        {{-- QUOTATION FORM --}}
+        <form wire:submit.prevent="submitQuote">
 
-</div>
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+
+                <h5 class="fw-bold mb-3">💼 Your Quotation</h5>
+
+                <div class="row g-4">
+
+                    {{-- PRICE --}}
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Price *</label>
+
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number"
+                                   wire:model.live="price"
+                                   class="form-control"
+                                   placeholder="Enter price">
+                        </div>
+                    </div>
+
+                    {{-- DELIVERY --}}
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Delivery Time *</label>
+
+                        <select wire:model="delivery_time" class="form-select">
+                           <option value="">Select delivery time</option>
+                            <option>1-3 days</option>
+                            <option>3-5 days</option>
+                            <option>7 days</option>
+                            <option>10 days</option>
+                            <option>14 days</option>
+                            <option>21 days</option>
+                            <option>30 days</option>
+                            <option>45 days</option>
+                            <option>60 days</option>
+                            <option>90 days</option>
+                        </select>
+                    </div>
+
+                    {{-- PAYMENT --}}
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Payment Terms</label>
+
+                        <select wire:model="payment_terms" class="form-select">
+                            <option value="">Select</option>
+                            <option>Advance</option>
+                            <option>50% Advance</option>
+                            <option>Net 30</option>
+                        </select>
+                    </div>
+
+                    {{-- MESSAGE --}}
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Notes</label>
+
+                        <textarea wire:model="message"
+                                  rows="4"
+                                  class="form-control"
+                                  placeholder="Add details..."></textarea>
+                    </div>
+
+                </div>
+
+                {{-- BUTTONS --}}
+                <div class="d-flex justify-content-end gap-2 mt-4">
+
+                    <button type="button"
+                            onclick="history.back()"
+                            class="btn btn-light border">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-success px-4"
+                            wire:loading.attr="disabled">
+
+                        <span wire:loading.remove>
+                            🚀 Send Quote
+                        </span>
+
+                        <span wire:loading>
+                            Sending...
+                        </span>
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+
+        </form>
+
+    </div>
 
 
-{{-- FOOTER --}}
-<div class="d-flex justify-content-between align-items-center mt-4">
+    {{-- RIGHT SIDE (STICKY SUMMARY) --}}
+    <div class="col-lg-4">
 
-    <small class="text-muted">
-        ⚡ Tip: Competitive pricing increases acceptance chances
-    </small>
+        <div class="card border-0 shadow-sm rounded-4 position-sticky" style="top: 20px;">
+            <div class="card-body">
 
-@if($rfq->status === 'quoted')
-    <button class="btn btn-secondary px-4 fw-semibold" disabled>
-        ✔ Already Quoted
-    </button>
-@else
+                <h6 class="fw-bold mb-3">📊 Deal Summary</h6>
 
-    <div class="d-flex gap-2">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Unit Price</span>
+                    <strong>₹ {{ $this->priceVal ?? 0 }}</strong>
+                </div>
 
-    <button type="submit"
-            class="btn btn-success px-4 fw-semibold"
-            wire:loading.attr="disabled">
+                <div class="d-flex justify-content-between mb-3">
+                    <span>Total</span>
+                    <strong class="fs-5 text-success">
+                        ₹ {{ $this->priceVal ? number_format($this->total) : 0 }}
+                    </strong>
+                </div>
 
-        <span wire:loading.remove>
-            🚀 Send Quotation
-        </span>
+                <hr>
 
-        <span wire:loading>
-            <span class="spinner-border spinner-border-sm me-1"></span>
-            Sending...
-        </span>
-    </button>
+                @if($rfq->target_price && $this->priceVal)
+                    @if($this->priceVal <= $rfq->target_price)
+                        <div class="alert alert-success py-2 small mb-0">
+                            ✔ Competitive pricing
+                        </div>
+                    @else
+                        <div class="alert alert-danger py-2 small mb-0">
+                            ⚠ Above buyer expectation
+                        </div>
+                    @endif
+                @endif
 
-    <!-- Cancel Button -->
-    <button type="button"
-            onclick="history.back()"
-            class="btn btn-outline-secondary px-4 fw-semibold">
-        ❌ Cancel
-    </button>
+                @if(!$this->priceVal)
+                    <small class="text-muted">
+                        Enter price to preview total
+                    </small>
+                @endif
 
-</div>
+            </div>
+        </div>
 
-@endif
+    </div>
 
-</div>
-
-</div>
-</div>
-
-</form>
-
-</div>
 </div>
 
 </div>
