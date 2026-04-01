@@ -38,7 +38,7 @@ public function reject($id)
 
     // ❌ Reject this quote
     $quote->update(['status' => 2]);
-
+$quote->rfq->update(['status' => 'rejected']);
     // 🔍 Check if any pending quotes still exist
     $remainingQuotes = Quotation::where('rfq_id', $quote->rfq_id)
         ->where('status', 0) // still pending
@@ -105,5 +105,49 @@ public function export()
 
     return response()->stream($callback, 200, $headers);
 }
+public function delete($id)
+{
+    $buyerUuid = session('buyer_uuid');
 
+    $quote = Quotation::where('id', $id)
+        ->where('buyer_uuid', $buyerUuid)
+        ->first();
+
+    if (!$quote) {
+        return redirect()->route('buyer.quotations')
+            ->with('error', 'Quotation not found.');
+    }
+
+    // ❗ Prevent delete if already accepted
+    if ($quote->status == 1) {
+        return redirect()->route('buyer.quotations')
+            ->with('error', 'Accepted quotation cannot be deleted.');
+    }
+
+    $quote->delete();
+
+    return redirect()->route('buyer.quotations')
+        ->with('success', 'Quotation deleted successfully.');
+}
+public function cancel($id)
+{
+    $buyerUuid = session('buyer_uuid');
+
+    $quote = Quotation::where('id', $id)
+        ->where('buyer_uuid', $buyerUuid)
+        ->firstOrFail();
+
+    // Only cancel if accepted
+    if ($quote->status != 1) {
+        return redirect()->back()->with('error', 'Only accepted deal can be cancelled.');
+    }
+
+    // Reset all quotes to pending
+   Quotation::where('rfq_id', $quote->rfq_id)
+    ->update(['status' => 0]); // pending quotes
+
+$quote->rfq->update(['status' => 'pending']); // ✅ FIXED
+
+    return redirect()->back()->with('success', 'Deal cancelled successfully.');
+}
 }

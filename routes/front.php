@@ -51,6 +51,7 @@ use App\Livewire\Front\MyRFQs;
 use App\Livewire\Front\ViewRFQ;
 use App\Livewire\Front\Quotations;
 use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\RFQController;
 use App\Livewire\Front\BuyerInfo;  // ✅ updated namespace
 
 // public website / front routes (preserved exactly)
@@ -199,10 +200,14 @@ Route::get('/buyer/rfqs', MyRFQs::class)
     ->name('buyer.myrfqs');
     Route::get('/buyer/rfq/{id}', ViewRFQ::class)
     ->name('buyer.rfq.view');
+   Route::delete('/buyer/rfq/{id}', [RFQController::class, 'delete'])
+    ->name('buyer.rfq.delete');
 Route::get('/buyer/quotations', Quotations::class)
     ->name('buyer.quotations');
-
-
+Route::delete('/buyer/quotation/{id}', [QuotationController::class, 'delete'])
+    ->name('quotation.delete');
+Route::post('/quotation/cancel/{id}', [QuotationController::class, 'cancel'])
+    ->name('quotation.cancel');
 
 Route::post('/quotation/accept/{id}', [QuotationController::class, 'accept'])
     ->name('quotation.accept');

@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('tbl_subcategory')) {
         Schema::create('tbl_subcategory', function (Blueprint $table) {
-    $table->id();
-    $table->unsignedBigInteger('category_id')->nullable();
-    $table->string('name')->nullable();
-    $table->timestamps();
-});
+            $table->id();
+            $table->unsignedBigInteger('category_id')->nullable();
+            $table->string('name')->nullable();
+            $table->timestamps();
+        });
+    }
     }
 
     /**

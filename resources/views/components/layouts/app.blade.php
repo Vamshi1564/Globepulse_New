@@ -149,21 +149,18 @@ window.isLoggedIn = @json(auth('customer')->check());
             transition: opacity 0.3s ease;
         }
 
-        #loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(232, 244, 236, 0.977);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 1;
-            transition: opacity 0.7s ease;
-            overflow: hidden;
-        }
+       #loading-overlay {
+    position: fixed;
+    inset: 0; /* 🔥 replaces top/left/width/height */
+    background-color: rgba(232, 244, 236, 1);
+    z-index: 999999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s ease;
+    will-change: opacity;
+}
+
 
         .logo-container {
             text-align: center;

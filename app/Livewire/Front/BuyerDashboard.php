@@ -5,6 +5,7 @@ namespace App\Livewire\Front;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+    use App\Models\Quotation;
 
 
 class BuyerDashboard extends Component
@@ -15,6 +16,7 @@ public $buyerFullName;
     public $activeInquiries = 0;
     public $savedSuppliers = 0;
     public $unreadMessages = 0;
+    public $totalQuotations = 0;
 
 public function mount()
 {
@@ -44,7 +46,7 @@ public function mount()
             ->where('buyer_uuid', $buyerUuid) // 🔥 FIX
             ->count();
     }
-
+ $this->totalQuotations = Quotation::where('buyer_uuid', $buyerUuid)->count();
     // Active inquiries (if still using id, leave it OR migrate later)
     if (Schema::hasTable('inquiries')) {
         $this->activeInquiries = DB::table('inquiries')

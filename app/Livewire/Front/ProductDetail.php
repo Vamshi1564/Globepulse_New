@@ -55,6 +55,7 @@ public $rfq_attachment;
     // }
     public function mount($slug)
     {
+        
         // $this->slug = $slug;
         // $this->images = [
         //     "../../../assets/img/products/details/blue_front.png",
@@ -72,13 +73,11 @@ public $rfq_attachment;
 
             // ❗ If product not found → redirect
             if (!$this->product) {
-                return redirect()->route('product.notfound');
+                session()->forget(['rfq_resume', 'rfq_data']); // prevent loop
+                return redirect()->route('home')->with('error', 'Product not found.');
             }
 
-            // ❗ 2. Customer missing → redirect
-            if (!$this->product->customer) {
-                return redirect()->route('product.notfound');
-            }
+           
             if ($this->product) {
                 $this->similarProducts = Product::where('category_id', $this->product->category_id)
                     ->where('status', 1)
@@ -95,6 +94,28 @@ public $rfq_attachment;
             $this->metaTitle = $this->product->seo_title ?? null;
             $this->metaDescription = $this->product->seo_description ?? null;
             $this->metaKeywords = $this->product->seo_keywords ?? null;
+
+             // ✅ 🔥 ADD THIS BLOCK AT END
+            if (session('rfq_resume') && session('rfq_data')) {
+
+            $data = session('rfq_data');
+
+            $this->rfq_quantity = $data['rfq_quantity'] ?? null;
+            $this->rfq_target_price = $data['rfq_target_price'] ?? null;
+            $this->rfq_shipping_terms = $data['rfq_shipping_terms'] ?? null;
+            $this->rfq_delivery_time = $data['rfq_delivery_time'] ?? null;
+            $this->rfq_message = $data['rfq_message'] ?? null;
+            $this->rfq_destination_port = $data['rfq_destination_port'] ?? null;
+            $this->rfq_payment_terms = $data['rfq_payment_terms'] ?? null;
+
+            
+           // reopen modal AFTER render cycle
+            $this->dispatch('openRFQModalDelayed');
+
+            // clear session AFTER using it
+            session()->forget(['rfq_resume', 'rfq_data']);
+        }
+
         } catch (\Exception $e) {
             // ❗ Any error occurs → redirect to not found page
             return redirect()->route('product.notfound');
@@ -177,15 +198,31 @@ public $rfq_attachment;
         $buyerId = Session::get('buyer_id');
 
         if (!$buyerId) {
-            return redirect()->route('buyer.login')
-                ->with('error', 'Please login to send RFQ');
-        }
+
+    session([
+        'rfq_pending' => true,
+        'rfq_data' => [
+            'product_id' => $this->product->id,
+            'product_slug' => $this->product->slug, 
+            'rfq_quantity' => $this->rfq_quantity,
+            'rfq_target_price' => $this->rfq_target_price,
+            'rfq_shipping_terms' => $this->rfq_shipping_terms,
+            'rfq_delivery_time' => $this->rfq_delivery_time,
+            'rfq_message' => $this->rfq_message,
+            'rfq_destination_port' => $this->rfq_destination_port,
+            'rfq_payment_terms' => $this->rfq_payment_terms,
+        ]
+    ]);
+
+    return redirect()->route('buyer.login')
+        ->with('error', 'Please login to continue RFQ');
+}
 
         $buyer = Buyer::find($buyerId);
 
         // ✅ VALIDATION
         $this->validate([
-            'rfq_quantity' => 'required|string|max:50',
+            'rfq_quantity' => 'required|numeric|min:' . $this->product->min_order,
             'rfq_message' => 'required|min:10',
         ]);
 
@@ -252,5 +289,32 @@ $rfq = RFQ::create([
     } catch (\Exception $e) {
         session()->flash('message', 'Error: ' . $e->getMessage());
     }
+}
+public function updated($field)
+{
+    if (!in_array($field, ['rfq_quantity', 'rfq_message'])) return;
+
+    $this->validateOnly($field, [
+        'rfq_quantity' => 'required|numeric|min:' . $this->product->min_order,
+        'rfq_message' => 'required|min:10',
+    ]);
+}
+protected function rules()
+{
+    return [
+        'rfq_quantity' => 'required|numeric|min:' . $this->product->min_order,
+        'rfq_message' => 'required|min:10',
+    ];
+}
+
+protected function messages()
+{
+    return [
+        'rfq_quantity.required' => 'Quantity is required',
+        'rfq_quantity.numeric' => 'Quantity must be a number',
+        'rfq_quantity.min' => 'Minimum order quantity is ' . $this->product->min_order,
+        'rfq_message.required' => 'Requirement is required',
+        'rfq_message.min' => 'Requirement must be at least 10 characters',
+    ];
 }
 }

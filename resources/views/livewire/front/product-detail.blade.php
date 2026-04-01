@@ -633,6 +633,14 @@ document.addEventListener('livewire:init', () => {
         document.getElementById("rfqPopup").style.display = "none";
     });
 });
+document.addEventListener('livewire:init', () => {
+    Livewire.on('openRFQModalDelayed', () => {
+        setTimeout(() => {
+            const el = document.getElementById("rfqPopup");
+            if (el) el.style.display = "flex";
+        }, 300);
+    });
+});
 </script>
 <style>
 .rfq-overlay {
@@ -671,8 +679,9 @@ document.addEventListener('livewire:init', () => {
 </style>
                                     <!-- RFQ POPUP -->
 <!-- RFQ POPUP -->
-<div id="rfqPopup" class="rfq-overlay" onclick="closeRFQOutside(event)">
-    <div class="rfq-box">
+<div wire:ignore.self id="rfqPopup" class="rfq-overlay" onclick="closeRFQOutside(event)">
+    
+    <div class="rfq-box" onclick="event.stopPropagation()">
 
         <!-- Close Button -->
         <button type="button"
@@ -681,7 +690,7 @@ document.addEventListener('livewire:init', () => {
 
         <h4 class="fw-bold mb-4 text-center">Request For Quotation (RFQ)</h4>
 
-        <form wire:submit.prevent="submitRFQ" class="row g-3">
+        <form wire:submit.prevent="submitRFQ" class="row g-3" novalidate>
 
             <!-- Product -->
             <div class="col-12">
@@ -699,9 +708,9 @@ document.addEventListener('livewire:init', () => {
                 <label class="form-label fw-semibold text-start">Quantity</label>
                 <div class="input-group">
     <input type="number"
-        wire:model="rfq_quantity"
-        min="{{ $product->min_order }}"
-        class="form-control"
+        wire:model.live="rfq_quantity"
+        
+        class="form-control @error('rfq_quantity') is-invalid @enderror"
         placeholder="Enter quantity">
 
     <span class="input-group-text">
@@ -712,8 +721,9 @@ document.addEventListener('livewire:init', () => {
 <small class="text-muted">
     MOQ: {{ $product->min_order }}
 </small>
-                @error('rfq_quantity') <small class="text-danger">{{ $message }}</small> @enderror
-
+               @error('rfq_quantity')
+    <div class="invalid-feedback d-block">{{ $message }}</div>
+@enderror
             </div>
 
             <!-- Target Price -->
@@ -799,7 +809,7 @@ document.addEventListener('livewire:init', () => {
             <!-- Message -->
             <div class="col-12">
                 <label class="form-label fw-semibold text-start">Requirement</label>
-                <textarea wire:model="rfq_message"
+                <textarea wire:model.live="rfq_message"
                     class="form-control"
                     rows="3"
                     placeholder="Describe your requirement..."></textarea>

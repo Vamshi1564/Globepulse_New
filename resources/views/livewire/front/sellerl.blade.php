@@ -17,12 +17,12 @@
     background:linear-gradient(135deg,#0a1628 0%,#1e3a8a 55%,#1d4ed8 100%);
     min-height:90vh;
     display:flex;align-items:center;
-    position:relative;overflow:hidden;
+    position:relative;overflow:hidden;max-width: 100%;
     padding-top:80px;padding-bottom:60px;
 }
-.ss-hero::before{content:'';position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.22),transparent 70%);top:-150px;right:-150px;pointer-events:none}
-.ss-hero::after{content:'';position:absolute;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.1),transparent 70%);bottom:-60px;left:8%;pointer-events:none}
-.ss-grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:48px 48px}
+.ss-hero::before{content:'';position:absolute;width:400px;max-width: 100%;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.22),transparent 70%);top:-150px;right:-120px;pointer-events:none}
+.ss-hero::after{content:'';position:absolute;width:250px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.1),transparent 70%);bottom:-60px;left:50px;pointer-events:none}
+.ss-grid-bg{position:absolute;inset:0;width:100%;overflow:hidden;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:48px 48px}
 
 .ss-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);padding:6px 18px;border-radius:30px;font-size:12px;font-weight:700;color:rgba(255,255,255,.9);letter-spacing:.6px;text-transform:uppercase;margin-bottom:28px}
 .ss-dot{width:7px;height:7px;border-radius:50%;background:#f59e0b;display:inline-block;animation:blink 2s infinite}
@@ -92,6 +92,21 @@
 }
 @media(max-width:576px){
     .ss-hero h1{font-size:26px}
+}
+@media(max-width:768px){
+    .ss-hero::before,
+    .ss-hero::after{
+        display:none;
+    }
+}
+.row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.container {
+    max-width: 100%;
+    
 }
 </style>
 @endpush
@@ -194,9 +209,11 @@
 
             <div class="row g-4 position-relative">
                 {{-- connector line (desktop only) --}}
-                <div class="d-none d-lg-block position-absolute"
-                    style="top:30px;left:17%;right:17%;height:2px;background:linear-gradient(90deg,#2563eb,#f59e0b);z-index:0">
-                </div>
+                <div class="d-none d-lg-block position-absolute w-100"
+    style="top:30px;left:0;height:2px;
+    background:linear-gradient(90deg,#2563eb,#f59e0b);
+    z-index:0;">
+</div>
 
                 <div class="col-6 col-lg-3 text-center position-relative" style="z-index:1">
                     <div class="ss-step-num" style="background:#2563eb;box-shadow:0 6px 20px rgba(37,99,235,.3)">1</div>
