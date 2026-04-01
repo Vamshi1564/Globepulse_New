@@ -143,8 +143,17 @@
               </svg>
               @php $logoUrl = $seller?->details?->logo_url; @endphp
               @if($logoUrl)
-                <img class="av-img" src="{{ asset('storage/' . $logoUrl) }}" alt="Company Logo"
-                    style="object-fit:contain;background:#fff;padding:4px;">
+                @php
+                $sideLogoUrl = $logoUrl;
+                if (!str_starts_with($sideLogoUrl, 'http')) {
+                    $sideLogoUrl = config('app.pub_aws_url')
+                        ? rtrim(config('app.pub_aws_url'),'/') . '/' . $sideLogoUrl
+                        : asset('storage/' . $sideLogoUrl);
+                }
+              @endphp
+              <img class="av-img" src="{{ $sideLogoUrl }}" alt="Company Logo"
+                    style="object-fit:contain;background:#fff;padding:4px;"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
               @else
                 {{-- Fallback: initials avatar from business name --}}
                 @php
@@ -526,9 +535,23 @@
                         {{-- Show existing saved logo if available --}}
                         @if($seller?->details?->logo_url)
                         <div class="text-center py-2">
-                          <img src="{{ asset('storage/' . $seller->details->logo_url) }}"
+                          @php
+                            $logoPath = $seller->details->logo_url;
+                            // If stored on S3 (full http URL) use as-is
+                            // If stored as relative path use Storage::url() which handles
+                            // both local (storage:link) and S3 (pub_aws_url config)
+                            if (str_starts_with($logoPath, 'http')) {
+                                $logoDisplayUrl = $logoPath;
+                            } elseif (config('app.pub_aws_url')) {
+                                $logoDisplayUrl = rtrim(config('app.pub_aws_url'), '/') . '/' . $logoPath;
+                            } else {
+                                $logoDisplayUrl = asset('storage/' . $logoPath);
+                            }
+                          @endphp
+                          <img src="{{ $logoDisplayUrl }}"
                             alt="Company Logo"
-                            style="max-height:80px;max-width:180px;object-fit:contain;border-radius:8px;border:1.5px solid #e5e9f2;padding:6px;background:#fff;">
+                            style="max-height:80px;max-width:180px;object-fit:contain;border-radius:8px;border:1.5px solid #e5e9f2;padding:6px;background:#fff;"
+                            onerror="this.style.display='none'">
                           <div class="duz-hint mt-1" style="color:#059669;font-weight:600;">
                             <i class="bi bi-check-circle-fill me-1"></i>Logo uploaded — upload again to replace
                           </div>
@@ -1010,7 +1033,6 @@
     </main>
     <livewire:seller.layout.footer />
 
-    @script
     <script>
     function previewVideo(input) {
         if (!input.files || !input.files[0]) return;
@@ -1072,7 +1094,6 @@
         }
         prev.style.display = 'block';
     }
-    </script>
-    @endscript
+</script>
 </div>
 </div>

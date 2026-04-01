@@ -76,14 +76,21 @@ class SellerVerifyOtp extends Component
             actorType:  'seller'
         );
 
-        // Send credentials email
-        Mail::to($this->email)->send(
-            new SellerCredentialsMail(
-                $cached['seller_name'],
-                $this->email,
-                $cached['temp_password']
-            )
-        );
+        // ── Send credentials email (wrapped in try-catch so mail failure
+        //    doesn't block the verification redirect) ──────────────────
+        try {
+            Mail::to($this->email)->send(
+                new SellerCredentialsMail(
+                    $cached['seller_name'],
+                    $this->email,
+                    $cached['temp_password']
+                )
+            );
+            \Illuminate\Support\Facades\Log::info('[SellerVerifyOtp] Credentials email sent to ' . $this->email);
+        } catch (\Exception $mailEx) {
+            \Illuminate\Support\Facades\Log::error('[SellerVerifyOtp] Credentials email FAILED for ' . $this->email . ' — ' . $mailEx->getMessage());
+            // Verification succeeds even if mail fails — seller still redirected to login
+        }
 
         // Send welcome WhatsApp + SMS
         try {

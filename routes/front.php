@@ -51,6 +51,8 @@ use App\Livewire\Front\MyRFQs;
 use App\Livewire\Front\ViewRFQ;
 use App\Livewire\Front\Quotations;
 use App\Http\Controllers\QuotationController;
+use App\Livewire\Front\BuyerInfo;  // ✅ updated namespace
+
 // public website / front routes (preserved exactly)
 
 // service & homepage
@@ -78,6 +80,9 @@ Route::get('/rfq/{product_id}/{supplier_id}', function ($product_id, $supplier_i
 })->name('rfq.create');
 Route::get('/product-detail/{slug}', ProductDetail::class)->name('product-detail');
 
+// Buyer info page
+
+Route::get('/buyer_info/{id}', BuyerInfo::class)->name('buyer.info');
 Route::get('/service-detail/{slug}', ServiceDetail::class)
     ->name('service-detail');
 Route::get('/signup/{id?}', Signup::class)->name('signup');

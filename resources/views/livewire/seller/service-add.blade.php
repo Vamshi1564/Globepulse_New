@@ -107,8 +107,12 @@
     {{-- Page header --}}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;">
         <div>
-            <h1 style="font-size:1.35rem;font-weight:800;color:#1e293b;margin:0;">Add New Service</h1>
-            <p style="font-size:.82rem;color:#94a3b8;margin:.2rem 0 0;">List your service — approved services are visible to buyers worldwide</p>
+            <h1 style="font-size:1.35rem;font-weight:800;color:#1e293b;margin:0;">
+                {{ $isEditMode ? 'Edit Service' : 'Add New Service' }}
+            </h1>
+            <p style="font-size:.82rem;color:#94a3b8;margin:.2rem 0 0;">
+                {{ $isEditMode ? 'Update your service details below' : 'List your service — approved services are visible to buyers worldwide' }}
+            </p>
         </div>
         <a href="{{ route('my-listings') }}" style="font-size:.82rem;color:#64748b;text-decoration:none;display:flex;align-items:center;gap:.3rem;padding:.4rem .9rem;border:1.5px solid #e2e8f0;border-radius:9px;background:#f8fafc;font-weight:600;">
             <i class="bi bi-arrow-left-short"></i> My Listings
@@ -117,7 +121,12 @@
 
     {{-- Step bar --}}
     <div class="pa-stepbar">
-        <div class="pa-steps">
+        <div class="pa-steps" style="align-items:center;">
+            @if($isEditMode)
+            <div style="font-size:.75rem;font-weight:700;color:#059669;padding:.35rem 1rem;background:#d1fae5;border-radius:20px;white-space:nowrap;margin-right:.75rem;display:flex;align-items:center;gap:.35rem;flex-shrink:0;">
+                <i class="bi bi-pencil-square"></i> Editing Service
+            </div>
+            @endif
             @foreach([1=>['bi-tag-fill','Basic Info'],2=>['bi-images','Media'],3=>['bi-currency-exchange','Pricing'],4=>['bi-patch-check','Specs']] as $n=>[$icon,$lbl])
             <div class="pa-step {{ $activeStep==$n ? 'active' : ($activeStep>$n ? 'done' : 'pending') }}"
                  wire:click.prevent="goToStep({{ $n }})" style="cursor:pointer;">
@@ -147,34 +156,39 @@
             <div class="pa-card-body">
                 <div style="margin-bottom:1rem;">
                     <label class="pa-label">Service Name *</label>
-                    <input class="pa-input" wire:model.lazy="title" placeholder="e.g. Digital Marketing, Web Development, SEO Services">
+                    <input class="pa-input" wire:model="title" placeholder="e.g. Digital Marketing, Web Development, SEO Services">
                     @error('title')<div class="pa-err">{{ $message }}</div>@enderror
                     <div class="pa-hint">Be specific — buyers search by service name</div>
                 </div>
 
                 <div style="margin-bottom:1rem;">
                     <label class="pa-label">Description</label>
-                    <div class="editor-toolbar">
-                        <button type="button" onclick="sfmt('bold')" title="Bold"><b>B</b></button>
-                        <button type="button" onclick="sfmt('italic')" title="Italic"><i>I</i></button>
-                        <button type="button" onclick="sfmt('underline')" title="Underline"><u>U</u></button>
-                        <button type="button" onclick="sfmt('insertUnorderedList')" title="List">• List</button>
-                        <select onchange="if(this.value){document.execCommand('formatBlock',false,this.value);this.value=''}"
-                            style="font-size:.75rem;">
-                            <option value="">Format</option>
-                            <option value="h3">Heading</option>
-                            <option value="p">Paragraph</option>
-                        </select>
+                    {{-- wire:ignore prevents Livewire wiping contenteditable on re-render --}}
+                    <div wire:ignore>
+                        <div class="editor-toolbar">
+                            <button type="button" onclick="sfmt('bold')" title="Bold"><b>B</b></button>
+                            <button type="button" onclick="sfmt('italic')" title="Italic"><i>I</i></button>
+                            <button type="button" onclick="sfmt('underline')" title="Underline"><u>U</u></button>
+                            <button type="button" onclick="sfmt('insertUnorderedList')" title="List">• List</button>
+                            <select onchange="if(this.value){document.execCommand('formatBlock',false,this.value);this.value=''}"
+                                style="font-size:.75rem;">
+                                <option value="">Format</option>
+                                <option value="h3">Heading</option>
+                                <option value="p">Paragraph</option>
+                            </select>
+                        </div>
+                        <div id="sa-editor" class="editor-content" contenteditable="true"
+                            data-initial="{{ htmlspecialchars($description ?? '', ENT_QUOTES, 'UTF-8') }}"
+                            placeholder="Describe your service in detail..."></div>
                     </div>
-                    <div id="sa-editor" class="editor-content" contenteditable="true"
-                        placeholder="Describe your service in detail..."></div>
+                    {{-- Hidden input OUTSIDE wire:ignore so Livewire CAN read it --}}
                     <input type="hidden" id="sa-desc-hidden" wire:model="description">
                     @error('description')<div class="pa-err">{{ $message }}</div>@enderror
                 </div>
 
                 <div>
                     <label class="pa-label">Keywords</label>
-                    <input class="pa-input" wire:model.lazy="keywords" placeholder="SEO, digital marketing, social media (comma separated)">
+                    <input class="pa-input" wire:model="keywords" placeholder="SEO, digital marketing, social media (comma separated)">
                     <div class="pa-hint">Helps buyers find your service</div>
                 </div>
 
@@ -182,8 +196,9 @@
                     <!-- <button class="btn-draft" type="button" wire:click="saveDraft">
                         <i class="bi bi-floppy"></i> Save Draft
                     </button> -->
-                    <button class="btn-next" type="button" wire:click="nextStep"
-                        wire:loading.attr="disabled" wire:target="nextStep">
+                    <button class="btn-next" type="button" wire:loading.attr="disabled" wire:target="nextStep"
+                        wire:click="nextStep"
+                        onclick="saSync()">
                         Next: Media <i class="bi bi-arrow-right"></i>
                     </button>
                 </div>
@@ -204,19 +219,40 @@
                 <div style="margin-bottom:1.25rem;">
                     <label class="pa-label">Cover Image</label>
                     <div class="photo-grid">
-                        <label for="coverImg" class="photo-slot" style="width:120px;height:90px;">
-                            @if($cover_image)
-                                <img src="{{ $cover_image->temporaryUrl() }}" style="border-radius:8px;">
-                            @else
-                                <div style="text-align:center;color:#94a3b8;">
-                                    <i class="bi bi-cloud-upload" style="font-size:1.4rem;display:block;"></i>
-                                    <span style="font-size:.68rem;">Cover</span>
-                                </div>
-                            @endif
+                        @if($cover_image)
+                        {{-- Newly selected file --}}
+                        <label for="coverImg" class="photo-slot" style="width:120px;height:90px;border-style:solid;border-color:#059669;">
+                            <img src="{{ $cover_image->temporaryUrl() }}" style="border-radius:8px;width:100%;height:100%;object-fit:cover;">
                         </label>
+                        @elseif($isEditMode && !empty($existingCoverImage))
+                        {{-- Saved cover image in edit mode --}}
+                        @php
+                            $covUrl = str_starts_with($existingCoverImage,'http')
+                                ? $existingCoverImage
+                                : (config('app.pub_aws_url')
+                                    ? rtrim(config('app.pub_aws_url'),'/') . '/' . $existingCoverImage
+                                    : asset('storage/' . $existingCoverImage));
+                        @endphp
+                        <div style="position:relative;">
+                            <label for="coverImg" class="photo-slot" style="width:120px;height:90px;border-style:solid;border-color:#059669;">
+                                <img src="{{ $covUrl }}" style="border-radius:8px;width:100%;height:100%;object-fit:cover;"
+                                    onerror="this.parentElement.innerHTML='<div style=\'text-align:center;color:#94a3b8;\'><i class=\'bi bi-image\' style=\'font-size:1.4rem;display:block;\'></i><span style=\'font-size:.68rem;\'>Cover</span></div>'">
+                            </label>
+                            <div style="font-size:.65rem;color:#059669;font-weight:700;margin-top:.25rem;text-align:center;">Saved ✓</div>
+                        </div>
+                        @else
+                        <label for="coverImg" class="photo-slot" style="width:120px;height:90px;">
+                            <div style="text-align:center;color:#94a3b8;">
+                                <i class="bi bi-cloud-upload" style="font-size:1.4rem;display:block;"></i>
+                                <span style="font-size:.68rem;">Cover</span>
+                            </div>
+                        </label>
+                        @endif
                     </div>
                     <input type="file" id="coverImg" class="d-none" wire:model="cover_image" accept="image/jpg,image/jpeg,image/png,image/webp">
-                    <div class="upload-hint">JPG, PNG, WebP · Max 4MB</div>
+                    <div class="upload-hint">JPG, PNG, WebP · Max 4MB
+                        @if($isEditMode && $existingCoverImage) · Upload new to replace @endif
+                    </div>
                     @error('cover_image')<div class="pa-err">{{ $message }}</div>@enderror
                 </div>
 
@@ -226,7 +262,19 @@
                     <div class="photo-grid">
                         @foreach($gallery_images as $idx => $gi)
                         <div class="photo-slot" style="width:80px;height:80px;">
-                            <img src="{{ $gi->temporaryUrl() }}" style="border-radius:8px;">
+                            @if(is_string($gi))
+                                {{-- Saved path in edit mode --}}
+                                @php
+                                    $giUrl = str_starts_with($gi,'http') ? $gi
+                                        : (config('app.pub_aws_url')
+                                            ? rtrim(config('app.pub_aws_url'),'/') . '/' . $gi
+                                            : asset('storage/' . $gi));
+                                @endphp
+                                <img src="{{ $giUrl }}" style="border-radius:8px;width:100%;height:100%;object-fit:cover;">
+                            @else
+                                {{-- New upload --}}
+                                <img src="{{ $gi->temporaryUrl() }}" style="border-radius:8px;width:100%;height:100%;object-fit:cover;">
+                            @endif
                             <button class="remove-btn" type="button" wire:click="removeGalleryImage({{ $idx }})">×</button>
                         </div>
                         @endforeach
@@ -268,13 +316,29 @@
                             onmouseover="this.style.borderColor='#1d4ed8';this.style.color='#1d4ed8'"
                             onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#475569'">
                             <i class="bi bi-file-earmark-pdf" style="color:#ef4444;"></i>
-                            {{ $brochure_pdf ? 'Replace PDF' : 'Upload PDF' }}
+                            {{ $brochure_pdf ? 'Replace PDF' : ($isEditMode && $existingBrochurePath ? 'Replace PDF' : 'Upload PDF') }}
                         </label>
+
                         @if($brochure_pdf)
+                        {{-- Newly selected PDF --}}
                         <span style="font-size:.78rem;color:#059669;display:flex;align-items:center;gap:.3rem;">
                             <i class="bi bi-check-circle-fill"></i>
                             {{ $brochure_pdf->getClientOriginalName() }}
                             <span style="color:#94a3b8;">({{ round($brochure_pdf->getSize() / 1024) }} KB)</span>
+                        </span>
+                        @elseif($isEditMode && !empty($existingBrochurePath))
+                        {{-- Saved PDF in edit mode --}}
+                        @php
+                            $pdfUrl = str_starts_with($existingBrochurePath,'http')
+                                ? $existingBrochurePath
+                                : (config('app.pub_aws_url')
+                                    ? rtrim(config('app.pub_aws_url'),'/') . '/' . $existingBrochurePath
+                                    : asset('storage/' . $existingBrochurePath));
+                        @endphp
+                        <span style="font-size:.78rem;color:#059669;display:flex;align-items:center;gap:.3rem;">
+                            <i class="bi bi-file-earmark-pdf-fill" style="color:#ef4444;"></i>
+                            PDF uploaded
+                            <a href="{{ $pdfUrl }}" target="_blank" style="color:#1d4ed8;font-weight:700;">View ↗</a>
                         </span>
                         @endif
                     </div>
@@ -287,14 +351,15 @@
                 </div>
 
                 <div class="pa-actions">
-                    <button class="btn-back" type="button" wire:click="prevStep">
+                    <button class="btn-back" type="button" wire:click="prevStep" onclick="saSync()">
                         <i class="bi bi-arrow-left"></i> Back
                     </button>
                     <!-- <button class="btn-draft" type="button" wire:click="saveDraft">
                         <i class="bi bi-floppy"></i> Save Draft
                     </button> -->
-                    <button class="btn-next" type="button" wire:click="nextStep"
-                        wire:loading.attr="disabled" wire:target="nextStep">
+                    <button class="btn-next" type="button" wire:loading.attr="disabled" wire:target="nextStep"
+                        wire:click="nextStep"
+                        onclick="saSync()">
                         Next: Pricing <i class="bi bi-arrow-right"></i>
                     </button>
                 </div>
@@ -394,14 +459,15 @@
                 </div>
 
                 <div class="pa-actions">
-                    <button class="btn-back" type="button" wire:click="prevStep">
+                    <button class="btn-back" type="button" wire:click="prevStep" onclick="saSync()">
                         <i class="bi bi-arrow-left"></i> Back
                     </button>
                     <!-- <button class="btn-draft" type="button" wire:click="saveDraft">
                         <i class="bi bi-floppy"></i> Save Draft
                     </button> -->
-                    <button class="btn-next" type="button" wire:click="nextStep"
-                        wire:loading.attr="disabled" wire:target="nextStep">
+                    <button class="btn-next" type="button" wire:loading.attr="disabled" wire:target="nextStep"
+                        wire:click="nextStep"
+                        onclick="saSync()">
                         Next: Specs <i class="bi bi-arrow-right"></i>
                     </button>
                 </div>
@@ -473,20 +539,26 @@
                 </div>
 
                 <div class="pa-actions">
-                    <button class="btn-back" type="button" wire:click="prevStep">
+                    <button class="btn-back" type="button" wire:click="prevStep" onclick="saSync()">
                         <i class="bi bi-arrow-left"></i> Back
                     </button>
-                    <button class="btn-draft" type="button" wire:click="saveDraft">
+                    <button class="btn-draft" type="button"
+                        wire:click="saveDraft"
+                        onclick="saSync()">
                         <i class="bi bi-floppy"></i> Save Draft
                     </button>
                     <button type="submit" class="btn-publish"
                         wire:loading.attr="disabled" wire:target="submit"
-                        onclick="this.disabled=true;this.innerHTML='<i class=\'bi bi-arrow-repeat me-1\'></i> Submitting...';this.closest(\'form\').requestSubmit();">
+                        onclick="saSync(); this.disabled=true; this.closest('form').requestSubmit();">
                         <span wire:loading.remove wire:target="submit">
-                            <i class="bi bi-send-fill"></i> Submit for Review
+                            @if($isEditMode)
+                                <i class="bi bi-check-circle-fill"></i> Save Changes
+                            @else
+                                <i class="bi bi-send-fill"></i> Submit for Review
+                            @endif
                         </span>
                         <span wire:loading wire:target="submit">
-                            <i class="bi bi-arrow-repeat me-1"></i> Submitting...
+                            <i class="bi bi-arrow-repeat me-1"></i> {{ $isEditMode ? 'Saving...' : 'Submitting...' }}
                         </span>
                     </button>
                 </div>
@@ -499,13 +571,26 @@
 
         {{-- ── RIGHT: Preview panel ────────────────────────── --}}
         <div class="pa-preview">
-            <div style="font-size:.72rem;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem;">Live Preview</div>
+            <div style="font-size:.72rem;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem;">
+                {{ $isEditMode ? '✏️ Editing' : 'Live Preview' }}
+            </div>
 
-            {{-- Cover image or placeholder --}}
+            {{-- Cover image: new upload > saved image > placeholder --}}
             @if($cover_image)
-            <img src="{{ $cover_image->temporaryUrl() }}" class="preview-img" style="display:block;">
+                <img src="{{ $cover_image->temporaryUrl() }}" class="preview-img" style="display:block;object-fit:cover;">
+            @elseif($isEditMode && !empty($existingCoverImage))
+                @php
+                    $prevCov = str_starts_with($existingCoverImage,'http')
+                        ? $existingCoverImage
+                        : (config('app.pub_aws_url')
+                            ? rtrim(config('app.pub_aws_url'),'/') . '/' . $existingCoverImage
+                            : asset('storage/' . $existingCoverImage));
+                @endphp
+                <img src="{{ $prevCov }}" class="preview-img" style="display:block;object-fit:cover;"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <div class="preview-img" style="display:none;">🛠️</div>
             @else
-            <div class="preview-img" style="display:flex;">🛠️</div>
+                <div class="preview-img" style="display:flex;">🛠️</div>
             @endif
 
             @if($service_type)
@@ -537,7 +622,17 @@
             @if(!empty($gallery_images))
             <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.75rem;">
                 @foreach($gallery_images as $gi)
-                <img src="{{ $gi->temporaryUrl() }}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;">
+                @if(is_string($gi))
+                    @php
+                        $giPrev = str_starts_with($gi,'http') ? $gi
+                            : (config('app.pub_aws_url')
+                                ? rtrim(config('app.pub_aws_url'),'/') . '/' . $gi
+                                : asset('storage/' . $gi));
+                    @endphp
+                    <img src="{{ $giPrev }}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;">
+                @else
+                    <img src="{{ $gi->temporaryUrl() }}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;">
+                @endif
                 @endforeach
             </div>
             @endif
@@ -560,35 +655,55 @@
     </div>{{-- end pa-body --}}
 </div>{{-- end pa-wrap --}}
 
-{{-- JS for rich text editor --}}
+<livewire:seller.layout.footer />
+
+@script
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+// saSync: syncs editor HTML → hidden input → Livewire wire:model
+window.saSync = function() {
+    var editor = document.getElementById('sa-editor');
+    var hidden  = document.getElementById('sa-desc-hidden');
+    if (editor && hidden) {
+        hidden.value = editor.innerHTML;
+        var ev = new Event('input'); ev.bubbles = true; hidden.dispatchEvent(ev);
+    }
+};
+
+function saInitEditor() {
     const editor = document.getElementById('sa-editor');
-    const hidden  = document.getElementById('sa-desc-hidden');
     if (!editor) return;
+    if (editor._saInited) return; // prevent double init
+    editor._saInited = true;
 
-    editor.innerHTML = @json($description ?? '');
+    // Read from data-initial HTML attribute
+    const initial = editor.getAttribute('data-initial') || '';
+    editor.innerHTML = initial;
 
-    editor.addEventListener('blur', function() {
-        if (hidden) {
-            hidden.value = editor.innerHTML;
-            @this.set('description', editor.innerHTML, false);
-        }
-    });
+    editor.addEventListener('input', saSync);
+    editor.addEventListener('blur',  saSync);
+}
 
-    editor.addEventListener('input', function() {
-        if (hidden) hidden.value = editor.innerHTML;
-    });
-});
+// Use livewire:initialized (fires after Livewire hydrates on page load)
+document.addEventListener('livewire:navigated',   saInitEditor);
+document.addEventListener('livewire:initialized', saInitEditor);
+
+// Fallback for non-SPA page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', saInitEditor);
+} else {
+    // DOM already ready (script deferred) — init directly
+    setTimeout(saInitEditor, 0);
+}
+
+// Always sync before Livewire network request
+document.addEventListener('livewire:before-request', saSync);
 
 window.sfmt = function(cmd) {
     document.execCommand('styleWithCSS', false, true);
     document.execCommand(cmd, false, null);
     const editor = document.getElementById('sa-editor');
-    const hidden  = document.getElementById('sa-desc-hidden');
-    if (editor && hidden) hidden.value = editor.innerHTML;
+    if (editor) { editor.focus(); saSync(); }
 };
 </script>
-
-<livewire:seller.layout.footer />
+@endscript
 </div>

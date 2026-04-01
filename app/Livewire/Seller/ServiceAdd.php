@@ -5,6 +5,8 @@ namespace App\Livewire\Seller;
 
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\PackagesModel;
+use App\Models\Seller;
 use App\Models\SellerService;
 use App\Models\Subcategory;
 use App\Models\SubSubCategory;
@@ -59,10 +61,75 @@ class ServiceAdd extends Component
     public $certifications       = '';
 
     // ── UI state ──────────────────────────────────────────────
-    public string $alertMessage = '';
-    public string $alertType    = '';
+    public string $alertMessage       = '';
+    public string $alertType          = '';
+    public ?int   $editId             = null;
+    public bool   $isEditMode         = false;
+    public string $existingCoverImage  = '';  // saved cover_image path
+    public string $existingBrochurePath = ''; // saved brochure PDF path
 
     // ─────────────────────────────────────────────────────────
+    public function mount(): void
+    {
+        // Load existing service when ?edit=ID is in the URL
+        $editId = request()->query('edit');
+        if ($editId) {
+            $customerId = $this->resolveCustomerId();
+            $service    = SellerService::where('id', $editId)
+                            ->where('customer_id', $customerId)
+                            ->first();
+
+            if ($service) {
+                $this->editId      = (int) $editId;
+                $this->isEditMode  = true;
+
+                // Step 1 — Basic Info
+                $this->title       = $service->title       ?? '';
+                $this->description = $service->description ?? '';
+                $this->keywords    = $service->keywords    ?? '';
+
+                // Step 2 — Media
+                $this->existingCoverImage = $service->cover_image ?? '';
+                $this->video_url          = $service->video_url   ?? '';
+
+                // Step 3 — Pricing
+                $this->price             = $service->min_price       ?? '';
+                $this->price_unit        = $service->price_unit      ?? 'per project';
+                $this->delivery_mode     = $service->delivery_mode   ?? 'Both';
+                $this->turnaround_time   = $service->turnaround_time ?? '';
+                $this->service_area      = $service->service_area    ?? '';
+                $this->payment_terms     = $service->payment_terms   ?? '';
+                $this->sample_consultation = $service->sample_consultation ?? 'no';
+
+                // Step 4 — Specs
+                $this->service_type         = $service->service_type      ?? '';
+                $this->category_id          = $service->category_id       ?? '';
+                $this->subcategory_id       = $service->subcategory_id    ?? '';
+                $this->sub_subcategory_id   = $service->sub_subcategory_id ?? '';
+                $this->certifications       = $service->certifications     ?? '';
+                $this->experience_years     = $service->experience_years   ?? '';
+
+                // Load subcategory list if category already set
+                if ($this->category_id) {
+                    $this->subcategories = Subcategory::where('category_id', $this->category_id)->get();
+                }
+                if ($this->subcategory_id) {
+                    $this->sub_subcategories = SubSubCategory::where('subcategory_id', $this->subcategory_id)->get();
+                }
+
+                // Decode inclusions JSON
+                if ($service->inclusions) {
+                    $inc = json_decode($service->inclusions, true) ?? [];
+                    $this->pricing_model        = $inc['pricing_model']        ?? '';
+                    $this->contract_duration    = $inc['contract_duration']    ?? '';
+                    $this->business_type_target = $inc['business_type_target'] ?? '';
+                    $this->industries_served    = $inc['industries_served']    ?? [];
+                    $this->existingBrochurePath = $inc['brochure_pdf']         ?? '';
+                }
+            }
+        }
+    }
+
     public function render()
     {
         $categories = Category::all();
@@ -94,6 +161,12 @@ class ServiceAdd extends Component
     public function removeGalleryImage(int $index): void
     {
         array_splice($this->gallery_images, $index, 1);
+    }
+
+    // ── Sync description from JS editor before step change ────
+    public function syncDescription(string $html): void
+    {
+        $this->description = $html;
     }
 
     // ── Step navigation ───────────────────────────────────────
@@ -316,11 +389,30 @@ class ServiceAdd extends Component
             return;
         }
 
-        // Duplicate check
-        if (SellerService::where('customer_id', $customerId)
+        // ── Service limit check (skip when editing existing) ──
+        if (!$this->isEditMode) {
+            $sellerId = Session::get('seller_id');
+            if ($sellerId) {
+                $seller      = Seller::find($sellerId);
+                $package     = $seller?->package_id ? PackagesModel::find($seller->package_id) : null;
+                $serviceLimit = $package?->service_limit ?? 999;
+                $existingServices = SellerService::where('customer_id', $customerId)->count();
+                if ($serviceLimit !== 999 && $existingServices >= $serviceLimit) {
+                    $this->alertMessage = 'You have reached your plan service limit. Please upgrade your package to add more services.';
+                    $this->alertType    = 'error';
+                    return;
+                }
+            }
+        }
+
+        // Duplicate check (skip title check when editing same service)
+        $dupQuery = SellerService::where('customer_id', $customerId)
             ->where('title', trim($this->title))
-            ->where('status', '!=', 'draft')
-            ->exists()) {
+            ->where('status', '!=', 'draft');
+        if ($this->isEditMode) {
+            $dupQuery->where('id', '!=', $this->editId);
+        }
+        if ($dupQuery->exists()) {
             $this->alertMessage = '⚠️ You already have a service with this name.';
             $this->alertType    = 'error';
             return;
@@ -335,19 +427,41 @@ class ServiceAdd extends Component
                 if ($p) $galleryPaths[] = $p;
             }
 
-            $service = SellerService::create(
-                $this->buildData($customerId, 'pending', $coverPath, $galleryPaths, $pdfPath)
-            );
+            $data = $this->buildData($customerId, 'pending', $coverPath, $galleryPaths, $pdfPath);
 
-            if (!$service?->exists) {
-                $this->alertMessage = 'Service could not be saved. Please try again.';
-                $this->alertType    = 'error';
-                return;
+            if ($this->isEditMode && $this->editId) {
+                // UPDATE existing service
+                $service = SellerService::where('id', $this->editId)
+                    ->where('customer_id', $customerId)
+                    ->first();
+                if ($service) {
+                    // Keep existing cover image if no new one uploaded
+                    if (!$coverPath) {
+                        $data['cover_image'] = $this->existingCoverImage ?: null;
+                    }
+                    // Keep existing brochure if no new one uploaded
+                    if (!$pdfPath) {
+                        $inc = json_decode($data['inclusions'], true) ?? [];
+                        $inc['brochure_pdf'] = $this->existingBrochurePath ?: null;
+                        $data['inclusions'] = json_encode($inc);
+                    }
+                    $service->update($data);
+                }
+            } else {
+                // CREATE new service
+                $service = SellerService::create($data);
+                if (!$service?->exists) {
+                    $this->alertMessage = 'Service could not be saved. Please try again.';
+                    $this->alertType    = 'error';
+                    return;
+                }
             }
 
             $this->reset();
             redirect()->route('my-listings')
-                ->with('message', '✅ Service submitted for review! Goes live once approved by admin.');
+                ->with('message', $this->isEditMode
+                    ? '✅ Service updated successfully!'
+                    : '✅ Service submitted for review! Goes live once approved by admin.');
 
         } catch (\Illuminate\Database\QueryException $dbEx) {
             $this->alertMessage = 'Database error: ' . $dbEx->getMessage();

@@ -272,7 +272,7 @@
 
     <div style="margin-left:auto;" class="ml-search-wrap">
       <i class="bi bi-search ml-search-icon"></i>
-      <input wire:model.debounce.400ms="search" class="ml-search"
+      <input wire:model.live.debounce.400ms="search" class="ml-search"
              placeholder="Search listings...">
     </div>
   </div>
@@ -295,71 +295,92 @@
         </tr>
       </thead>
       <tbody>
+        {{-- JS Map to hold item data — avoids ALL HTML attribute escaping issues --}}
+        <script>window._listingItems = window._listingItems || {};</script>
         @forelse($listings as $item)
-        <tr>
+        @php
+            $rowKey = $item['type'] . '_' . $item['id'];
+            $awsBase = config('app.pub_aws_url', '');
+            $imgPath = $item['image'] ?? null;
+            $fullImgUrl = $imgPath
+                ? (str_starts_with($imgPath,'http') ? $imgPath
+                    : ($awsBase ? rtrim($awsBase,'/') . '/' . $imgPath : asset('storage/' . $imgPath)))
+                : null;
+            $itemData = json_encode([
+                'id'             => $item['id'],
+                'type'           => $item['type'],
+                'title'          => $item['title'] ?? '',
+                'brand_name'     => $item['brand_name'] ?? '',
+                'description'    => $item['description'] ?? '',
+                'image'          => $fullImgUrl,
+                'status'         => $item['status'],
+                'price'          => $item['price'] ?? '—',
+                'meta'           => $item['meta'] ?? '',
+                'keywords'       => $item['keywords'] ?? '',
+                'certifications' => $item['certifications'] ?? '',
+                'lead_time'      => $item['lead_time'] ?? '',
+                'supply_ability' => $item['supply_ability'] ?? '',
+                'country_of_origin' => $item['country_of_origin'] ?? '',
+                'rejection_reason'  => $item['rejection_reason'] ?? '',
+                'edit_route'     => $item['edit_route'] ?? '#',
+                'created_at'     => $item['created_at']
+                    ? \Carbon\Carbon::parse($item['created_at'])->format('Y-m-d')
+                    : null,
+            ], JSON_UNESCAPED_UNICODE);
+        @endphp
+        <script>window._listingItems['{{ $rowKey }}'] = {!! $itemData !!};</script>
+        <tr wire:key="{{ $rowKey }}">
           <td style="color:#94a3b8;font-size:.75rem;font-weight:600;">
             {{ $listings->firstItem() + $loop->index }}
           </td>
 
           <td>
-            @php
-              $imgSrc = null;
-              if ($item->image) {
-                  if (str_starts_with($item->image, 'http')) {
-                      $imgSrc = $item->image; // S3 or absolute URL
-                  } elseif (str_starts_with($item->image, 'uploads/')) {
-                      // Stored as 'uploads/product/xxx.jpg' — try S3 URL config first
-                      $awsBase = config('app.pub_aws_url');
-                      $imgSrc  = $awsBase ? rtrim($awsBase,'/').'/'.$item->image : asset('storage/'.$item->image);
-                  } else {
-                      $imgSrc = asset('storage/' . $item->image);
-                  }
-              }
-            @endphp
-            @if($imgSrc)
-              <img src="{{ $imgSrc }}" class="ml-thumb"
+            @if($fullImgUrl)
+              <img src="{{ $fullImgUrl }}" class="ml-thumb"
                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
               <div class="ml-thumb-placeholder" style="display:none;">
-                {{ $item->type === 'product' ? '📦' : '🛠️' }}
+                {{ $item['type'] === 'product' ? '📦' : '🛠️' }}
               </div>
             @else
               <div class="ml-thumb-placeholder">
-                {{ $item->type === 'product' ? '📦' : '🛠️' }}
+                {{ $item['type'] === 'product' ? '📦' : '🛠️' }}
               </div>
             @endif
           </td>
 
           <td>
             <div style="font-weight:700;color:#0f172a;font-size:.86rem;line-height:1.3;">
-              {{ Str::limit($item->title, 55) }}
+              {{ Str::limit($item['title'], 55) }}
             </div>
           </td>
 
           <td>
-            <span class="ml-type-badge {{ $item->type === 'product' ? 'type-product' : 'type-service' }}">
-              {{ $item->type === 'product' ? '📦 Product' : '🛠️ Service' }}
+            <span class="ml-type-badge {{ $item['type'] === 'product' ? 'type-product' : 'type-service' }}">
+              {{ $item['type'] === 'product' ? '📦 Product' : '🛠️ Service' }}
             </span>
           </td>
 
           <td>
-            <span style="font-weight:700;color:#059669;font-size:.84rem;">{{ $item->price }}</span>
+            <span style="font-weight:700;color:#059669;font-size:.84rem;">{{ $item['price'] }}</span>
           </td>
 
           <td style="font-size:.76rem;color:#64748b;max-width:160px;">
-            {{ $item->meta }}
+            {{ $item['meta'] }}
           </td>
 
           <td>
             @php
-              $statusClass = match($item->status) {
+              $statusClass = match($item['status']) {
                 'approved' => 'st-approved',
                 'rejected' => 'st-rejected',
+                'draft'    => 'st-draft',
                 'inactive' => 'st-inactive',
                 default    => 'st-pending',
               };
-              $statusLabel = match($item->status) {
+              $statusLabel = match($item['status']) {
                 'approved' => '✅ Approved',
                 'rejected' => '❌ Rejected',
+                'draft'    => '📝 Draft',
                 'inactive' => '⏸ Inactive',
                 default    => '⏳ Pending',
               };
@@ -368,30 +389,30 @@
           </td>
 
           <td style="font-size:.76rem;color:#94a3b8;white-space:nowrap;">
-            {{ $item->created_at ? \Carbon\Carbon::parse($item->created_at)->format('d M Y') : '—' }}
+            {{ $item['created_at'] ? \Carbon\Carbon::parse($item['created_at'])->format('d M Y') : '—' }}
           </td>
 
           <td>
             <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
                 
                 {{-- Publish / Resubmit Button for Products --}}
-                @if($item->type === 'product' && in_array($item->status, ['draft', 'pending', 'rejected']))
-                    @if($item->status === 'draft')
+                @if($item['type'] === 'product' && in_array($item['status'], ['draft', 'pending', 'rejected']))
+                    @if($item['status'] === 'draft')
                         <button class="btn-publish-now"
-                            wire:click="publishProduct({{ $item->id }})"
+                            wire:click="publishProduct({{ $item['id'] }})"
                             wire:confirm="Submit this product for admin review?"
                             title="Submit for admin review">
                             <i class="bi bi-send-fill" style="font-size:.75rem;"></i> Publish
                         </button>
-                    @elseif($item->status === 'rejected')
+                    @elseif($item['status'] === 'rejected')
                         <button class="btn-publish-now" 
                             style="border-color:#f59e0b; background:#fffbeb; color:#92400e;"
-                            wire:click="publishProduct({{ $item->id }})"
+                            wire:click="publishProduct({{ $item['id'] }})"
                             wire:confirm="Re-submit this product for review?"
                             title="Re-submit for review">
                             <i class="bi bi-arrow-clockwise" style="font-size:.75rem;"></i> Resubmit
                         </button>
-                    @elseif($item->status === 'pending')
+                    @elseif($item['status'] === 'pending')
                         <span class="ml-status st-pending" style="font-size:.72rem; padding:4px 10px;">
                             ⏳ Under Review
                         </span>
@@ -400,38 +421,35 @@
 
                 {{-- View Detail Button --}}
                 <button class="btn-view-detail"
-                    data-item="{{ htmlspecialchars(json_encode([
-                        'id'         => $item->id,
-                        'type'       => $item->type,
-                        'title'      => $item->title,
-                        'image'      => $item->image,
-                        'status'     => $item->status,
-                        'price'      => $item->price,
-                        'meta'       => $item->meta,
-                        'edit_route' => $item->edit_route,
-                        'created_at' => $item->created_at ? (string)$item->created_at : null,
-                    ]), ENT_QUOTES, 'UTF-8') }}"
-                    onclick="openListingDetail(this)"
+                    onclick="openListingDetail('{{ $rowKey }}')"
                     title="View full details">
                     <i class="bi bi-eye" style="font-size:.78rem;"></i>
                 </button>
 
-                {{-- Edit Button --}}
-                <a href="{{ $item->edit_route }}" class="btn-edit" title="Edit listing">
-                    <i class="bi bi-pencil" style="font-size:.78rem;"></i>
-                </a>
+                {{-- Edit Button — disabled for approved listings --}}
+                @if($item['status'] === 'approved')
+                    <span class="btn-edit"
+                        title="Approved listings cannot be edited"
+                        style="opacity:.35;cursor:not-allowed;pointer-events:none;">
+                        <i class="bi bi-pencil" style="font-size:.78rem;"></i>
+                    </span>
+                @else
+                    <a href="{{ $item['edit_route'] }}" class="btn-edit" title="Edit listing">
+                        <i class="bi bi-pencil" style="font-size:.78rem;"></i>
+                    </a>
+                @endif
 
                 {{-- Delete Button --}}
-                @if($item->type === 'product')
+                @if($item['type'] === 'product')
                     <button class="btn-del"
-                        wire:click="deleteProduct({{ $item->id }})"
+                        wire:click="deleteProduct({{ $item['id'] }})"
                         onclick="return confirm('Delete this product? Permanently remove this listing?')"
                         title="Delete product">
                         <i class="bi bi-trash" style="font-size:.78rem;"></i>
                     </button>
                 @else
                     <button class="btn-del"
-                        wire:click="deleteService({{ $item->id }})"
+                        wire:click="deleteService({{ $item['id'] }})"
                         onclick="return confirm('Delete this service? Permanently remove this listing?')"
                         title="Delete service">
                         <i class="bi bi-trash" style="font-size:.78rem;"></i>
@@ -496,12 +514,13 @@
 </div>
 
 <script>
-function openListingDetail(btn) {
+function openListingDetail(rowKey) {
     var item;
     try {
-        item = JSON.parse(btn.getAttribute('data-item'));
+        item = window._listingItems[rowKey];
+        if (!item) throw new Error('Item not found: ' + rowKey);
     } catch(e) {
-        console.error('View drawer parse error:', e);
+        console.error('View drawer error:', e);
         alert('Could not load item details. Check console.');
         return;
     }
@@ -579,10 +598,29 @@ function openListingDetail(btn) {
     var card = document.createElement('div');
     card.style.cssText = 'background:#f8fafc;border-radius:10px;padding:1rem;margin-bottom:1rem;border:1px solid #e8ecf4;';
 
+    // Title
     addField(card, 'Title', item.title || '—', 'font-size:.95rem;font-weight:700;color:#0f172a;');
-    
+
+    // Brand (products only)
+    if (item.brand_name) {
+        var brandWrap = document.createElement('div');
+        brandWrap.style.cssText = 'margin-bottom:.5rem;';
+        brandWrap.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px;">Brand</span>' +
+            '<span style="font-size:.78rem;font-weight:700;background:#fef3c7;color:#92400e;padding:2px 10px;border-radius:20px;display:inline-block;">' + item.brand_name + '</span>';
+        card.appendChild(brandWrap);
+    }
+
+    // Description
+    if (item.description) {
+        var descDiv = document.createElement('div');
+        descDiv.style.cssText = 'margin-bottom:.75rem;';
+        descDiv.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;">Description</span>' +
+            '<div style="font-size:.82rem;color:#334155;line-height:1.6;max-height:100px;overflow-y:auto;background:#fff;border-radius:7px;padding:.5rem .75rem;border:1px solid #e8ecf4;">' + item.description + '</div>';
+        card.appendChild(descDiv);
+    }
+
     var grid = document.createElement('div');
-    grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.5rem;';
+    grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.25rem;';
 
     // Type
     var typeEl = document.createElement('div');
@@ -590,7 +628,7 @@ function openListingDetail(btn) {
         '<span style="font-size:.82rem;font-weight:600;color:#1e293b;">' + (item.type === 'product' ? '📦 Product' : '🛠️ Service') + '</span>';
     grid.appendChild(typeEl);
 
-    // Status badge
+    // Status
     var stEl = document.createElement('div');
     stEl.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px;">Status</span>' +
         '<span style="font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;background:' + st.bg + ';color:' + st.color + ';">' + st.label + '</span>';
@@ -602,20 +640,71 @@ function openListingDetail(btn) {
         '<span style="font-size:.9rem;font-weight:700;color:#059669;">' + (item.price || '—') + '</span>';
     grid.appendChild(prEl);
 
-    // Details
+    // Details (MOQ / Service Type)
     var dtEl = document.createElement('div');
     dtEl.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px;">Details</span>' +
         '<span style="font-size:.82rem;font-weight:600;color:#1e293b;">' + (item.meta || '—') + '</span>';
     grid.appendChild(dtEl);
 
-    // Date
+    // Lead Time / Turnaround
+    if (item.lead_time) {
+        var ltEl = document.createElement('div');
+        ltEl.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px;">' +
+            (item.type === 'product' ? 'Lead Time' : 'Turnaround') + '</span>' +
+            '<span style="font-size:.82rem;font-weight:600;color:#1e293b;">⏱ ' + item.lead_time + '</span>';
+        grid.appendChild(ltEl);
+    }
+
+    // Supply Ability / Service Area
+    if (item.supply_ability) {
+        var saEl = document.createElement('div');
+        saEl.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px;">' +
+            (item.type === 'product' ? 'Supply / Month' : 'Service Area') + '</span>' +
+            '<span style="font-size:.82rem;font-weight:600;color:#1e293b;">🏭 ' + item.supply_ability + '</span>';
+        grid.appendChild(saEl);
+    }
+
+    // Country of Origin (products)
+    if (item.country_of_origin) {
+        var coEl = document.createElement('div');
+        coEl.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px;">Made In</span>' +
+            '<span style="font-size:.82rem;font-weight:600;color:#1e293b;">🌍 ' + item.country_of_origin + '</span>';
+        grid.appendChild(coEl);
+    }
+
+    // Date Added
     var dateStr = item.created_at ? item.created_at.substring(0,10) : '—';
     var daEl = document.createElement('div');
     daEl.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px;">Date Added</span>' +
-        '<span style="font-size:.82rem;font-weight:600;color:#1e293b;">' + dateStr + '</span>';
+        '<span style="font-size:.82rem;font-weight:600;color:#1e293b;">📅 ' + dateStr + '</span>';
     grid.appendChild(daEl);
 
     card.appendChild(grid);
+
+    // Certifications
+    if (item.certifications) {
+        var certDiv = document.createElement('div');
+        certDiv.style.cssText = 'margin-top:.75rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:.4rem .75rem;font-size:.78rem;color:#065f46;font-weight:600;';
+        certDiv.innerHTML = '🏅 ' + item.certifications;
+        card.appendChild(certDiv);
+    }
+
+    // Keywords
+    if (item.keywords) {
+        var kwDiv = document.createElement('div');
+        kwDiv.style.cssText = 'margin-top:.5rem;font-size:.74rem;color:#64748b;';
+        kwDiv.innerHTML = '<i class="bi bi-tags me-1"></i>' + item.keywords;
+        card.appendChild(kwDiv);
+    }
+
+    // Rejection reason
+    if (item.rejection_reason && item.status === 'rejected') {
+        var rjDiv = document.createElement('div');
+        rjDiv.style.cssText = 'margin-top:.75rem;background:#fee2e2;border:1px solid #fca5a5;border-radius:7px;padding:.5rem .75rem;font-size:.78rem;color:#991b1b;font-weight:600;';
+        rjDiv.innerHTML = '<i class="bi bi-x-circle me-1"></i><strong>Rejected:</strong> ' + item.rejection_reason;
+        card.appendChild(rjDiv);
+    }
+
     body.appendChild(card);
 
     // Action buttons
@@ -640,12 +729,19 @@ function openListingDetail(btn) {
         actions.appendChild(pubBtn);
     }
 
-    // Edit button
-    var editBtn = document.createElement('a');
-    editBtn.href = item.edit_route;
-    editBtn.style.cssText = 'flex:1;min-width:120px;display:flex;align-items:center;justify-content:center;gap:6px;padding:.55rem 1rem;background:#1d4ed8;color:#fff;border-radius:10px;font-size:.84rem;font-weight:700;text-decoration:none;';
-    editBtn.innerHTML = '<i class="bi bi-pencil"></i> Edit Listing';
-    actions.appendChild(editBtn);
+    // Edit button — hidden for approved listings
+    if (item.status !== 'approved') {
+        var editBtn = document.createElement('a');
+        editBtn.href = item.edit_route;
+        editBtn.style.cssText = 'flex:1;min-width:120px;display:flex;align-items:center;justify-content:center;gap:6px;padding:.55rem 1rem;background:#1d4ed8;color:#fff;border-radius:10px;font-size:.84rem;font-weight:700;text-decoration:none;';
+        editBtn.innerHTML = '<i class="bi bi-pencil"></i> Edit Listing';
+        actions.appendChild(editBtn);
+    } else {
+        var lockedMsg = document.createElement('div');
+        lockedMsg.style.cssText = 'flex:1;padding:.55rem 1rem;background:#d1fae5;color:#065f46;border-radius:10px;font-size:.82rem;font-weight:600;text-align:center;border:1px solid #6ee7b7;';
+        lockedMsg.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Approved — contact support to edit';
+        actions.appendChild(lockedMsg);
+    }
 
     body.appendChild(actions);
 

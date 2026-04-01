@@ -126,7 +126,12 @@
 
 {{-- Step bar --}}
 <div class="pa-stepbar">
-  <div class="pa-steps">
+  <div class="pa-steps" style="align-items:center;">
+    @if($isEditMode)
+    <div style="font-size:.78rem;font-weight:700;color:#059669;padding:.4rem 1.2rem;background:#d1fae5;border-radius:20px;white-space:nowrap;margin-right:1rem;display:flex;align-items:center;gap:.4rem;">
+      <i class="bi bi-pencil-square"></i> Editing Product
+    </div>
+    @endif
     @foreach([
       1 => ['bi-tag-fill',     'Basic Info'],
       2 => ['bi-images',       'Photos & Media'],
@@ -184,7 +189,8 @@
 
           <div class="mb-3">
             <label class="pa-label">Product Title *</label>
-            <input class="pa-input" wire:model.lazy="title"
+            <input class="pa-input"
+              wire:model="title"
               placeholder="e.g. Stainless Steel Insulated Water Bottle 1L — BPA Free">
             <div class="pa-hint">Be specific. Include material, size, key feature.</div>
             @error('title')<div class="pa-err">{{ $message }}</div>@enderror
@@ -196,48 +202,53 @@
               <span style="font-size:.68rem;background:#fef3c7;color:#92400e;padding:1px 7px;border-radius:20px;margin-left:6px;font-weight:700;">Store Page</span>
             </label>
             <div class="brand-wrap">
-              <input class="pa-input" wire:model.lazy="brand_name"
+              <input class="pa-input"
+                wire:model="brand_name"
                 placeholder="e.g. Fastrack, Milton, Bosch, or your company name">
             </div>
             <div class="pa-hint">Buyers can browse all products from this brand on one page — like Amazon stores.</div>
           </div>
 
           {{-- Rich text description --}}
-          <div class="mb-3" wire:ignore>
+          {{-- wire:ignore wraps ONLY the contenteditable area — NOT the hidden input --}}
+          <div class="mb-3">
             <label class="pa-label">Product Description *</label>
             <div class="pa-tip">
               💡 Describe features, materials, applications, benefits. Buyers read this before sending enquiries.
             </div>
 
-            {{-- Toolbar --}}
-            <div class="editor-toolbar">
-              <button type="button" onclick="fmt('bold')" title="Bold"><i class="fas fa-bold"></i></button>
-              <button type="button" onclick="fmt('italic')" title="Italic"><i class="fas fa-italic"></i></button>
-              <button type="button" onclick="fmt('underline')" title="Underline"><i class="fas fa-underline"></i></button>
-              <button type="button" onclick="fmt('insertUnorderedList')" title="Bullet List"><i class="fas fa-list-ul"></i></button>
-              <button type="button" onclick="fmt('insertOrderedList')" title="Numbered List"><i class="fas fa-list-ol"></i></button>
-              <select onchange="if(this.value){document.execCommand('formatBlock',false,this.value);syncEditor();this.value=''}"
-                style="max-width:90px;">
-                <option value="">Heading</option>
-                <option value="h3">H3</option>
-                <option value="h4">H4</option>
-                <option value="p">Paragraph</option>
-              </select>
-              <button type="button" onclick="fmt('justifyLeft')" title="Left"><i class="fas fa-align-left"></i></button>
-              <button type="button" onclick="fmt('justifyCenter')" title="Center"><i class="fas fa-align-center"></i></button>
-              <button type="button" id="toggleCodeBtn" onclick="toggleCode()" title="HTML" style="font-size:.7rem;font-weight:700;">
-                &lt;/&gt; HTML
-              </button>
+            {{-- wire:ignore prevents Livewire from wiping the contenteditable on re-render --}}
+            <div wire:ignore>
+              {{-- Toolbar --}}
+              <div class="editor-toolbar">
+                <button type="button" onclick="fmt('bold')" title="Bold"><i class="fas fa-bold"></i></button>
+                <button type="button" onclick="fmt('italic')" title="Italic"><i class="fas fa-italic"></i></button>
+                <button type="button" onclick="fmt('underline')" title="Underline"><i class="fas fa-underline"></i></button>
+                <button type="button" onclick="fmt('insertUnorderedList')" title="Bullet List"><i class="fas fa-list-ul"></i></button>
+                <button type="button" onclick="fmt('insertOrderedList')" title="Numbered List"><i class="fas fa-list-ol"></i></button>
+                <select onchange="if(this.value){document.execCommand('formatBlock',false,this.value);paSync();this.value=''}"
+                  style="max-width:90px;">
+                  <option value="">Heading</option>
+                  <option value="h3">H3</option>
+                  <option value="h4">H4</option>
+                  <option value="p">Paragraph</option>
+                </select>
+                <button type="button" onclick="fmt('justifyLeft')" title="Left"><i class="fas fa-align-left"></i></button>
+                <button type="button" onclick="fmt('justifyCenter')" title="Center"><i class="fas fa-align-center"></i></button>
+                <button type="button" id="toggleCodeBtn" onclick="toggleCode()" title="HTML" style="font-size:.7rem;font-weight:700;">
+                  &lt;/&gt; HTML
+                </button>
+              </div>
+              {{-- Editor — data-initial carries the existing description safely --}}
+              <div id="pa-editor" class="editor-content" contenteditable="true"
+                data-initial="{{ htmlspecialchars($description ?? '', ENT_QUOTES, 'UTF-8') }}"
+                placeholder="Start writing product description..."></div>
+              {{-- HTML code view --}}
+              <textarea id="pa-code" class="pa-textarea" style="display:none;border-radius:0 0 10px 10px;border-top:none;font-family:monospace;font-size:.78rem;"
+                placeholder="Edit raw HTML..."></textarea>
             </div>
 
-            {{-- Editor --}}
-            <div id="pa-editor" class="editor-content" contenteditable="true"
-              placeholder="Start writing product description..."></div>
-
-            {{-- HTML code view --}}
-            <textarea id="pa-code" class="pa-textarea" style="display:none;border-radius:0 0 10px 10px;border-top:none;font-family:monospace;font-size:.78rem;"
-              placeholder="Edit raw HTML..."></textarea>
-
+            {{-- Hidden input OUTSIDE wire:ignore so Livewire CAN read it --}}
             <input type="hidden" id="pa-desc-hidden" wire:model="description">
             @error('description')<div class="pa-err">{{ $message }}</div>@enderror
           </div>
@@ -245,7 +256,8 @@
           {{-- Keywords --}}
           <div>
             <label class="pa-label">Search Keywords / Tags</label>
-            <input class="pa-input" wire:model.lazy="keywords"
+            <input class="pa-input"
+              wire:model="keywords"
               placeholder="e.g. stainless steel bottle, BPA free, insulated, 1 litre flask">
             <div class="pa-hint">Separate with commas. Helps buyers find your product via search.</div>
           </div>
@@ -316,9 +328,32 @@
           </div>
 
           @if($product_img)
-            <img src="{{ $product_img->temporaryUrl() }}" class="img-preview-main mb-3">
+            {{-- New image just selected --}}
+            <img src="{{ $product_img->temporaryUrl() }}"
+              class="img-preview-main mb-2"
+              style="max-height:300px;object-fit:contain;background:#f8fafc;padding:8px;border-radius:12px;display:block;">
             <label for="mainImg" style="font-size:.78rem;color:#7c3aed;font-weight:700;cursor:pointer;display:inline-block;">
               <i class="bi bi-arrow-repeat me-1"></i> Change Image
+            </label>
+          @elseif($isEditMode && $existingImagePath)
+            {{-- Show saved image in edit mode --}}
+            @php
+              $existImg = str_starts_with($existingImagePath,'http')
+                  ? $existingImagePath
+                  : (config('app.pub_aws_url')
+                      ? rtrim(config('app.pub_aws_url'),'/') . '/' . $existingImagePath
+                      : asset('storage/' . $existingImagePath));
+            @endphp
+            <div style="margin-bottom:.75rem;">
+              <img src="{{ $existImg }}"
+                style="max-height:220px;object-fit:contain;border-radius:12px;border:1.5px solid #e5e9f2;padding:8px;background:#f8fafc;display:block;"
+                onerror="this.style.display='none'">
+              <div style="font-size:.76rem;color:#059669;font-weight:600;margin-top:.4rem;">
+                <i class="bi bi-check-circle-fill me-1"></i> Current image — upload new one to replace
+              </div>
+            </div>
+            <label for="mainImg" style="font-size:.78rem;color:#7c3aed;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;padding:.4rem .85rem;border:1.5px solid #7c3aed;border-radius:8px;background:#faf5ff;">
+              <i class="bi bi-arrow-repeat"></i> Replace Image
             </label>
           @else
             <label for="mainImg" class="img-drop-zone d-block">
@@ -660,7 +695,9 @@
       {{-- ── Navigation buttons ── --}}
       <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0 2rem;">
         @if($activeStep > 1)
-          <button type="button" class="btn-prev" wire:click.prevent="prevStep">
+          <button type="button" class="btn-prev"
+            wire:click="prevStep"
+            onclick="paSync()">
             ← Previous
           </button>
         @else
@@ -668,7 +705,11 @@
         @endif
 
         @if($activeStep < $totalSteps)
-          <button type="button" class="btn-next" wire:click.prevent="nextStep" wire:loading.attr="disabled">
+          <button type="button" class="btn-next"
+            wire:loading.attr="disabled"
+            wire:target="nextStep"
+            wire:click="nextStep"
+            onclick="paSync()">
             <span wire:loading.remove wire:target="nextStep">Continue → Step {{ $activeStep + 1 }}</span>
             <span wire:loading wire:target="nextStep">
               <i class="bi bi-arrow-repeat me-1"></i> Moving...
@@ -692,19 +733,23 @@
               </span>
             </button>
 
-            {{-- Publish — disabled after first click to prevent double submit --}}
+            {{-- Publish / Save Changes --}}
             <button type="submit"
               class="btn-publish"
               wire:loading.attr="disabled"
               wire:target="submit"
               wire:click="generateSlug"
-              onclick="this.disabled=true;this.innerHTML='<i class=\'bi bi-arrow-repeat me-1\'></i> Submitting...';this.closest('form').requestSubmit();"
-              title="Submit for admin review — goes live once approved">
+              onclick="paSync(); this.disabled=true; this.closest('form').requestSubmit();"
+              title="{{ $isEditMode ? 'Save changes' : 'Submit for admin review' }}">
               <span wire:loading.remove wire:target="submit">
-                <i class="bi bi-send-fill"></i> Submit for Review
+                @if($isEditMode)
+                  <i class="bi bi-check-circle-fill"></i> Save Changes
+                @else
+                  <i class="bi bi-send-fill"></i> Submit for Review
+                @endif
               </span>
               <span wire:loading wire:target="submit">
-                <i class="bi bi-arrow-repeat me-1"></i> Submitting...
+                <i class="bi bi-arrow-repeat me-1"></i> {{ $isEditMode ? 'Saving...' : 'Submitting...' }}
               </span>
             </button>
 
@@ -721,8 +766,21 @@
       <div class="preview-card">
         <div class="preview-img-wrap">
           @if($product_img)
+            {{-- New image just uploaded --}}
             <img src="{{ $product_img->temporaryUrl() }}"
               style="width:100%;height:200px;object-fit:contain;background:#f8fafc;padding:8px;display:block;">
+          @elseif($isEditMode && $existingImagePath)
+            {{-- Existing saved image in edit mode --}}
+            @php
+              $prevImg = str_starts_with($existingImagePath,'http')
+                  ? $existingImagePath
+                  : (config('app.pub_aws_url')
+                      ? rtrim(config('app.pub_aws_url'),'/') . '/' . $existingImagePath
+                      : asset('storage/' . $existingImagePath));
+            @endphp
+            <img src="{{ $prevImg }}"
+              style="width:100%;height:200px;object-fit:contain;background:#f8fafc;padding:8px;display:block;"
+              onerror="this.style.display='none'">
           @else
             <div style="width:100%;height:200px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);
               display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;">
@@ -730,7 +788,7 @@
               <span style="font-size:.75rem;color:#94a3b8;">Image preview</span>
             </div>
           @endif
-          <span class="preview-live-badge">PREVIEW</span>
+          <span class="preview-live-badge">{{ $isEditMode ? 'EDITING' : 'PREVIEW' }}</span>
         </div>
 
         <div class="preview-body">
@@ -819,43 +877,43 @@
 
 <livewire:seller.layout.footer />
 
+@script
 <script>
-// ── Rich text editor ──────────────────────────────────────
-document.addEventListener('DOMContentLoaded', function() {
+// paSync: syncs editor HTML → hidden input → Livewire wire:model
+window.paSync = function() {
+    var editor = document.getElementById('pa-editor');
+    var hidden  = document.getElementById('pa-desc-hidden');
+    if (editor && hidden) {
+        hidden.value = editor.innerHTML;
+        var ev = new Event('input'); ev.bubbles = true; hidden.dispatchEvent(ev);
+    }
+};
+
+// initEditor: called after Livewire renders — safe to set innerHTML here
+function initEditor() {
     const editor = document.getElementById('pa-editor');
-    const hidden = document.getElementById('pa-desc-hidden');
     const code   = document.getElementById('pa-code');
     if (!editor) return;
+    if (editor._paInited) return; // don't reinit if already done
+    editor._paInited = true;
 
-    // Load existing content
-    editor.innerHTML = @json($description ?? '');
+    // Read existing description from data-initial HTML attribute
+    const initial = editor.getAttribute('data-initial') || '';
+    editor.innerHTML = initial;
 
-    // Sync hidden input on every keystroke (no Livewire re-render)
-    function syncEditor() {
-        if (hidden) {
-            hidden.value = editor.innerHTML;
-        }
-    }
-    editor.addEventListener('input', syncEditor);
-
-    // Only push to Livewire on blur (when user leaves the field)
-    // This prevents cursor-jumping caused by Livewire re-renders on every keystroke
-    editor.addEventListener('blur', function() {
-        if (hidden) {
-            hidden.value = editor.innerHTML;
-            @this.set('description', editor.innerHTML, false);
-        }
-    });
+    editor.addEventListener('input', paSync);
+    editor.addEventListener('blur',  paSync);
 
     window.fmt = function(cmd) {
         document.execCommand('styleWithCSS', false, true);
         document.execCommand(cmd, false, null);
-        editor.dispatchEvent(new Event('input'));
+        editor.focus();
+        paSync();
     };
 
-    let codeMode = false;
     window.toggleCode = function() {
-        if (!codeMode) {
+        if (!code) return;
+        if (editor.style.display !== 'none') {
             code.value = editor.innerHTML;
             editor.style.display = 'none';
             code.style.display   = 'block';
@@ -863,15 +921,31 @@ document.addEventListener('DOMContentLoaded', function() {
             editor.innerHTML     = code.value;
             editor.style.display = 'block';
             code.style.display   = 'none';
-            syncEditor();
+            paSync();
         }
-        codeMode = !codeMode;
     };
 
-    code.addEventListener('input', function() {
-        editor.innerHTML = code.value;
-        syncEditor();
-    });
-});
+    if (code) {
+        code.addEventListener('input', function() {
+            editor.innerHTML = code.value;
+            paSync();
+        });
+    }
+}
+
+// Run after Livewire finishes rendering (works for both initial load and re-renders)
+document.addEventListener('livewire:navigated', initEditor);
+document.addEventListener('livewire:initialized', initEditor);
+
+// Fallback: also run on DOMContentLoaded (covers non-Livewire-navigate page loads)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initEditor);
+} else {
+    initEditor();
+}
+
+// Sync before every Livewire network request
+document.addEventListener('livewire:before-request', paSync);
 </script>
+@endscript
 </div>

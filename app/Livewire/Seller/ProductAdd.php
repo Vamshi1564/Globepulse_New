@@ -83,7 +83,93 @@ class ProductAdd extends Component
     public int $activeStep = 1;
     public int $totalSteps = 4;
 
+    // ── Edit mode ─────────────────────────────────────────────
+    public ?int  $editId            = null;
+    public bool  $isEditMode        = false;
+    public string $existingImagePath = '';  // saved product_img path for edit
+
     // ─────────────────────────────────────────────────────────
+    public function mount(): void
+    {
+        $editId = request()->query('edit');
+        if (!$editId) return;
+
+        $customerId = Session::get('id')
+            ?? Session::get('customer_id')
+            ?? (auth()->check() ? auth()->id() : null);
+
+        // Fallback for new seller system
+        if (!$customerId && Session::get('seller_email')) {
+            $customer = Customer::where('email', Session::get('seller_email'))->first();
+            $customerId = $customer?->id;
+            if ($customerId) Session::put('id', $customerId);
+        }
+
+        $product = Product::where('id', $editId)
+            ->where('customer_id', $customerId)
+            ->first();
+
+        if (!$product) return;
+
+        $this->editId    = (int) $editId;
+        $this->isEditMode = true;
+
+        // Step 1 — Basic Info
+        $this->title       = $product->title       ?? '';
+        $this->description = $product->description ?? '';
+        $this->brand_name  = $product->brand_name  ?? '';
+        $this->keywords    = $product->keywords    ?? '';
+
+        // Step 2 — Images
+        $this->existingImagePath = $product->product_img ?? '';
+        $this->product_video_url = $product->product_video_url ?? '';
+
+        // Load existing gallery
+        $gallery = Productgallery::where('product_id', $editId)->get();
+        // We store paths as strings for edit mode (not file objects)
+        $this->gallery_images = $gallery->pluck('gallery_images')->toArray();
+
+        // Step 3 — Pricing
+        if ($product->min_price && $product->max_price && $product->min_price != $product->max_price) {
+            $this->price_type = 'range';
+            $this->min_price  = $product->min_price;
+            $this->max_price  = $product->max_price;
+        } elseif ($product->min_price) {
+            $this->price_type  = 'fixed';
+            $this->fixed_price = $product->min_price;
+        }
+        $this->unit           = $product->unit          ?? 'Piece';
+        $this->min_order      = $product->min_order     ?? '';
+        $this->HSN            = $product->HSN           ?? '';
+        $this->business_type  = $product->business_type ?? '';
+        $this->supply_ability = $product->supply_ability ?? '';
+        $this->lead_time      = $product->lead_time     ?? '';
+        $this->payment_terms  = $product->payment_terms ?? '';
+        $this->port_of_dispatch  = $product->port_of_dispatch  ?? '';
+        $this->country_of_origin = $product->country_of_origin ?? 'India';
+
+        // Step 4 — Specs & SEO
+        $this->certifications    = $product->certifications    ?? '';
+        $this->packaging_details = $product->packaging_details ?? '';
+        $this->sample_available  = $product->sample_available  ?? 'no';
+        $this->sample_price      = $product->sample_price      ?? '';
+        $this->seo_title         = $product->seo_title         ?? '';
+        $this->seo_description   = $product->seo_description   ?? '';
+        $this->seo_keywords      = $product->seo_keywords      ?? '';
+
+        // Category
+        $this->category_id       = $product->category_id       ?? '';
+        $this->subcategory_id    = $product->subcategory_id    ?? '';
+        $this->sub_subcategory_id = $product->sub_subcategory_id ?? '';
+
+        if ($this->category_id) {
+            $this->subcategories = Subcategory::where('category_id', $this->category_id)->get();
+        }
+        if ($this->subcategory_id) {
+            $this->sub_subcategories = SubSubCategory::where('subcategory_id', $this->subcategory_id)->get();
+        }
+    }
+
     public function render()
     {
         $categories = Category::all();
@@ -129,9 +215,13 @@ class ProductAdd extends Component
         array_splice($this->document_list, $index, 1);
     }
 
+    // ── Sync description from JS editor before step change ────
+    public function syncDescription(string $html): void
+    {
+        $this->description = $html;
+    }
+
     // ── Step navigation ───────────────────────────────────────
-    // Steps navigate freely — NO validation on continue
-    // All validation happens only on final submit
     public function nextStep()
     {
         if ($this->activeStep < $this->totalSteps) {
@@ -265,7 +355,10 @@ class ProductAdd extends Component
             'description'    => 'required|string|min:20',
             'category_id'    => 'required',
             'subcategory_id' => 'required',
-            'product_img'    => 'required|image|mimes:webp,jpg,jpeg,png|max:4096',
+            // Image required only when adding new product, not when editing
+            'product_img'    => ($this->isEditMode && $this->existingImagePath)
+                                    ? 'nullable|image|mimes:webp,jpg,jpeg,png|max:4096'
+                                    : 'required|image|mimes:webp,jpg,jpeg,png|max:4096',
             'price_type'     => 'required|in:range,fixed,negotiable,quote',
             'min_price'      => 'required_if:price_type,range|nullable|numeric|min:0',
             'max_price'      => 'required_if:price_type,range|nullable|numeric|gte:min_price',
@@ -341,25 +434,31 @@ class ProductAdd extends Component
                 }
             }
 
-            // Check for duplicate product title by same seller
-            $duplicate = Product::where('customer_id', $customerId)
+            // Check for duplicate product title (exclude self in edit mode)
+            $dupQuery = Product::where('customer_id', $customerId)
                 ->where('title', $this->title)
-                ->where('status', '!=', 3) // allow draft with same name
-                ->exists();
-            if ($duplicate) {
+                ->where('status', '!=', 3);
+            if ($this->isEditMode) $dupQuery->where('id', '!=', $this->editId);
+            if ($dupQuery->exists()) {
                 session()->flash('error', '⚠️ You already have a product with this name. Please use a different title.');
                 return;
             }
 
-            // Upload main image
-            $ext        = $this->product_img->getClientOriginalExtension();
-            $baseName   = Str::slug(pathinfo($this->product_img->getClientOriginalName(), PATHINFO_FILENAME));
-            $uniqueName = $baseName . '-' . rand(1000, 999999) . '.' . $ext;
-            $this->product_img->storeAs('public/uploads/product', $uniqueName, 's3');
-            $imagePath = 'uploads/product/' . $uniqueName;
+            // Upload new image (or keep existing in edit mode)
+            if ($this->product_img && is_object($this->product_img)) {
+                $ext        = $this->product_img->getClientOriginalExtension();
+                $baseName   = Str::slug(pathinfo($this->product_img->getClientOriginalName(), PATHINFO_FILENAME));
+                $uniqueName = $baseName . '-' . rand(1000, 999999) . '.' . $ext;
+                $this->product_img->storeAs('public/uploads/product', $uniqueName, 's3');
+                $imagePath = 'uploads/product/' . $uniqueName;
+            } else {
+                $imagePath = $this->existingImagePath ?: null;
+            }
 
-            // Auto-generate slug
-            $slug = Str::slug($this->title) . '-' . rand(100, 999999);
+            // Auto-generate slug (only for new products)
+            $slug = $this->isEditMode
+                ? (Product::find($this->editId)?->slug ?? Str::slug($this->title) . '-' . rand(100, 999999))
+                : Str::slug($this->title) . '-' . rand(100, 999999);
 
             // Determine price values
             $minPrice = $this->price_type === 'range' ? $this->min_price
@@ -367,7 +466,7 @@ class ProductAdd extends Component
             $maxPrice = $this->price_type === 'range' ? $this->max_price
                       : ($this->price_type === 'fixed' ? $this->fixed_price : 0);
 
-            $product = Product::create([
+            $productData = [
                 'title'             => $this->title,
                 'description'       => $this->description,
                 'product_img'       => $imagePath,
@@ -384,11 +483,10 @@ class ProductAdd extends Component
                 'customer_id'       => $customerId,
                 'seller_id'         => $sellerId,
                 'country_id'        => $customer->country_id,
-                'status'            => 0,
+                'status'            => $this->isEditMode ? 0 : 0, // resubmit for review
                 'seo_title'         => $this->seo_title   ?: $this->title,
                 'seo_description'   => $this->seo_description ?: null,
                 'seo_keywords'      => $this->seo_keywords ?: $this->keywords,
-                // B2B fields
                 'brand_name'        => $this->brand_name        ?: null,
                 'keywords'          => $this->keywords           ?: null,
                 'supply_ability'    => $this->supply_ability     ?: null,
@@ -401,7 +499,18 @@ class ProductAdd extends Component
                 'packaging_details' => $this->packaging_details  ?: null,
                 'sample_available'  => $this->sample_available,
                 'sample_price'      => $this->sample_available === 'yes' ? ($this->sample_price ?: null) : null,
-            ]);
+            ];
+
+            if ($this->isEditMode && $this->editId) {
+                $product = Product::where('id', $this->editId)
+                    ->where('customer_id', $customerId)
+                    ->first();
+                if ($product) {
+                    $product->update($productData);
+                }
+            } else {
+                $product = Product::create($productData);
+            }
 
             // Upload gallery images
             foreach ($this->gallery_images as $gi) {
@@ -439,7 +548,9 @@ class ProductAdd extends Component
 
             $this->reset();
             return redirect()->route('my-listings')
-                ->with('message', '✅ Product submitted for review! Goes live once approved by admin.');
+                ->with('message', $this->isEditMode
+                    ? '✅ Product updated successfully!'
+                    : '✅ Product submitted for review! Goes live once approved by admin.');
 
         } catch (\Exception $e) {
             session()->flash('error', 'Something went wrong: ' . $e->getMessage());
