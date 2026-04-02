@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('tbl_postbyrequirment')) {
         Schema::create('tbl_postbyrequirment', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
         });
+    }
     }
 
     /**

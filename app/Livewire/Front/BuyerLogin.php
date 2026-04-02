@@ -81,6 +81,19 @@ if ($buyer->must_change_password == 1) {
     return redirect()->route('buyer.set-password');
 }
 
+// ✅ If RFQ pending → redirect back to product page
+if (session('rfq_data')) {
+
+    $rfqData = session('rfq_data');
+
+    session()->put('rfq_resume', true);
+
+    return redirect()->route('product-detail', [
+        'slug' => $rfqData['product_slug']
+    ]);
+}
+
+// default
 return redirect()->route('home');
     }
 

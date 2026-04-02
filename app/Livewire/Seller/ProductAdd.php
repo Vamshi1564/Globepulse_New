@@ -47,7 +47,7 @@ class ProductAdd extends Component
     public $min_price      = '';
     public $max_price      = '';
     public $fixed_price    = '';
-    public $unit           = 'Piece';
+    public $unit           = '';
     public $min_order      = '';
     public $HSN            = '';
     public $business_type  = '';

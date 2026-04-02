@@ -50,8 +50,24 @@
                     <h3 class="dashboard-title mb-4 fw-bold">
                         📩 My RFQs
                     </h3>
+<form method="GET" action="{{ route('buyer.myrfqs') }}" class="mb-3 d-flex gap-2 align-items-end justify-content-end"">
 
-                    @if($rfqs->isEmpty())
+    <input type="text" 
+           name="search" 
+           value="{{ request('search') }}"
+           placeholder="Search product, quantity, price..."
+           class="form-control w-25">
+
+    <button type="submit" class="btn btn-primary">
+        Search
+    </button>
+
+    <a href="{{ route('buyer.myrfqs') }}" class="btn btn-secondary">
+        Reset
+    </a>
+
+</form>
+                  @if($rfqs->count() == 0)
                         <div class="alert alert-info text-center p-4">
                             No RFQs found
                         </div>
@@ -60,8 +76,14 @@
                     <!-- Card Container -->
                     <div class="card shadow-sm border-0 rounded-4">
                         <div class="card-body p-0">
-
+@if(session('message'))
+    <div class="alert alert-warning alert-dismissible fade show">
+        {{ session('message') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
                             <div class="table-responsive">
+                                
                                 <table class="table align-middle mb-0">
 
                                     <thead class="table-light">
@@ -145,6 +167,19 @@
                                             class="btn btn-sm btn-outline-primary">
                                                 View
                                             </a>
+
+                                            <!-- Delete -->
+<form method="POST" action="{{ route('buyer.rfq.delete', $rfq->id) }}" style="display:inline;">
+    @csrf
+    @method('DELETE')
+
+    <button type="submit"
+        onclick="return confirm('Are you sure to delete this RFQ?')"
+        class="btn btn-sm btn-outline-danger">
+        Delete
+    </button>
+</form>
+
                                             </td>
 
                                         </tr>
@@ -153,8 +188,22 @@
                                     </tbody>
 
                                 </table>
-                            </div>
 
+                            </div>
+<div class="d-flex justify-content-between align-items-center mt-4">
+
+    <!-- LEFT: Showing results -->
+    <div class="text-muted small">
+        Showing {{ $rfqs->firstItem() }} to {{ $rfqs->lastItem() }} 
+        of {{ $rfqs->total() }} results
+    </div>
+
+    <!-- RIGHT: Pagination -->
+    <div>
+        {{ $rfqs->links('pagination::simple-bootstrap-5') }}
+    </div>
+
+</div>
                         </div>
                     </div>
 
@@ -168,3 +217,4 @@
 
     <livewire:front.layout.footer />
 </div>
+

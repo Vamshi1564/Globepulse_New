@@ -66,6 +66,7 @@
     <link href="{{ asset('../../../vendors/glightbox/glightbox.min.css') }}" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     @livewireStyles
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-5B3H1ZR1R6"></script>
@@ -148,21 +149,18 @@ window.isLoggedIn = @json(auth('customer')->check());
             transition: opacity 0.3s ease;
         }
 
-        #loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(232, 244, 236, 0.977);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 1;
-            transition: opacity 0.7s ease;
-            overflow: hidden;
-        }
+       #loading-overlay {
+    position: fixed;
+    inset: 0; /* 🔥 replaces top/left/width/height */
+    background-color: rgba(232, 244, 236, 1);
+    z-index: 999999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s ease;
+    will-change: opacity;
+}
+
 
         .logo-container {
             text-align: center;
@@ -862,7 +860,7 @@ document.addEventListener("click", function(e){
 
 });
 </script> -->
- 
+
   @livewireScripts
 </body>
 

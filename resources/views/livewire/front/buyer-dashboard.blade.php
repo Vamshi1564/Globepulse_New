@@ -48,7 +48,12 @@ box-shadow:0 6px 20px rgba(0,0,0,0.05);
 transition:all .25s ease;
 position:relative;
 overflow:hidden;
+cursor: pointer; 
 }
+a .dashboard-card{
+    color: inherit;
+}
+
 
 .dashboard-card:hover{
 transform:translateY(-6px);
@@ -158,23 +163,45 @@ Logged in as <strong>{{ $buyerEmail }}</strong>
 <!-- Total RFQ -->
 <div class="col-md-3">
 
+<a href="{{ route('buyer.myrfqs') }}" class="text-decoration-none">
+    <div class="dashboard-card">
+
+        <div class="card-icon icon-blue">
+            <i class="fas fa-file-alt"></i>
+        </div>
+
+        <div class="card-label">Total RFQs</div>
+
+        <div class="card-number text-primary">
+            {{ $totalRfq }}
+        </div>
+
+    </div>
+</a>
+
+</div>
+
+<div class="col-md-3">
+
+<a href="{{ route('buyer.quotations') }}" class="text-decoration-none">
+
 <div class="dashboard-card">
 
-<div class="card-icon icon-blue">
-<i class="fas fa-file-alt"></i>
-</div>
+    <div class="card-icon icon-green">
+        <i class="fas fa-handshake"></i>
+    </div>
 
-<div class="card-label">Total RFQs</div>
+    <div class="card-label">Total Quotations</div>
 
-<div class="card-number text-primary">
-{{ $totalRfq }}
-</div>
-
-</div>
+    <div class="card-number text-success">
+        {{ $totalQuotations ?? 0 }}
+    </div>
 
 </div>
 
+</a>
 
+</div>
 <!-- Active Inquiries -->
 
 <div class="col-md-3">
