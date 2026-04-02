@@ -45,7 +45,10 @@
 
                 <tr>
                     <td><strong>Quantity:</strong></td>
-                    <td>{{ $quotation->rfq->quantity ?? '-' }}</td>
+                    <td>
+                        {{ $quotation->rfq->quantity ?? '-' }} 
+                        {{ isset($quotation->rfq->product->unit) ? Str::singular($quotation->rfq->product->unit) : '-' }}
+                    </td>
                 </tr>
 
                 <tr>

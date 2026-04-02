@@ -22,24 +22,18 @@ aria-haspopup="true" aria-expanded="false">
 
 <span class="text-body-tertiary avatar avatar-xl" style="height:40px;width:40px;">
 
-{{-- PROFILE IMAGE --}}
-{{--  @if(session()->has('id') && optional($customer)->profile_image)
 
-<img class="rounded-circle w-100"
-src="{{ config('app.pub_aws_url') . $customer->profile_image }}"
-alt="" />
+@php
+    $profileImage = asset('assets/img/default.png');
 
-@else
+    if(!empty($customer) && !empty($customer->profile_image)){
+        $profileImage = asset('storage/' . $customer->profile_image);
+    }
+@endphp
 
-<img class="rounded-circle"
-src="../../../assets/img/team/72x72/57.webp"
-alt="" />
-
-@endif --}}
-<span class="d-flex align-items-center justify-content-center rounded-circle bg-white shadow border"
-      style="height:40px;width:40px;">
-    <i class="fa-solid fa-user text-dark"></i>
-</span>
+<img class="rounded-circle w-100 h-100 object-fit-cover"
+     src="{{ $profileImage }}"
+     alt="Profile Image" />
 </a>
 
 <style>
@@ -60,25 +54,17 @@ aria-labelledby="navbarDropdownUser">
 
 <div class="avatar avatar-xl rounded-circle border border-2 border-primary overflow-hidden">
 
-{{-- @if(session()->has('id') && optional($customer)->profile_image)
+@php
+    $profileImage = asset('assets/img/default.png');
 
-<img class="w-100 h-100 object-fit-cover"
-src="{{ config('app.pub_aws_url') . $customer->profile_image }}"
-alt="Profile Image" />
+    if(!empty($customer) && !empty($customer->profile_image)){
+        $profileImage = asset('storage/' . $customer->profile_image);
+    }
+@endphp
 
-@else
-
-<img class="w-100 h-100 object-fit-cover"
-src="../../../assets/img/team/72x72/57.webp"
-alt="Default Avatar" />
-
-@endif --}}
-
-
-     <span class="d-flex align-items-center justify-content-center rounded-circle bg-white shadow border w-100 h-100 object-fit-cover"
-      >
-    <i class="fa-solid fa-user text-dark"></i>
-</span>
+<img class="rounded-circle w-100 h-100 object-fit-cover"
+     src="{{ $profileImage }}"
+     alt="Profile Image" />
 
 </div>
 </div>

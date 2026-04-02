@@ -75,7 +75,7 @@ public function render()
 
 })
         ->latest()
-        ->paginate(3) // ✅ MUST
+        ->paginate(5) // ✅ MUST
         ->withQueryString();
 
     return view('livewire.front.quotations', compact('quotations'));

@@ -3,84 +3,112 @@
 namespace App\Livewire\Seller;
 
 use Livewire\Component;
-
 use App\Models\Quotation;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Session;
 
 class Quotations extends Component
 {
-   
+
+    use WithPagination;
 
     public $statusFilter = '';
     public $search = '';
+    public $sort = '';
 
-    
+
+
+    protected $paginationTheme = 'bootstrap';
+
     protected $queryString = [
-    'statusFilter' => ['except' => ''],
-    'search' => ['except' => ''],
-];
+        'statusFilter' => ['except' => ''],
+        'search' => ['except' => ''],
+        'sort' => ['except' => ''],
+    ];
 
     public $sellerId;
-public $buyerUuid;
+    public $buyerUuid;
 
     // ================= INIT =================
-    public function mount()
-    {
-        $this->sellerId = Session::get('seller_id');
-        $this->buyerUuid = Session::get('buyer_uuid');
-    }
+   public function mount()
+{
+    $this->sellerId = Session::get('seller_id');
+    $this->buyerUuid = Session::get('buyer_uuid');
 
+    $this->search = request('search', '');
+    $this->statusFilter = request('statusFilter', ''); // FIXED
+    $this->sort = request('sort', '');
+}
 
     // ================= BASE QUERY =================
-private function baseQuery()
-{
-    return Quotation::with(['rfq.product', 'buyer'])
-        ->when($this->sellerId && $this->buyerUuid, function ($q) {
-            $q->where(function ($sub) {
-                $sub->where('supplier_uuid', $this->sellerId)
-                    ->orWhere('buyer_uuid', $this->buyerUuid);
-            });
-        })
-        ->when($this->sellerId && !$this->buyerUuid, function ($q) {
-            $q->where('supplier_uuid', $this->sellerId);
-        })
-        ->when(!$this->sellerId && $this->buyerUuid, function ($q) {
-            $q->where('buyer_uuid', $this->buyerUuid);
-        });
-}
-
-
-    // ================= PAGINATED DATA =================
-public function getQuotationsProperty()
-{
-    $search = request('search');
-    $status = request('status');
-
-    return $this->baseQuery()
-        ->when($status !== null && $status !== '', function ($q) use ($status) {
-            $q->where('status', (int)$status);
-        })
-        ->when($search, function ($q) use ($search) {
-            $q->where(function ($sub) use ($search) {
-                $sub->whereHas('rfq.product', function ($q2) use ($search) {
-                    $q2->whereRaw("title COLLATE utf8mb4_unicode_ci LIKE ?", ["%{$search}%"]);
-                })
-                ->orWhereHas('buyer', function ($q2) use ($search) {
-                    $q2->whereRaw("full_name COLLATE utf8mb4_unicode_ci LIKE ?", ["%{$search}%"]);
+    private function baseQuery()
+    {
+        return Quotation::with(['rfq.product', 'buyer'])
+            ->when($this->sellerId && $this->buyerUuid, function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('supplier_uuid', $this->sellerId)
+                        ->orWhere('buyer_uuid', $this->buyerUuid);
                 });
+            })
+            ->when($this->sellerId && !$this->buyerUuid, function ($q) {
+                $q->where('supplier_uuid', $this->sellerId);
+            })
+            ->when(!$this->sellerId && $this->buyerUuid, function ($q) {
+                $q->where('buyer_uuid', $this->buyerUuid);
             });
-        })
-        ->latest()
-        ->get(); // ✅ REQUIRED (no pagination now)
-}
+    }
 
-    // ================= EXPORT FULL DATA =================
+    // ================= APPLY FILTERS (REUSABLE) =================
+    private function applyFilters($query)
+    {
+        return $query
+            // STATUS
+            ->when($this->statusFilter !== '', function ($q) {
+                $q->where('status', (int)$this->statusFilter);
+            })
+
+            // SEARCH
+            ->when($this->search, function ($q) {
+                $q->where(function ($sub) {
+                    $sub->whereHas('rfq.product', function ($q2) {
+                        $q2->whereRaw("title COLLATE utf8mb4_unicode_ci LIKE ?", ["%{$this->search}%"]);
+                    })
+                    ->orWhereHas('buyer', function ($q2) {
+                        $q2->whereRaw("full_name COLLATE utf8mb4_unicode_ci LIKE ?", ["%{$this->search}%"]);
+                    });
+                });
+            })
+
+            // SORT
+            ->when($this->sort === 'price_low', function ($q) {
+    $q->orderBy('price', 'asc');
+})
+->when($this->sort === 'price_high', function ($q) {
+    $q->orderBy('price', 'desc');
+})
+->when($this->sort === 'latest', function ($q) {
+    $q->latest();
+})
+->when(!$this->sort, function ($q) {
+    $q->latest(); // default
+});
+    }
+
+    // ================= DATA =================
+   public function getQuotationsProperty()
+    {
+        return $this->applyFilters($this->baseQuery())
+            ->paginate(8)
+            ->withQueryString();
+    }
+
+    // ================= EXPORT =================
     public function exportCsv()
     {
         $fileName = "quotations.csv";
 
-        // 🔥 IMPORTANT: use FULL data, not paginated
-        $quotes = $this->baseQuery()->get();
+        // ✅ APPLY FILTERS HERE ALSO (FIXED BUG)
+        $quotes = $this->applyFilters($this->baseQuery())->get();
 
         $headers = [
             "Content-type" => "text/csv",
@@ -109,26 +137,28 @@ public function getQuotationsProperty()
         return response()->stream($callback, 200, $headers);
     }
 
+    // ================= STATS =================
+    public function getStatsProperty()
+    {
+        $data = $this->baseQuery()->get();
+
+        return [
+            'total' => $data->count(),
+            'pending' => $data->where('status', 0)->count(),
+            'accepted' => $data->where('status', 1)->count(),
+            'rejected' => $data->where('status', 2)->count(),
+            'value' => $data
+                ->where('status', 1)
+                ->sum(fn($q) => $q->price * ($q->rfq->quantity ?? 0)),
+        ];
+    }
+
     // ================= RENDER =================
-    public function render()
+   public function render()
     {
         return view('livewire.seller.quotations', [
-            'quotations' => $this->quotations, // ✅ computed property
-            'stats' => $this->stats, // ✅ ADD THIS
-           
+            'quotations' => $this->quotations,
+            'stats' => $this->stats,
         ]);
     }
-    public function getStatsProperty()
-{
-    $data = $this->baseQuery()->get();
-
-    return [
-        'total' => $data->count(),
-        'pending' => $data->where('status', 0)->count(),
-        'accepted' => $data->where('status', 1)->count(),
-        'rejected' => $data->where('status', 2)->count(),
-        'value' => $data->sum(fn($q) => $q->price * $q->rfq->quantity),
-    ];
-}
-
 }

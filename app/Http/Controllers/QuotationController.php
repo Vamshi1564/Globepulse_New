@@ -150,4 +150,29 @@ $quote->rfq->update(['status' => 'pending']); // ✅ FIXED
 
     return redirect()->back()->with('success', 'Deal cancelled successfully.');
 }
+
+public function deleteBySeller($id)
+{
+    $sellerId = session('seller_id');
+
+    $quote = Quotation::where('id', $id)
+        ->where('supplier_uuid', $sellerId) // ✅ seller ownership check
+        ->first();
+
+    if (!$quote) {
+        return redirect()->route('seller.quotations')
+            ->with('error', 'Quotation not found.');
+    }
+
+    // ❗ Prevent deleting accepted quote
+    if ($quote->status == 1) {
+        return redirect()->route('seller.quotations')
+            ->with('error', 'Accepted quotation cannot be deleted.');
+    }
+
+    $quote->delete();
+
+    return redirect()->route('seller.quotations')
+        ->with('success', 'Quotation deleted successfully.');
+}
 }

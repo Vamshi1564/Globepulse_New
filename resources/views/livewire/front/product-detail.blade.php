@@ -891,7 +891,7 @@ document.addEventListener('livewire:init', () => {
                     <div>
                         <span>
                           <div style="all: revert;">
-    {!! $product->description !!}
+   {!! html_entity_decode($product->description) !!}
 </div>
                         </span>
                     </div>
