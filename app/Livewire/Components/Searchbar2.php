@@ -272,89 +272,6 @@ class Searchbar2 extends Component
                     'url'  => url('/products?seller_id=' . $r->id),
                 ])->values()->toArray();
 
-        } elseif ($this->searchType === 'service') {
-
-            $services = DB::table('seller_services')
-                ->where('title', 'LIKE', $q)
-                ->whereNotNull('slug')->where('slug', '!=', '')
-                ->whereNotNull('title')->where('title', '!=', '')
-                ->limit(5)
-                ->get(['id', 'title', 'slug'])
-                ->map(fn($r) => [
-                    'name' => (string) $r->title,
-                    'type' => 'Product',
-                    'url'  => url('/product-detail/' . $r->slug),
-                ])->values()->toArray();
-
-            // By keywords
-            $byKeyword = DB::table('tbl_products')
-                ->where('status', 1)
-                ->where('keywords', 'LIKE', $q)
-                ->whereNotNull('slug')->where('slug', '!=', '')
-                ->whereNotNull('title')->where('title', '!=', '')
-                ->limit(3)
-                ->get(['id', 'title', 'slug'])
-                ->map(fn($r) => [
-                    'name' => (string) $r->title,
-                    'type' => 'Service',
-                    'url'  => url('/service-detail/' . $r->slug),
-                ])
-                ->values()
-                ->toArray();
-
-            $categories = DB::table('tbl_category')
-                ->where('cat_name', 'LIKE', $q)
-                ->pluck('id');
-
-            $byCategory = DB::table('tbl_products')
-                ->where('status', 1)
-                ->whereIn('category_id', $catIds)
-                ->whereNotNull('slug')->where('slug', '!=', '')
-                ->limit(3)
-                ->get(['id', 'title', 'slug'])
-                ->map(fn($r) => [
-                    'name' => (string) $r->title,
-                    'type' => 'Product',
-                    'url'  => url('/product-detail/' . $r->slug),
-                ])->values()->toArray();
-
-            // Also show matching category names directly
-            $categoryDirect = DB::table('tbl_category')
-                ->where('status', 1)
-                ->where('cat_name', 'LIKE', $q)
-                ->whereNotNull('slug')->where('slug', '!=', '')
-                ->limit(3)
-                ->get(['id', 'cat_name', 'slug'])
-                ->map(fn($r) => [
-                    'name' => (string) ($r->company_name ?: $r->full_name),
-                    'type' => 'Buyer',
-                    'url'  => url('/buyer_info/' . $r->id),  // ✅ redirects to buyer info page
-                ])
-                ->values()
-                ->toArray();
-
-        } elseif ($this->searchType === 'seller') {
-
-            // ✅ Shows seller names in dropdown → redirects to seller's products page
-            $this->suggestions = DB::table('sellers')
-                ->where('is_active', 1)
-                ->where(function ($query) use ($q) {
-                    $query->where('name', 'LIKE', $q)
-                          ->orWhere('company', 'LIKE', $q)
-                          ->orWhere('email', 'LIKE', $q);
-                })
-                ->whereNotNull('name')
-                ->where('name', '!=', '')
-                ->limit(10)
-                ->get(['id', 'name', 'company', 'email'])
-                ->map(fn($r) => [
-                    'name' => (string) ($r->company ?: $r->name),  // ✅ shows seller name in dropdown
-                    'type' => 'Seller',
-                    'url'  => url('/products?seller_id=' . $r->id),  // ✅ redirects to seller's products
-                ])
-                ->values()
-                ->toArray();
-
         } elseif ($this->searchType === 'buylead') {
 
             $this->suggestions = DB::table('tbl_buyleads')
@@ -403,11 +320,6 @@ class Searchbar2 extends Component
             'seller' => $this->redirect(url('/products?seller_search=' . urlencode($this->searchTerm))),
             'buyer'  => $this->redirect(url('/buyer_info?q='           . urlencode($this->searchTerm))),
             default  => $this->redirect(url('/products?q='             . urlencode($this->searchTerm) . '&type=' . $this->searchType)),
-        };
-        match ($this->searchType) {
-            'seller' => $this->redirect(url('/products?seller_search=' . urlencode($this->searchTerm))),
-            'buyer'  => $this->redirect(url('/buyer_info?q=' . urlencode($this->searchTerm))),
-            default  => $this->redirect(url('/products?q=' . urlencode($this->searchTerm) . '&type=' . $this->searchType)),
         };
     }
 
