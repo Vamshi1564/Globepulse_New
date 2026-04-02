@@ -556,6 +556,10 @@ class Profile extends Component
             ? collect($this->packages)->firstWhere('id', $this->selected_package_id)
             : null;
 
+        // Build correct public URL for logo/video — works for both S3 and local storage
+        $logoFullUrl  = $this->buildStorageUrl($this->logo_url);
+        $videoFullUrl = $this->buildStorageUrl($this->video_url);
+
         return view('livewire.seller.profile', [
             'seller'            => $seller,
             'customer'          => $seller,
@@ -571,9 +575,26 @@ class Profile extends Component
             'currentPlan'       => $selectedPackage,
             'logo_url'          => $this->logo_url,
             'video_url'         => $this->video_url,
+            'logo_full_url'     => $logoFullUrl,
+            'video_full_url'    => $videoFullUrl,
             'successMsg'        => $this->successMsg ?? '',
             'errorMsg'          => $this->errorMsg ?? '',
         ]);
+    }
+
+    // Build correct public URL for a stored file path
+    private function buildStorageUrl(?string $path): string
+    {
+        if (!$path) return '';
+        // Already a full URL (e.g. S3 https://)
+        if (str_starts_with($path, 'http')) return $path;
+        // S3 production: use AWS public URL from config
+        $awsBase = config('app.pub_aws_url', '');
+        if ($awsBase) {
+            return rtrim($awsBase, '/') . '/' . ltrim($path, '/');
+        }
+        // Local: symlinked storage
+        return asset('storage/' . $path);
     }
     private function cleanInput($value)
 {

@@ -54,6 +54,7 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\RFQController;
 use App\Livewire\Front\BuyerInfo;  // ✅ updated namespace
 
+
 // public website / front routes (preserved exactly)
 
 // service & homepage
@@ -84,6 +85,11 @@ Route::get('/product-detail/{slug}', ProductDetail::class)->name('product-detail
 // Buyer info page
 
 Route::get('/buyer_info/{id}', BuyerInfo::class)->name('buyer.info');
+  Route::delete('/buyer/rfq/{id}', [RFQController::class, 'delete'])
+    ->name('buyer.rfq.delete');
+
+Route::delete('/buyer/quotation/{id}', [QuotationController::class, 'delete'])
+    ->name('quotation.delete');
 Route::get('/service-detail/{slug}', ServiceDetail::class)
     ->name('service-detail');
 Route::get('/signup/{id?}', Signup::class)->name('signup');
@@ -266,4 +272,9 @@ Route::get('/product-not-found', function () {
 
 // payment
 Route::post('/store-payment', [PaymentController::class, 'storePayment'])->name('store.payment');
+
+
+// Route::get('/buyer_info/{id}', BuyerInfo::class)->name('buyer.info');
+
+
 

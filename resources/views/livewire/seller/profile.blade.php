@@ -142,19 +142,12 @@
                   transform="rotate(-90 44 44)"/>
               </svg>
               @php $logoUrl = $seller?->details?->logo_url; @endphp
-              @if($logoUrl)
-                @php
-                $sideLogoUrl = $logoUrl;
-                if (!str_starts_with($sideLogoUrl, 'http')) {
-                    $sideLogoUrl = config('app.pub_aws_url')
-                        ? rtrim(config('app.pub_aws_url'),'/') . '/' . $sideLogoUrl
-                        : asset('storage/' . $sideLogoUrl);
-                }
-              @endphp
-              <img class="av-img" src="{{ $sideLogoUrl }}" alt="Company Logo"
+              @if($logo_full_url)
+                <img class="av-img" src="{{ $logo_full_url }}" alt="Company Logo"
                     style="object-fit:contain;background:#fff;padding:4px;"
-                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-              @else
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+              @endif
+              @if(!$logo_full_url)
                 {{-- Fallback: initials avatar from business name --}}
                 @php
                   $bname = $seller?->details?->legal_business_name ?? $seller?->email ?? 'S';
@@ -533,25 +526,11 @@
                       <label>Company Logo <span class="doc-guide ms-1">PNG, SVG · max 2MB</span></label>
                       <div class="duz">
                         {{-- Show existing saved logo if available --}}
-                        @if($seller?->details?->logo_url)
+                        @if($logo_full_url)
                         <div class="text-center py-2">
-                          @php
-                            $logoPath = $seller->details->logo_url;
-                            // If stored on S3 (full http URL) use as-is
-                            // If stored as relative path use Storage::url() which handles
-                            // both local (storage:link) and S3 (pub_aws_url config)
-                            if (str_starts_with($logoPath, 'http')) {
-                                $logoDisplayUrl = $logoPath;
-                            } elseif (config('app.pub_aws_url')) {
-                                $logoDisplayUrl = rtrim(config('app.pub_aws_url'), '/') . '/' . $logoPath;
-                            } else {
-                                $logoDisplayUrl = asset('storage/' . $logoPath);
-                            }
-                          @endphp
-                          <img src="{{ $logoDisplayUrl }}"
+                          <img src="{{ $logo_full_url }}"
                             alt="Company Logo"
-                            style="max-height:80px;max-width:180px;object-fit:contain;border-radius:8px;border:1.5px solid #e5e9f2;padding:6px;background:#fff;"
-                            onerror="this.style.display='none'">
+                            style="max-height:80px;max-width:180px;object-fit:contain;border-radius:8px;border:1.5px solid #e5e9f2;padding:6px;background:#fff;">
                           <div class="duz-hint mt-1" style="color:#059669;font-weight:600;">
                             <i class="bi bi-check-circle-fill me-1"></i>Logo uploaded — upload again to replace
                           </div>
@@ -565,7 +544,7 @@
                         <input type="file" wire:model="logo_file" id="f_logo" style="display:none;" accept=".png,.svg,.jpg,.jpeg"
                           onchange="previewLogo(this)">
                         <label for="f_logo" class="ul-btn"><i class="fas fa-upload"></i>
-                          {{ $seller?->details?->logo_url ? 'Replace Logo' : 'Upload Logo' }}
+                          {{ $logo_full_url ? 'Replace Logo' : 'Upload Logo' }}
                         </label>
                         <span wire:loading wire:target="logo_file" class="ms-2 text-muted" style="font-size:.76rem;">
                           <span class="spinner-border spinner-border-sm"></span>
@@ -583,7 +562,7 @@
                           <div class="text-center py-2" id="video-saved-wrap">
                             <video controls
                               style="max-width:100%;max-height:130px;border-radius:8px;border:1.5px solid #e5e9f2;">
-                              <source src="{{ asset('storage/' . $video_url) }}">
+                              <source src="{{ $video_full_url }}">
                               Your browser does not support video.
                             </video>
                             <div class="duz-hint mt-1" style="color:#059669;font-weight:600;">
@@ -1033,6 +1012,7 @@
     </main>
     <livewire:seller.layout.footer />
 
+    @script
     <script>
     function previewVideo(input) {
         if (!input.files || !input.files[0]) return;
@@ -1094,6 +1074,7 @@
         }
         prev.style.display = 'block';
     }
-</script>
+    </script>
+    @endscript
 </div>
 </div>
