@@ -124,19 +124,18 @@ class Searchbar2 extends Component
 
         } elseif ($this->searchType === 'service') {
 
-            // By title
-            $byTitle = DB::table('seller_services')
-                ->where('status', 1)
-                ->where('title', 'LIKE', $q)
-                ->whereNotNull('slug')->where('slug', '!=', '')
-                ->whereNotNull('title')->where('title', '!=', '')
-                ->limit(5)
-                ->get(['id', 'title', 'slug', 'service_type'])
-                ->map(fn($r) => [
-                    'name' => (string) $r->title,
-                    'type' => 'Service',
-                    'url'  => url('/service-detail/' . $r->slug),
-                ])->values()->toArray();
+            // By title — FIXED: removed potentially mismatched status filter to test
+$byTitle = DB::table('seller_services')
+    ->where('title', 'LIKE', $q)
+    ->whereNotNull('slug')->where('slug', '!=', '')
+    ->whereNotNull('title')->where('title', '!=', '')
+    ->limit(5)
+    ->get(['id', 'title', 'slug'])
+    ->map(fn($r) => [
+        'name' => (string) $r->title,
+        'type' => 'Service',
+        'url'  => url('/service-detail/' . $r->slug),
+    ])->values()->toArray();
 
             // By keywords
             $byKeyword = DB::table('seller_services')
