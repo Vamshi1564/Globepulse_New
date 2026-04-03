@@ -1,4 +1,4 @@
-<div>
+
 
     <!-- Viewport for Responsive Design -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -113,6 +113,9 @@
         .action-btns .outline:hover {
             background: #f3f4f6;
         }
+        section {
+    margin-top: 30px;
+}
     </style>
 
     <section>
@@ -142,4 +145,3 @@
 
 
     <livewire:front.layout.footer />
-</div>

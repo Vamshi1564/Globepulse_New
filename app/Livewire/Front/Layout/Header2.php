@@ -90,19 +90,23 @@ class Header2 extends Component
     }
 
 
-    public function mount()
-    {
-        $this->slides = NewsSlider::all();
+ public function mount()
+{
+    $this->slides = NewsSlider::all();
+    $this->categories = Category::with('subcategory')->get();
 
-        $this->categories = Category::with(['subcategory', 'subSubcategories'])->get();
+    $this->customer = null;
 
-        $customerId = Session::get('id'); // Assuming you're storing user ID in session
-        //    if ($customerId) {
-        $this->customer = Customer::find($customerId); // Retrieve the user from the database
-        //    $this->profile_image = $customer->profile_image; // Get the profile image
-        //    }
-
+    if(Session::has('buyer_id')){
+        $this->customer = \App\Models\Buyer::find(Session::get('buyer_id'));
+    } 
+    elseif(Session::has('seller_id')){
+        $this->customer = \App\Models\Seller::find(Session::get('seller_id'));
+    } 
+    elseif(Session::has('id')){
+        $this->customer = Customer::find(Session::get('id'));
     }
+}
     public function render()
     {
         return view('livewire.front.layout.header2');

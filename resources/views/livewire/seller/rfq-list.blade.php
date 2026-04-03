@@ -59,21 +59,38 @@
 <!-- MAIN -->
 <div class="col-md-12">
 
-<div class="container py-4">
+<div class="container-fluid py-4">
 
 <!-- TITLE + BACK -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-
-    <h3 class="dashboard-title fw-bold mb-0">
-        📩 RFQs
-    </h3>
+<div class="d-flex align-items-center gap-3 mb-4">
 
     <button onclick="history.back()" class="btn btn-outline-primary btn-sm px-3">
         <i class="fas fa-arrow-left me-1"></i> Back
     </button>
 
-</div>
+    <h3 class="dashboard-title fw-bold mb-0">
+        📩 RFQs
+    </h3>
 
+</div>
+<form method="GET" action="{{ route('seller.rfqs') }}" 
+      class="mb-3 d-flex gap-2 align-items-end justify-content-end">
+
+    <input type="text" 
+           name="search" 
+           value="{{ request('search') }}"
+           placeholder="Search product, buyer, price..."
+           class="form-control w-25">
+
+    <button type="submit" class="btn btn-primary">
+        Search
+    </button>
+
+    <a href="{{ route('seller.rfqs') }}" class="btn btn-secondary">
+        Reset
+    </a>
+
+</form>
 @if($rfqs->isEmpty())
 
     <div class="alert alert-info text-center p-4">
@@ -91,21 +108,21 @@
 <table class="table align-middle mb-0">
 
 <thead class="table-light">
-<tr>
+<tr class="text-left">
     <th>Product</th>
     <th>Buyer</th>
     <th>Quantity</th>
     <th>Target Price</th>
     <th>Status</th>
     <th>Date</th>
-    <th class="text-end">Action</th>
+    <th>Action</th>
 </tr>
 </thead>
 
 <tbody>
 
 @foreach($rfqs as $rfq)
-<tr class="rfq-row">
+<tr class="rfq-row text-left">
 
 <!-- PRODUCT -->
 <td>
@@ -169,41 +186,69 @@ $myQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
 </td>
 
 <!-- ACTION -->
-<td class="text-end">
+<td>
 
-    {{-- VIEW --}}
-    <a href="{{ route('seller.rfq.view', $rfq->id) }}"
-       class="btn btn-sm btn-outline-primary me-2">
-        View
-    </a>
+    <div class="d-flex gap-2">
 
-    @php
-    $alreadyQuoted = \App\Models\Quotation::where('rfq_id', $rfq->id)
-        ->where('supplier_uuid', session('seller_id'))
-        ->exists();
-    @endphp
-
-    {{-- STATUS BASED ACTION --}}
-    @if($rfq->status === 'rejected')
-
-        <button class="btn btn-secondary btn-sm" disabled>
-            ❌ Rejected
-        </button>
-
-    @elseif($alreadyQuoted)
-
-        <button class="btn btn-secondary btn-sm" disabled>
-            ✔ Already Quoted
-        </button>
-
-    @else
-
-        <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
-           class="btn btn-success btn-sm">
-            💰 Quote
+        {{-- VIEW --}}
+        <a href="{{ route('seller.rfq.view', $rfq->id) }}"
+           class="btn btn-sm btn-outline-primary">
+            View
         </a>
 
-    @endif
+        @php
+        $alreadyQuoted = \App\Models\Quotation::where('rfq_id', $rfq->id)
+            ->where('supplier_uuid', session('seller_id'))
+            ->exists();
+
+        $hasQuotes = \App\Models\Quotation::where('rfq_id', $rfq->id)->exists();
+        @endphp
+
+        {{-- STATUS / QUOTE --}}
+        @if($rfq->status === 'rejected')
+
+            <button class="btn btn-secondary btn-sm" disabled>
+                ❌ Rejected
+            </button>
+
+        @elseif($alreadyQuoted)
+
+            <button class="btn btn-secondary btn-sm" disabled>
+                ✔ Quoted
+            </button>
+
+        @else
+
+            <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
+               class="btn btn-success btn-sm">
+                💰 Quote
+            </a>
+
+        @endif
+
+        {{-- DELETE --}}
+        @if(!$hasQuotes)
+
+            <form action="{{ route('seller.rfq.delete', $rfq->id) }}" 
+                  method="POST"
+                  onsubmit="return confirm('Delete this RFQ?')"
+                  class="d-inline">
+                @csrf
+                @method('DELETE')
+
+                <button class="btn btn-danger btn-sm">
+                    🗑
+                </button>
+            </form>
+
+        @else
+<button class="btn btn-danger btn-sm" disabled title="Has Quotes">
+   🗑
+</button>
+
+        @endif
+
+    </div>
 
 </td>
 
@@ -212,6 +257,18 @@ $myQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
 
 </tbody>
 </table>
+<div class="d-flex justify-content-between align-items-center mt-4">
+
+    <div class="text-muted small">
+        Showing {{ $rfqs->firstItem() }} to {{ $rfqs->lastItem() }} 
+        of {{ $rfqs->total() }} results
+    </div>
+
+    <div>
+        {{ $rfqs->links('pagination::simple-bootstrap-5') }}
+    </div>
+
+</div>
 </div>
 
 </div>

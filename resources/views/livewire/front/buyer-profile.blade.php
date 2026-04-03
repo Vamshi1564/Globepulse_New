@@ -125,6 +125,13 @@
             .plan-grid{grid-template-columns:1fr;}
             .step-btn{min-width:70px;font-size:.7rem;}
         }
+        .avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #2563eb;
+}
     </style>
  <div class="pw">
 
@@ -137,16 +144,34 @@
 
 <div class="av-wrap">
 
-<span class="text-body-tertiary avatar avatar-xl" style="height:80px;width:80px;">
-
-    <span class="d-flex align-items-center justify-content-center rounded-circle bg-white shadow border"
-          style="height:80px;width:80px; font-weight:600; font-size:34px; color:#111827;">
-        
-        {{ strtoupper(substr($full_name ?? 'U', 0, 1)) }}
+    {{-- SHOW UPLOADED IMAGE --}}
+    @if ($profile_image)
+        <img src="{{ $profile_image->temporaryUrl() }}" class="av-img">
     
-    </span>
+    @elseif ($existing_profile_image)
+        <img src="{{ asset('storage/' . $existing_profile_image) }}" class="av-img">
 
-</span>
+    {{-- DEFAULT INITIAL --}}
+    @else
+        <div class="d-flex align-items-center justify-content-center rounded-circle bg-white shadow border"
+             style="height:72px;width:72px;font-size:28px;">
+            {{ strtoupper(substr($full_name ?? 'U', 0, 1)) }}
+        </div>
+    @endif
+
+</div>
+
+{{-- UPLOAD --}}
+<div class="mt-2 mb-2 text-center">
+    <input type="file" wire:model="profile_image" class="form-control mb-2">
+
+    @error('profile_image') 
+        <small class="text-danger">{{ $message }}</small> 
+    @enderror
+
+    <button wire:click="saveProfileImage" class="btn btn-primary btn-sm">
+        Upload Image
+    </button>
 </div>
 
 <div class="sname">{{ $full_name }}</div>

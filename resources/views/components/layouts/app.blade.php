@@ -648,7 +648,8 @@ function showPopup(){
 
     popup.style.display = "flex";
 
-    sessionStorage.setItem("intentPopupShown","true");
+    
+    localStorage.setItem("intentPopupShown","true");
 
 }
 
@@ -697,7 +698,7 @@ window.addEventListener("load", function(){
         if(
             !window.isLoggedIn &&
             !localStorage.getItem("globpulseUserType") &&
-            !sessionStorage.getItem("intentPopupShown")
+            !localStorage.getItem("intentPopupShown")
         ){
             showPopup();
         }

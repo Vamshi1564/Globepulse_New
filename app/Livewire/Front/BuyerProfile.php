@@ -4,11 +4,16 @@ namespace App\Livewire\Front;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
+use Livewire\WithFileUploads;
 
 class BuyerProfile extends Component
 {
-    public $activeStep = 1;
 
+   use WithFileUploads;
+
+    public $activeStep = 1;
+     public $profile_image;
+    public $existing_profile_image; // ✅ ADD THIS
     public $full_name = '';
     public $email = '';
     public $phone = '';
@@ -44,6 +49,7 @@ class BuyerProfile extends Component
 
             $this->interested_products = $buyer->interested_products ?? '';
             $this->import_volume = $buyer->import_volume ?? '';
+            $this->existing_profile_image = $buyer->profile_image; 
         }
     }
 
@@ -138,6 +144,29 @@ class BuyerProfile extends Component
     public function render()
     {
         return view('livewire.front.buyer-profile');
+    }
+
+    public function saveProfileImage()
+    {
+        $this->validate([
+            'profile_image' => 'required|image|max:2048'
+        ]);
+
+        $path = $this->profile_image->store('profiles', 'public');
+
+        DB::table('buyers')
+            ->where('id', session('buyer_id'))
+            ->update([
+                'profile_image' => $path
+            ]);
+
+        // ✅ update UI instantly
+        $this->existing_profile_image = $path;
+
+        // ✅ reset file input
+        $this->reset('profile_image');
+
+        session()->flash('success', 'Profile image updated!');
     }
 
 }

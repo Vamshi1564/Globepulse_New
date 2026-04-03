@@ -110,6 +110,7 @@ use App\Livewire\Seller\ServiceAdd;
 use App\Livewire\Seller\RFQList;
 use App\Livewire\Seller\Quotations as SellerQuotations;
 use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\RFQController;
  
 use App\Http\Controllers\Seller\ProfileController;
 
@@ -235,10 +236,14 @@ Route::middleware([SellerAuth::class])->group(function () {  // <-- CHANGED from
         ->name('seller.rfqs');
         Route::get('/seller/rfq/{id}', \App\Livewire\Seller\RFQView::class)
     ->name('seller.rfq.view');
+    Route::delete('/seller/rfq/delete/{id}', [RFQController::class, 'deleteBySeller'])
+    ->name('seller.rfq.delete');
     Route::get('/seller/rfq/{id}/quote', \App\Livewire\Seller\RFQQuote::class)
     ->name('seller.rfq.quote');
 Route::get('/seller/quotations', SellerQuotations::class)
     ->name('seller.quotations');
     Route::get('/seller/export-quotations', [QuotationController::class, 'export'])
     ->name('seller.export.quotations');
+    Route::delete('/seller/quotation/delete/{id}', [QuotationController::class, 'deleteBySeller'])
+    ->name('seller.quotation.delete');
 });
