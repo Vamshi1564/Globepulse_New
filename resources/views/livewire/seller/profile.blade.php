@@ -236,6 +236,13 @@
             </div>
 
             {{-- ── STEP 1: BASIC ── --}}
+            @php $isApproved = ($seller?->status === 'approved'); @endphp
+            @if($isApproved)
+              <div style="background:#fef3c7;color:#92400e;border:1.5px solid #fcd34d;border-radius:10px;padding:.65rem 1rem;font-size:.81rem;margin-bottom:1rem;display:flex;align-items:center;gap:8px;">
+                <i class="fas fa-lock"></i>
+                <span>Your account is <strong>approved</strong>. Profile fields are locked — contact support to make changes.</span>
+              </div>
+            @endif
             @if($activeStep===1)
               <div class="stitle">Basic Information</div>
               <div class="ssub">Your account details</div>
@@ -251,14 +258,14 @@
                   <div class="col-md-6">
                     <div class="fg">
                       <label>Phone Number *</label>
-                      <input type="text" class="form-control" wire:model.defer="phone" placeholder="+91 98765 43210">
+                      <input type="text" class="form-control" wire:model.defer="phone" placeholder="+91 98765 43210" {{ $isApproved ? 'disabled' : '' }}>
                       @error('phone')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="fg">
                       <label>Country *</label>
-                      <select class="form-select" wire:model.defer="country_id">
+                      <select class="form-select" wire:model.defer="country_id" {{ $isApproved ? 'disabled' : '' }}>
                         <option value="">Select Country</option>
                         @foreach($countries as $c)
                           <option value="{{ $c->country_id }}"
@@ -273,10 +280,12 @@
                 </div>
                 <div class="sfooter">
                   <span class="autosave"><i class="fas fa-save"></i> Auto-saved</span>
+                  @if(!$isApproved)
                   <button type="submit" class="btn-p" wire:loading.attr="disabled">
                     <span wire:loading wire:target="saveStep1" class="spinner-border spinner-border-sm me-1"></span>
                     Continue <i class="fas fa-arrow-right" wire:loading.remove wire:target="saveStep1"></i>
                   </button>
+                  @endif
                 </div>
               </form>
 
@@ -289,7 +298,7 @@
                   <div class="col-12">
                     <div class="fg">
                       <label>Legal Business Name *</label>
-                      <input type="text" class="form-control" wire:model.defer="legal_business_name"
+                      <input type="text" class="form-control" wire:model.defer="legal_business_name" {{ $isApproved ? 'disabled' : '' }}
                         placeholder="e.g. Acme International Ltd.">
                       @error('legal_business_name')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
                     </div>
@@ -297,7 +306,7 @@
                   <div class="col-md-6">
                     <div class="fg">
                       <label>Business Type *</label>
-                      <select class="form-select" wire:model.defer="business_type">
+                      <select class="form-select" wire:model.defer="business_type" {{ $isApproved ? 'disabled' : '' }}>
                         <option value="">Select</option>
                         <option value="sole_proprietor">Sole Proprietor</option>
                         <option value="partnership">Partnership</option>
@@ -311,7 +320,7 @@
                   <div class="col-md-6">
                     <div class="fg">
                       <label>Year Established</label>
-                      <input type="number" class="form-control" wire:model.defer="year_established"
+                      <input type="number" class="form-control" wire:model.defer="year_established" {{ $isApproved ? 'disabled' : '' }}
                         placeholder="{{ date('Y') - 5 }}" min="1800" max="{{ date('Y') }}">
                       @error('year_established')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
                     </div>
@@ -321,7 +330,7 @@
                       <label>Company Website</label>
                       <div style="position:relative;">
                         <span style="position:absolute;left:.85rem;top:50%;transform:translateY(-50%);font-size:.78rem;color:var(--mu);">https://</span>
-                        <input type="text" class="form-control" wire:model.defer="company_website"
+                        <input type="text" class="form-control" wire:model.defer="company_website" {{ $isApproved ? 'disabled' : '' }}
                           style="padding-left:4.5rem;"
                           placeholder="www.example.com">
                       </div>
@@ -330,7 +339,7 @@
                   <div class="col-md-6">
                     <div class="fg">
                       <label>Number of Employees *</label>
-                      <select class="form-select" wire:model.defer="num_employees">
+                      <select class="form-select" wire:model.defer="num_employees" {{ $isApproved ? 'disabled' : '' }}>
                         <option value="">Select</option>
                         <option value="1-10">1–10</option>
                         <option value="11-50">11–50</option>
@@ -344,7 +353,7 @@
                   <div class="col-md-4">
                     <div class="fg">
                       <label>Country</label>
-                      <select class="form-select" wire:model.defer="business_country_id">
+                      <select class="form-select" wire:model.defer="business_country_id" {{ $isApproved ? 'disabled' : '' }}>
                         <option value="">Select</option>
                         @foreach($countries as $c)
                           <option value="{{ $c->country_id }}"
@@ -358,20 +367,20 @@
                   <div class="col-md-4">
                     <div class="fg">
                       <label>State / Province</label>
-                      <input type="text" class="form-control" wire:model.defer="state_province" placeholder="e.g. Gujarat">
+                      <input type="text" class="form-control" wire:model.defer="state_province" {{ $isApproved ? 'disabled' : '' }} placeholder="e.g. Gujarat">
                     </div>
                   </div>
                   <div class="col-md-4">
                     <div class="fg">
                       <label>City *</label>
-                      <input type="text" class="form-control" wire:model.defer="city" placeholder="e.g. Surat">
+                      <input type="text" class="form-control" wire:model.defer="city" {{ $isApproved ? 'disabled' : '' }} placeholder="e.g. Surat">
                       @error('city')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
                     </div>
                   </div>
                   <div class="col-12">
                     <div class="fg">
                       <label>Business Address *</label>
-                      <textarea class="form-control" wire:model.defer="business_address" rows="2"
+                      <textarea class="form-control" wire:model.defer="business_address" {{ $isApproved ? 'disabled' : '' }} rows="2"
                         placeholder="e.g. 123 Industrial Ave, Gajera, Surat - 395006"></textarea>
                       @error('business_address')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
                     </div>
@@ -385,7 +394,8 @@
                         <span class="doc-guide ms-1">GST Certificate / Incorporation / Trade License</span>
                       </label>
                       @php $brDoc = $documents->get('business_registration'); @endphp
-                      <div class="duz {{ $brDoc?'up':'' }} {{ isset($docWarnings['business_registration'])?'warn-zone':'' }}">
+                      <div class="duz {{ $brDoc?'up':'' }} {{ isset($docWarnings['business_registration'])?'warn-zone':'' }}"
+                        x-data="{ uploading:false, picked:false, pickedName:'', pickedSize:'', pickedIsImg:false, pickedSrc:'' }">
                         <div class="duz-head">
                           <div class="duz-lbl">
                             <i class="fas fa-file-alt text-primary"></i>
@@ -394,18 +404,17 @@
                               <span class="ds ds-{{ $brDoc->review_status }}">{{ ucfirst($brDoc->review_status) }}</span>
                             @endif
                           </div>
-                          @if(!$brDoc)
-                            <span style="font-size:.72rem;color:var(--mu);">PDF, JPG, PNG · max 5MB</span>
-                          @endif
+                          <span style="font-size:.72rem;color:var(--mu);">PDF, JPG, PNG · max <strong>5 MB</strong></span>
                         </div>
                         <div class="duz-hint">Upload your GST certificate, business incorporation, or trade license</div>
 
+                        {{-- ── Server-side preview (already uploaded doc) ── --}}
                         @if($brDoc)
                         @php
                             $brIsImage = str_starts_with($brDoc->mime_type, 'image/');
                             $brIsPdf   = $brDoc->mime_type === 'application/pdf';
                         @endphp
-                        <div class="file-preview" style="margin-bottom:.6rem;">
+                        <div class="file-preview" style="margin-bottom:.6rem;" x-show="!picked">
                           <div class="file-preview-top">
                             @if($brIsImage)
                               <img src="{{ asset('storage/' . $brDoc->storage_url) }}" alt="{{ $brDoc->file_name }}"
@@ -430,34 +439,76 @@
                           </div>
                         </div>
                         @endif
-                        {{-- Local JS preview shown immediately on file select --}}
-                        <div id="br_local_prev" style="display:none;margin-top:.5rem;border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;">
-                          <div id="br_local_prev_top" style="background:#f4f6fb;padding:.8rem;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80px;"></div>
-                          <div style="padding:.4rem .85rem;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:.5rem;border-top:1px solid var(--bdr);">
-                            <div style="font-size:.76rem;color:#374151;display:flex;align-items:center;gap:5px;">
-                              <i class="fas fa-paperclip" style="color:var(--blue);font-size:.7rem;"></i>
-                              <span id="br_local_name"></span>
+
+                        {{-- ── Client-side preview: shown immediately after user picks file ── --}}
+                        <div x-show="picked" x-cloak class="file-preview" style="margin-bottom:.6rem;">
+                          <div class="file-preview-top">
+                            <template x-if="pickedIsImg">
+                              <img :src="pickedSrc" style="max-height:90px;max-width:100%;border-radius:6px;object-fit:cover;">
+                            </template>
+                            <template x-if="!pickedIsImg && pickedName.toLowerCase().endsWith('.pdf')">
+                              <div style="text-align:center;">
+                                <div class="file-preview-icon" style="color:#e02424;"><i class="fas fa-file-pdf"></i></div>
+                                <div class="file-preview-label">PDF DOCUMENT</div>
+                              </div>
+                            </template>
+                            <template x-if="!pickedIsImg && !pickedName.toLowerCase().endsWith('.pdf')">
+                              <div style="text-align:center;">
+                                <div class="file-preview-icon" style="color:#6b7280;"><i class="fas fa-file-alt"></i></div>
+                                <div class="file-preview-label">DOCUMENT</div>
+                              </div>
+                            </template>
+                          </div>
+                          <div class="file-preview-bottom">
+                            <div class="file-preview-name">
+                              <i class="fas fa-paperclip" style="color:var(--blue);flex-shrink:0;font-size:.7rem;"></i>
+                              <span x-text="pickedName" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
                             </div>
                             <div style="display:flex;align-items:center;gap:.5rem;">
-                              <span id="br_local_size" style="font-size:.71rem;color:#9ca3af;"></span>
-                              <span style="background:var(--blue);color:#fff;font-size:.65rem;font-weight:800;padding:3px 9px;border-radius:20px;">NEW SELECTION</span>
+                              <span class="file-preview-meta" x-text="pickedSize"></span>
+                              <span x-show="uploading" class="new-sel-badge" style="background:#f59e0b;">UPLOADING…</span>
+                              <span x-show="!uploading" class="new-sel-badge" style="background:var(--green);">SAVED ✓</span>
                             </div>
                           </div>
                         </div>
+
                         @if(isset($docWarnings['business_registration']))
                           <div class="doc-warn"><i class="fas fa-exclamation-triangle mt-1"></i><span>{{ $docWarnings['business_registration'] }}</span></div>
                         @endif
-                        <div>
+
+                        {{-- ── Upload button + Alpine-controlled spinner ── --}}
+                        <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.3rem;">
                           <input type="file" wire:model="doc_business_registration" id="f_br"
                             style="display:none;" accept=".pdf,.jpg,.jpeg,.png"
-                            onchange="handleBrSelect(this)"
-                            x-on:change="$wire.checkDocFile('business_registration', $event.target.files[0]?.name ?? '')">
-                          <label for="f_br" class="ul-btn">
-                            <i class="fas fa-upload"></i> {{ $brDoc?'Re-upload':'Upload Document' }}
+                            x-on:change="
+                              let file = $event.target.files[0];
+                              if (!file) return;
+                              picked      = true;
+                              uploading   = true;
+                              pickedName  = file.name;
+                              pickedSize  = (file.size/1024).toFixed(0)+' KB';
+                              let ext = file.name.split('.').pop().toLowerCase();
+                              pickedIsImg = ['jpg','jpeg','png','gif','webp'].includes(ext);
+                              if (pickedIsImg) {
+                                let r = new FileReader();
+                                r.onload = e => pickedSrc = e.target.result;
+                                r.readAsDataURL(file);
+                              }
+                              $wire.checkDocFile('business_registration', file.name);
+                            "
+                            x-on:livewire-upload-finish="uploading = false"
+                            x-on:livewire-upload-error="uploading = false">
+                          @if(!$isApproved)
+                          <label for="f_br" class="ul-btn" :class="{ 'opacity-50 pointer-events-none': uploading }">
+                            <span x-show="uploading" class="spinner-border spinner-border-sm me-1"></span>
+                            <i x-show="!uploading" class="fas fa-upload"></i>
+                            <span x-text="uploading ? 'Uploading…' : '{{ $brDoc ? 'Re-upload' : 'Upload Document' }}'"></span>
                           </label>
-                          <span wire:loading wire:target="doc_business_registration" class="ms-2 text-muted" style="font-size:.76rem;">
-                            <span class="spinner-border spinner-border-sm"></span> Uploading...
-                          </span>
+                          @endif
+                        </div>
+                        <div style="font-size:.72rem;color:var(--mu);margin-top:.35rem;">
+                          <i class="fas fa-info-circle" style="color:#9ca3af;"></i>
+                          PDF, JPG, JPEG, PNG · Max file size: <strong>5 MB</strong>
                         </div>
                       </div>
                       @error('doc_business_registration')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
@@ -487,47 +538,47 @@
                   <div class="col-12">
                     <div class="fg">
                       <label>Company Description</label>
-                      <textarea class="form-control" wire:model.defer="company_description" rows="4"
+                      <textarea class="form-control" wire:model.defer="company_description" {{ $isApproved ? 'disabled' : '' }} rows="4"
                         placeholder="Tell buyers about your company, expertise, and what makes you unique..."></textarea>
                       <small class="text-muted" style="font-size:.72rem;">{{ strlen($company_description ?? '') }}/2000 chars</small>
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="fg"><label>Main Products</label>
-                      <input type="text" class="form-control" wire:model.defer="main_products"
+                      <input type="text" class="form-control" wire:model.defer="main_products" {{ $isApproved ? 'disabled' : '' }}
                         placeholder="e.g. LED Lights, Solar Panels, Textile">
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="fg"><label>Factory Size (sqm)</label>
-                      <input type="number" class="form-control" wire:model.defer="factory_size_sqm" placeholder="e.g. 5000">
+                      <input type="number" class="form-control" wire:model.defer="factory_size_sqm" {{ $isApproved ? 'disabled' : '' }} placeholder="e.g. 5000">
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="fg"><label>Production Capacity</label>
-                      <input type="text" class="form-control" wire:model.defer="production_capacity"
+                      <input type="text" class="form-control" wire:model.defer="production_capacity" {{ $isApproved ? 'disabled' : '' }}
                         placeholder="e.g. 10,000 units/month">
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="fg"><label>Export Markets</label>
-                      <input type="text" class="form-control" wire:model.defer="export_markets"
+                      <input type="text" class="form-control" wire:model.defer="export_markets" {{ $isApproved ? 'disabled' : '' }}
                         placeholder="e.g. USA, Europe, Middle East">
                     </div>
                   </div>
                   <div class="col-12">
                     <div class="fg"><label>Certifications</label>
-                      <input type="text" class="form-control" wire:model.defer="certifications"
+                      <input type="text" class="form-control" wire:model.defer="certifications" {{ $isApproved ? 'disabled' : '' }}
                         placeholder="e.g. ISO 9001, CE, RoHS, BIS">
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="fg">
                       <label>Company Logo <span class="doc-guide ms-1">PNG, SVG · max 2MB</span></label>
-                      <div class="duz">
+                      <div class="duz" x-data="{ uploading: false, fileName: '', fileSize: '' }">
                         {{-- Show existing saved logo if available --}}
                         @if($logo_full_url)
-                        <div class="text-center py-2">
+                        <div class="text-center py-2" id="logo-saved-wrap">
                           <img src="{{ $logo_full_url }}"
                             alt="Company Logo"
                             style="max-height:80px;max-width:180px;object-fit:contain;border-radius:8px;border:1.5px solid #e5e9f2;padding:6px;background:#fff;">
@@ -542,20 +593,44 @@
                         </div>
                         @endif
                         <input type="file" wire:model="logo_file" id="f_logo" style="display:none;" accept=".png,.svg,.jpg,.jpeg"
-                          onchange="previewLogo(this)">
-                        <label for="f_logo" class="ul-btn"><i class="fas fa-upload"></i>
-                          {{ $logo_full_url ? 'Replace Logo' : 'Upload Logo' }}
-                        </label>
-                        <span wire:loading wire:target="logo_file" class="ms-2 text-muted" style="font-size:.76rem;">
-                          <span class="spinner-border spinner-border-sm"></span>
-                        </span>
+                          @change="
+                            uploading = true;
+                            fileName  = $event.target.files[0]?.name ?? '';
+                            fileSize  = $event.target.files[0] ? (($event.target.files[0].size/1024).toFixed(0)+' KB') : '';
+                            previewLogo($event.target);
+                          "
+                          x-on:livewire-upload-finish="uploading = false"
+                          x-on:livewire-upload-error="uploading = false">
+                        <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.4rem;">
+                          <label for="f_logo" class="ul-btn"><i class="fas fa-upload"></i>
+                            {{ $logo_full_url ? 'Replace Logo' : 'Upload Logo' }}
+                          </label>
+                          {{-- Spinner: ONLY shows after file is picked, never on page load --}}
+                          <span x-show="uploading" x-cloak
+                            style="font-size:.76rem;color:var(--mu);display:inline-flex;align-items:center;gap:5px;">
+                            <span class="spinner-border spinner-border-sm"></span>
+                            <span>Uploading <span x-text="fileName" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom;"></span>…</span>
+                          </span>
+                          {{-- Filename shown after upload finishes --}}
+                          <span x-show="!uploading && fileName" x-cloak
+                            style="font-size:.74rem;color:#059669;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+                            <i class="fas fa-check-circle"></i>
+                            <span x-text="fileName" style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                            <span x-text="'('+fileSize+')'" style="color:#9ca3af;font-weight:400;"></span>
+                          </span>
+                        </div>
+                        <div style="font-size:.72rem;color:var(--mu);margin-top:.35rem;">
+                          <i class="fas fa-info-circle" style="color:#9ca3af;"></i>
+                          PNG, SVG, JPG, JPEG · Max file size: <strong>2 MB</strong>
+                        </div>
                       </div>
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="fg">
-                      <label>Company Video <small class="text-muted">(optional · MP4, MOV · max 50MB)</small></label>
-                      <div class="duz" id="video-duz">
+                      <label>Company Video <small class="text-muted">(optional · MP4, MOV, AVI · max <strong>50 MB</strong>)</small></label>
+                      <div class="duz" id="video-duz"
+                        x-data="{ uploading: false, fileName: '', fileSize: '' }">
 
                         {{-- Show saved video if already uploaded --}}
                         @if(!empty($video_url))
@@ -587,16 +662,40 @@
                         {{-- Hidden file input wired to Livewire --}}
                         <input type="file" wire:model="video_file" id="f_video"
                           style="display:none;" accept=".mp4,.mov,.avi,.webm"
-                          onchange="previewVideo(this)">
+                          @change="
+                            uploading = true;
+                            fileName  = $event.target.files[0]?.name ?? '';
+                            fileSize  = $event.target.files[0] ? (($event.target.files[0].size/1024/1024).toFixed(1)+' MB') : '';
+                            previewVideo($event.target);
+                          "
+                          x-on:livewire-upload-finish="uploading = false"
+                          x-on:livewire-upload-error="uploading = false">
 
-                        <label for="f_video" class="ul-btn" style="margin-top:.5rem;">
-                          <i class="fas fa-upload"></i>
-                          {{ !empty($video_url) ? 'Replace Video' : 'Upload Video' }}
-                        </label>
-
-                        <span wire:loading wire:target="video_file" class="ms-2 text-muted" style="font-size:.76rem;">
-                          <span class="spinner-border spinner-border-sm"></span> Uploading...
-                        </span>
+                        <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.5rem;">
+                          @if(!$isApproved)
+                          <label for="f_video" class="ul-btn">
+                            <i class="fas fa-upload"></i>
+                            {{ !empty($video_url) ? 'Replace Video' : 'Upload Video' }}
+                          </label>
+                          @endif
+                          {{-- Spinner: ONLY after file picked --}}
+                          <span x-show="uploading" x-cloak
+                            style="font-size:.76rem;color:var(--mu);display:inline-flex;align-items:center;gap:5px;">
+                            <span class="spinner-border spinner-border-sm"></span>
+                            <span>Uploading <span x-text="fileName" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom;"></span>…</span>
+                          </span>
+                          {{-- Filename after finish --}}
+                          <span x-show="!uploading && fileName" x-cloak
+                            style="font-size:.74rem;color:#059669;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+                            <i class="fas fa-check-circle"></i>
+                            <span x-text="fileName" style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                            <span x-text="'('+fileSize+')'" style="color:#9ca3af;font-weight:400;"></span>
+                          </span>
+                        </div>
+                        <div style="font-size:.72rem;color:var(--mu);margin-top:.35rem;">
+                          <i class="fas fa-info-circle" style="color:#9ca3af;"></i>
+                          MP4, MOV, AVI, WEBM · Max file size: <strong>50 MB</strong>
+                        </div>
 
                         @error('video_file')
                           <small class="text-danger d-block mt-1">{{ $message }}</small>
@@ -668,7 +767,8 @@
                 @endphp
 
                 <div class="col-md-6 col-12">
-                    <div class="doc-card {{ $cardClass }}">
+                    <div class="doc-card {{ $cardClass }}"
+                      x-data="{ uploading:false, picked:false, pickedName:'', pickedSize:'' }">
 
                     {{-- Card header --}}
                     <div class="doc-card-head">
@@ -757,10 +857,7 @@
                         </div>
                     </div>
 
-                    {{-- Spinner (JS controlled) --}}
-                    <span id="{{ $spinnerId }}" class="doc-uploading" style="margin-bottom:.4rem;">
-                        <span class="spinner-border spinner-border-sm"></span> Uploading...
-                    </span>
+                    {{-- Spinner now handled by Alpine inside the upload button above --}}
 
                     {{-- Validation result --}}
                     @if($ver)
@@ -778,7 +875,7 @@
                         </div>
                     @endif
 
-                    {{-- Upload / Replace button --}}
+                    {{-- Upload / Replace button (Alpine-controlled, never fires on page load) --}}
                     <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.3rem;">
                         <input
                         type="file"
@@ -786,12 +883,34 @@
                         id="{{ $fid }}"
                         style="display:none;"
                         accept="{{ $def['accept'] }}"
-                        onchange="handleDocSelect(this, '{{ $type }}')"
+                        x-on:change="
+                          let file = $event.target.files[0];
+                          if (!file) return;
+                          uploading = true; picked = true;
+                          pickedName = file.name; pickedSize = (file.size/1024).toFixed(0)+' KB';
+                          handleDocSelect($event.target, '{{ $type }}');
+                        "
+                        x-on:livewire-upload-finish="uploading = false"
+                        x-on:livewire-upload-error="uploading = false"
                         >
-                        <label for="{{ $fid }}" class="ul-btn">
-                        <i class="fas fa-{{ $doc ? 'redo' : 'upload' }}"></i>
-                        {{ $doc ? 'Change Document' : 'Upload Document' }}
+                        @if(!$isApproved)
+                        <label for="{{ $fid }}" class="ul-btn" :class="{ 'opacity-50': uploading }">
+                          <span x-show="uploading" class="spinner-border spinner-border-sm me-1"></span>
+                          <i x-show="!uploading" class="fas fa-{{ $doc ? 'redo' : 'upload' }}"></i>
+                          <span x-text="uploading ? 'Uploading…' : '{{ $doc ? 'Change Document' : 'Upload Document' }}'"></span>
                         </label>
+                        @endif
+                        {{-- Filename shown only after file picked, never on page load --}}
+                        <span x-show="picked && !uploading" x-cloak
+                          style="font-size:.74rem;color:#059669;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+                          <i class="fas fa-check-circle"></i>
+                          <span x-text="pickedName" style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                          <span x-text="'('+pickedSize+')'" style="color:#9ca3af;font-weight:400;"></span>
+                        </span>
+                    </div>
+                    <div style="font-size:.72rem;color:var(--mu);margin-top:.3rem;">
+                        <i class="fas fa-info-circle" style="color:#9ca3af;"></i>
+                        PDF, JPG, JPEG, PNG · Max file size: <strong>5 MB</strong>
                     </div>
 
                     @error('doc_'.$type)
@@ -994,14 +1113,27 @@
                 <button type="button" class="btn-o" wire:click="goToStep(4)">
                   <i class="fas fa-arrow-left"></i> Back
                 </button>
-                <button type="button" class="btn-p" wire:click="saveStep5"
-                  wire:loading.attr="disabled"
-                  {{ empty($selected_package_id) ? 'disabled' : '' }}>
-                  <span wire:loading wire:target="saveStep5" class="spinner-border spinner-border-sm me-1"></span>
-                  <span wire:loading.remove wire:target="saveStep5">
-                    <i class="fas fa-paper-plane me-1"></i> Submit for Review
-                  </span>
-                </button>
+                @php $selStatus = $seller?->status ?? 'pending'; @endphp
+                @if($selStatus === 'approved')
+                  {{-- Account already approved — no re-submission needed --}}
+                  <div style="background:#d5f5ec;color:#065f46;border-radius:10px;padding:.55rem 1.1rem;font-size:.82rem;font-weight:600;display:inline-flex;align-items:center;gap:7px;">
+                    <i class="fas fa-check-circle"></i> Account Approved — no action needed
+                  </div>
+                @elseif($selStatus === 'under_review')
+                  {{-- Already submitted — prevent duplicate submission --}}
+                  <div style="background:var(--blt);color:#1e40af;border-radius:10px;padding:.55rem 1.1rem;font-size:.82rem;font-weight:600;display:inline-flex;align-items:center;gap:7px;">
+                    <i class="fas fa-clock"></i> Submitted — Review in progress (24–48 hrs)
+                  </div>
+                @else
+                  <button type="button" class="btn-p" wire:click="saveStep5"
+                    wire:loading.attr="disabled"
+                    {{ empty($selected_package_id) ? 'disabled' : '' }}>
+                    <span wire:loading wire:target="saveStep5" class="spinner-border spinner-border-sm me-1"></span>
+                    <span wire:loading.remove wire:target="saveStep5">
+                      <i class="fas fa-paper-plane me-1"></i> Submit for Review
+                    </span>
+                  </button>
+                @endif
               </div>
             @endif
 

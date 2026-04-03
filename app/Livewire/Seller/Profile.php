@@ -336,29 +336,43 @@ class Profile extends Component
 
         if ($this->logo_file) {
             $ext      = $this->logo_file->getClientOriginalExtension();
-            $filename = 'logo.' . $ext;
+            $filename = 'logo_' . time() . '.' . $ext;
             $destPath = 'seller-assets/' . $sellerId . '/' . $filename;
 
             // Use S3 on production, public disk locally
             $disk = config('filesystems.default', 'public') === 's3' ? 's3' : 'public';
 
+            $storeOptions = $disk === 's3'
+                ? ['disk' => 's3', 'visibility' => 'public']
+                : $disk;
             $this->logo_file->storeAs(
                 'seller-assets/' . $sellerId,
                 $filename,
-                $disk
+                $storeOptions
             );
 
-            // Store relative path only — blade resolves correct URL
-            $data['logo_url']  = $destPath;
-            $this->logo_url    = $destPath;
+            // Persist full public URL so admin app (different folder/domain)
+            // can display the image directly from DB without needing asset()
+            $fullLogoUrl       = $this->buildStorageUrl($destPath);
+            $data['logo_url']  = $fullLogoUrl;
+            $this->logo_url    = $fullLogoUrl;
             $this->reset('logo_file');
         }
 
         if ($this->video_file) {
-            $path = $this->video_file->storeAs('seller-assets/'.$sellerId,
-                'video.'.$this->video_file->getClientOriginalExtension(), 'public');
-            $data['video_url'] = $path;
-            $this->video_url   = $path;
+            $videoPath     = 'seller-assets/' . $sellerId . '/video_' . time() . '.' .
+                             $this->video_file->getClientOriginalExtension();
+            $videoDisk = config('filesystems.default', 'public') === 's3'
+                ? ['disk' => 's3', 'visibility' => 'public']
+                : 'public';
+            $this->video_file->storeAs(
+                'seller-assets/' . $sellerId,
+                basename($videoPath),
+                $videoDisk
+            );
+            $fullVideoUrl      = $this->buildStorageUrl($videoPath);
+            $data['video_url'] = $fullVideoUrl;
+            $this->video_url   = $fullVideoUrl;
             $this->reset('video_file');
         }
 
@@ -477,7 +491,10 @@ class Profile extends Component
         }
 
         // Store the file
-        $path = $file->storeAs('seller-docs/' . $sellerId, $fileName, 'public');
+        $docDisk = config('filesystems.default', 'public') === 's3'
+            ? ['disk' => 's3', 'visibility' => 'public']
+            : 'public';
+        $path = $file->storeAs('seller-docs/' . $sellerId, $fileName, $docDisk);
 
         // Save verification result for UI feedback
         $this->docVerification[$type] = [
@@ -556,9 +573,18 @@ class Profile extends Component
             ? collect($this->packages)->firstWhere('id', $this->selected_package_id)
             : null;
 
-        // Build correct public URL for logo/video — works for both S3 and local storage
+        // Always resolve to full public URLs so the blade works regardless of
+        // whether it uses $logo_url, $logo_full_url, or $seller->details->logo_url
         $logoFullUrl  = $this->buildStorageUrl($this->logo_url);
         $videoFullUrl = $this->buildStorageUrl($this->video_url);
+
+        // Sync resolved URLs back onto the loaded $seller object so that
+        // $seller->details->logo_url in the blade also gives the correct URL
+        // (header blade uses this path — profile blade should too)
+        if ($seller?->details) {
+            $seller->details->logo_url  = $logoFullUrl;
+            $seller->details->video_url = $videoFullUrl;
+        }
 
         return view('livewire.seller.profile', [
             'seller'            => $seller,
@@ -573,8 +599,8 @@ class Profile extends Component
             'packages'          => $this->packages,
             'selectedPackage'   => $selectedPackage,
             'currentPlan'       => $selectedPackage,
-            'logo_url'          => $this->logo_url,
-            'video_url'         => $this->video_url,
+            'logo_url'          => $logoFullUrl,   // full URL — same as header uses
+            'video_url'         => $videoFullUrl,  // full URL
             'logo_full_url'     => $logoFullUrl,
             'video_full_url'    => $videoFullUrl,
             'successMsg'        => $this->successMsg ?? '',
