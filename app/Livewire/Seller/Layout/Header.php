@@ -32,6 +32,14 @@ class Header extends Component
     public $sellerName   = '';
     public $sellerEmail  = '';
 
+    /**
+     * Seller account status ('pending' | 'under_review' | 'approved' | 'rejected' | 'suspended')
+     * isLocked = true for any status that is NOT 'approved'
+     * (rejected sellers were already locked; now pending/under_review are locked too)
+     */
+    public $sellerStatus = 'pending';
+    public $isLocked     = true;
+
     // Ticket Form Fields
     public $projects       = [];
     public $project_id;
@@ -76,6 +84,10 @@ public $recentQuotations;
         $this->sellerEmail = $seller->email;
         $this->leadId      = $seller->id;   // used in ticket creation
         $this->client_id   = null;          // sellers don't have client_id yet
+
+        // ─── Access lock — only 'approved' sellers can use the platform ──────
+        $this->sellerStatus = $seller->status ?? 'pending';
+        $this->isLocked     = $this->sellerStatus !== 'approved';
 
         // ─── LetterHeads ─────────────────────────────────────────────────────
         // LetterHeadModel uses customer_id — sellers won't have entries yet,
@@ -198,7 +210,11 @@ $this->recentQuotations = Quotation::with('rfq.product')
     {
         $sellerId = Session::get('seller_id');
         $seller   = Seller::find($sellerId);
-        return view('livewire.seller.layout.header', compact('seller'));
+        return view('livewire.seller.layout.header', compact('seller'))
+            ->with([
+                'sellerStatus' => $this->sellerStatus,
+                'isLocked'     => $this->isLocked,
+            ]);
          
     }
 }

@@ -5,6 +5,8 @@ namespace App\Livewire\Seller;
 
 use App\Models\Product;
 use App\Models\Productgallery;
+use App\Models\Customer;
+use App\Models\Seller;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
@@ -39,13 +41,45 @@ class MyListings extends Component
         $this->loadCounts();
     }
 
-    // ── Resolve customer ID (same logic as ServiceAdd) ────────
+    // ── Resolve customer ID — same fallbacks as ProductAdd::resolveCustomer() ──
+    // Products/services are stored with customer_id from tblleads.
+    // New sellers log in via seller_id session; their customer_id is looked
+    // up by matching seller_email against tblleads.email.
     private function getCustomerId(): mixed
     {
-        return Session::get('id')
+        // 1. Direct session keys
+        $cid = Session::get('id')
             ?? Session::get('customer_id')
             ?? Session::get('user_id')
             ?? (auth()->check() ? auth()->id() : null);
+
+        if ($cid) return $cid;
+
+        // 2. New seller system: look up customer by seller_email
+        $sellerEmail = Session::get('seller_email');
+        if ($sellerEmail) {
+            $customer = \App\Models\Customer::where('email', $sellerEmail)->first();
+            if ($customer) {
+                // Cache in session so next request is instant
+                Session::put('id', $customer->id);
+                return $customer->id;
+            }
+        }
+
+        // 3. Look up via seller_id → seller email → customer
+        $sellerId = Session::get('seller_id');
+        if ($sellerId) {
+            $seller = \App\Models\Seller::find($sellerId);
+            if ($seller?->email) {
+                $customer = \App\Models\Customer::where('email', $seller->email)->first();
+                if ($customer) {
+                    Session::put('id', $customer->id);
+                    return $customer->id;
+                }
+            }
+        }
+
+        return null;
     }
 
     // ── Check seller_services table exists ────────────────────
@@ -80,6 +114,15 @@ class MyListings extends Component
     private function loadCounts(): void
     {
         $cid = $this->getCustomerId();
+
+        if (!$cid) {
+            $this->counts = [
+                'all' => 0, 'products' => 0, 'services' => 0,
+                'p_pending' => 0, 'p_approved' => 0, 'p_rejected' => 0, 'p_draft' => 0,
+                's_pending' => 0, 's_approved' => 0, 's_rejected' => 0,
+            ];
+            return;
+        }
 
         // ── Product counts ────────────────────────────────────
         $pTotal    = Product::where('customer_id', $cid)->count();
@@ -160,6 +203,16 @@ class MyListings extends Component
     public function render()
     {
         $cid = $this->getCustomerId();
+
+        // Safety: if we can't resolve a customer, return empty listing
+        // instead of querying with null which returns ALL rows
+        if (!$cid) {
+            $listings = new \Illuminate\Pagination\LengthAwarePaginator(
+                collect(), 0, $this->perPage, 1,
+                ['path' => request()->url(), 'query' => request()->query()]
+            );
+            return view('livewire.seller.my-listings', compact('listings'));
+        }
 
         // ── Products ──────────────────────────────────────────
         $products = collect();

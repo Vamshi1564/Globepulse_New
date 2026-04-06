@@ -1,5 +1,14 @@
 <div>
 <livewire:seller.layout.header />
+    {{-- Shown when seller is redirected from a locked feature --}}
+    @if(session('approval_required'))
+    <div style="background:#1e40af;color:#fff;padding:12px 20px;font-size:.84rem;font-weight:600;
+                display:flex;align-items:center;gap:10px;border-radius:0 0 10px 10px;
+                max-width:900px;margin:0 auto 0;position:relative;z-index:100;">
+        <i class="bi bi-lock-fill" style="font-size:1rem;flex-shrink:0;"></i>
+        <span>{{ session('approval_required') }}</span>
+    </div>
+    @endif
     <main class="main" id="top">
         <style>
               .doc-card{border:1.5px dashed var(--bdr);border-radius:12px;padding:1.1rem 1.2rem;background:#fafbfe;transition:border .2s,background .2s;}
