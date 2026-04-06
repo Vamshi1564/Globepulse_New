@@ -103,7 +103,15 @@
                             </div>
                         </div>
 
+@php
+$postRoute = (session()->has('buyer_id') || session()->has('seller_id') || session()->has('id'))
+    ? route('postbyrequirement')
+    : route('buyer.login');
 
+$sellRoute = session()->has('seller_id')
+    ? route('product_add')
+    : route('seller.signup');
+@endphp
                         <div class="col-md-5 mt-5 mt-md-0">
                             <div class="row g-4 align-items-stretch">
 
@@ -122,7 +130,7 @@
                                             <p>Get verified suppliers and competitive <br> quotes instantly.</p>
                                         </div>
 
-                                        <a href="{{ session()->has('id') ? route('postbyrequirement') : route('login') }}"
+                                      <a href="{{ route('product') }}"
                                             class="btn bg-light text-dark rounded-4 px-4 py-2 mt-auto align-self-start">
                                             Post Buy Requirements
                                         </a>
@@ -144,7 +152,7 @@
                                             <p>Showcase your products and scale your <br> business globally.</p>
                                         </div>
 
-                                        <a href="{{ session()->has('id') ? route('product_add') : route('signup') }}"
+                                        <a href="{{ $sellRoute }}"
                                             class="btn bg-light text-dark rounded-4 px-4 py-2 mt-auto align-self-start">
                                             Sell on Globpulse
                                         </a>
