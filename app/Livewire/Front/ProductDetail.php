@@ -193,7 +193,7 @@ public $rfq_attachment;
 
    public function submitRFQ()
 {
-    try {
+    
         // ✅ SAME AS ProductInquiry
         $buyerId = Session::get('buyer_id');
 
@@ -222,9 +222,89 @@ public $rfq_attachment;
 
         // ✅ VALIDATION
         $this->validate([
-            'rfq_quantity' => 'required|numeric|min:' . $this->product->min_order,
-            'rfq_message' => 'required|min:10',
-        ]);
+
+    // 📦 QUANTITY
+    'rfq_quantity' => [
+        'required',
+        'numeric',
+        'min:' . $this->product->min_order,
+        'max:999999'
+    ],
+
+    // 💰 TARGET PRICE (optional)
+    'rfq_target_price' => [
+        'nullable',
+        'numeric',
+        'min:1',
+        'max:99999999'
+    ],
+
+    // 🚚 SHIPPING
+    'rfq_shipping_terms' => [
+        'nullable',
+        'in:FOB,CIF,EXW'
+    ],
+
+    // ⏱ DELIVERY
+    'rfq_delivery_time' => [
+        'required',
+        'string'
+    ],
+
+    // 📍 LOCATION
+    'rfq_destination_port' => [
+        'required',
+        'string',
+        'min:3',
+        'max:255',
+        'regex:/^[a-zA-Z0-9\s,.-]+$/'
+    ],
+
+    // 💳 PAYMENT
+    'rfq_payment_terms' => [
+        'nullable',
+        'string',
+        'max:100'
+    ],
+
+    // 📝 MESSAGE
+    'rfq_message' => [
+        'required',
+        'string',
+        'min:10',
+        'max:1000',
+        'not_regex:/^\d+$/'
+    ],
+
+], [
+
+    // 📦 QUANTITY
+    'rfq_quantity.required' => 'Please enter quantity.',
+    'rfq_quantity.numeric'  => 'Quantity must be a number.',
+    'rfq_quantity.min'      => 'Minimum order is ' . $this->product->min_order . '.',
+    'rfq_quantity.max'      => 'Quantity is too large.',
+
+    // 💰 TARGET PRICE
+    'rfq_target_price.numeric' => 'Target price must be a number.',
+    'rfq_target_price.min'     => 'Target price must be greater than 0.',
+
+    // 🚚 SHIPPING
+    'rfq_shipping_terms.in' => 'Invalid shipping term selected.',
+
+    // ⏱ DELIVERY
+    'rfq_delivery_time.required' => 'Please select delivery time.',
+
+    // 📍 LOCATION
+    'rfq_destination_port.required' => 'Delivery location is required.',
+    'rfq_destination_port.min' => 'Location must be at least 3 characters.',
+    'rfq_destination_port.regex' => 'Location contains invalid characters.',
+
+    // 📝 MESSAGE
+    'rfq_message.required' => 'Please describe your requirement.',
+    'rfq_message.min' => 'Requirement must be at least 10 characters.',
+    'rfq_message.max' => 'Message is too long.',
+    'rfq_message.not_regex' => 'Message cannot be only numbers.',
+]);
 
         // ✅ SAVE RFQ
       $supplier = Seller::find($this->product->seller_id);
@@ -286,9 +366,7 @@ $rfq = RFQ::create([
         // ✅ SUCCESS MESSAGE
         session()->flash('message', 'RFQ sent successfully!');
 
-    } catch (\Exception $e) {
-        session()->flash('message', 'Error: ' . $e->getMessage());
-    }
+   
 }
 public function updated($field)
 {

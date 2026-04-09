@@ -306,13 +306,18 @@ $grouped = $quotations->getCollection()->groupBy('rfq_id');
             <span class="badge bg-success">🔥 Best Deal</span>
         @endif
 
-        @if($quote->status == 0)
-            <span class="badge bg-warning text-dark">⏳ Pending</span>
-        @elseif($quote->status == 1)
-            <span class="badge bg-success">🏆 Selected</span>
-        @else
-            <span class="badge bg-secondary">❌ Rejected</span>
-        @endif
+      @if($quote->status == 0)
+    <span class="badge bg-warning text-dark">⏳ Pending</span>
+
+@elseif($quote->status == 1)
+    <span class="badge bg-success">🏆 Selected</span>
+
+@elseif($quote->status == 2)
+    <span class="badge bg-danger">❌ Rejected</span>
+
+@elseif($quote->status == 3)
+    <span class="badge bg-secondary">🔄 Cancelled</span>
+@endif
 
         <!-- 🔥 CLEAR ACTION BUTTON -->
        <span class="view-btn">

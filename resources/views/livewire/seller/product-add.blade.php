@@ -293,6 +293,7 @@
                 placeholder="e.g. Fastrack, Milton, Bosch, or your company name">
             </div>
             <div class="pa-hint">Buyers can browse all products from this brand on one page — like Amazon stores.</div>
+            @error('brand_name')<div class="pa-err">{{ $message }}</div>@enderror
           </div>
 
           {{-- Rich text description --}}

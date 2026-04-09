@@ -236,21 +236,25 @@ $byTitle = DB::table('seller_services')
         } elseif ($this->searchType === 'buyer') {
 
             $this->suggestions = DB::table('buyers')
-                ->where('is_active', 1)
-                ->where(function ($query) use ($q) {
-                    $query->where('full_name', 'LIKE', $q)
-                          ->orWhere('company_name', 'LIKE', $q)
-                          ->orWhere('email', 'LIKE', $q);
-                })
-                ->whereNotNull('full_name')
-                ->where('full_name', '!=', '')
-                ->limit(10)
-                ->get(['id', 'full_name', 'company_name', 'email'])
-                ->map(fn($r) => [
-                    'name' => (string) ($r->company_name ?: $r->full_name),
-                    'type' => 'Buyer',
-                    'url'  => url('/buyer_info/' . $r->id),
-                ])->values()->toArray();
+        ->where('is_active', 1)
+        ->where(function ($query) use ($q) {
+            $query->where('full_name', 'LIKE', $q)
+                  ->orWhere('company_name', 'LIKE', $q)
+                  ->orWhere('email', 'LIKE', $q)
+                  ->orWhereRaw("SUBSTRING_INDEX(full_name, ' ', 1) LIKE ?", [$q])   // first name
+                  ->orWhereRaw("SUBSTRING_INDEX(full_name, ' ', -1) LIKE ?", [$q]); // last name
+        })
+        ->whereNotNull('full_name')
+        ->where('full_name', '!=', '')
+        ->limit(10)
+        ->get(['id', 'full_name', 'company_name', 'email'])
+        ->map(fn($r) => [
+            // Show both full_name and company_name if both exist
+            'name'    => (string) $r->full_name,
+    'company' => (string) ($r->company_name ?? ''),
+            'type' => 'Buyer',
+            'url'  => url('/buyer_info/' . $r->id),
+        ])->values()->toArray();
 
         } elseif ($this->searchType === 'seller') {
 

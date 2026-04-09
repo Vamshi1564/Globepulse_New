@@ -203,33 +203,107 @@ class ServiceAdd extends Component
 
     private function validateCurrentStep(): void
     {
-        match ($this->activeStep) {
-            1 => $this->validate([
-                    'title'       => 'required|string|min:3|max:255',
-                    'description' => 'nullable|string',
-                    'keywords'    => 'nullable|string|max:500',
-                ], [
-                    'title.required' => 'Service name is required.',
-                    'title.min'      => 'Name must be at least 3 characters.',
-                ]),
+       match ($this->activeStep) {
 
-            2 => $this->validate([
-                    'cover_image'    => 'nullable|image|mimes:jpg,jpeg,webp,png|max:4096',
-                    'gallery_images' => 'nullable|array|max:9',
-                    'video_url'      => 'nullable|url|max:500',
-                    'brochure_pdf'   => 'nullable|file|mimes:pdf|max:10240',
-                ], [
-                    'cover_image.max'    => 'Cover image must be under 4MB.',
-                    'brochure_pdf.max'   => 'PDF must be under 10MB.',
-                    'brochure_pdf.mimes' => 'Brochure must be a PDF file.',
-                ]),
+    // ── STEP 1: BASIC INFO ─────────────────────────
+    1 => $this->validate([
 
-            3 => $this->validate([
-                    'price' => 'nullable|numeric|min:0',
-                ]),
+        // Title (smart validation)
+        'title' => [
+            'required',
+            'string',
+            'min:3',
+            'max:255',
+            'not_regex:/^\d+$/'
+        ],
 
-            default => null,
-        };
+        // Description (no only numbers)
+        'description' => [
+            'required',
+            'nullable',
+            'string',
+            'min:10',
+            'not_regex:/^\d+$/'
+        ],
+
+        // Keywords
+        'keywords' => [
+            'nullable',
+            'string',
+            'max:500'
+        ],
+
+    ], [
+        'title.required' => 'Service name is required.',
+        'title.min'      => 'Name must be at least 3 characters.',
+        'title.not_regex'=> 'Service name cannot be only numbers.',
+        'description.required' => 'Description is required.',
+        'description.min'      => 'Description must be at least 10 characters.',
+        'description.not_regex' => 'Description cannot be only numbers.',
+    ]),
+
+
+    // ── STEP 2: MEDIA ──────────────────────────────
+    2 => $this->validate([
+
+        'cover_image' => 'nullable|image|mimes:jpg,jpeg,webp,png|max:4096',
+
+        'gallery_images' => [
+            'nullable',
+            'array',
+            'max:9'
+        ],
+
+        'video_url' => [
+            'nullable',
+            'url',
+            'max:500'
+        ],
+
+        'brochure_pdf' => [
+            'nullable',
+            'file',
+            'mimes:pdf',
+            'max:10240'
+        ],
+
+    ], [
+        'cover_image.max'    => 'Cover image must be under 4MB.',
+        'brochure_pdf.max'   => 'PDF must be under 10MB.',
+        'brochure_pdf.mimes' => 'Brochure must be a PDF file.',
+        'video_url.url'      => 'Enter a valid video URL.',
+    ]),
+
+
+    // ── STEP 3: PRICING ────────────────────────────
+    3 => $this->validate([
+
+        'price' => [
+            'nullable',
+            'numeric',
+            'min:0'
+        ],
+
+        // Optional improvements
+        'experience_years' => [
+            'nullable',
+            'regex:/^[0-9]+$/'
+        ],
+
+        'turnaround_time' => [
+            'nullable',
+            'regex:/^[a-zA-Z0-9\s-]+$/'
+        ],
+
+    ], [
+        'price.numeric' => 'Price must be a number.',
+        'experience_years.regex' => 'Experience must be only numbers.',
+        'turnaround_time.regex' => 'Invalid turnaround time format.',
+    ]),
+
+
+    default => null,
+};
     }
 
     // ── Resolve customer ID ───────────────────────────────────
@@ -456,13 +530,30 @@ class ServiceAdd extends Component
         $this->alertMessage = '';
 
         try {
-            $this->validate([
-                'title'        => 'required|string|min:3|max:255',
-                'video_url'    => 'nullable|url|max:500',
-                'brochure_pdf' => 'nullable|file|mimes:pdf|max:10240',
-            ]);
+    $this->validate([
+        'title'       => ['required','string','min:3','max:255'],
+        'description' => ['required','string','min:10'],
+        'video_url'   => ['nullable','url','max:500'],
+        'brochure_pdf'=> ['nullable','file','mimes:pdf','max:10240'],
+    ], [
+        'title.required'       => 'Service name is required.',
+        'description.required' => 'Description is required.',
+    ]);
+
         } catch (\Illuminate\Validation\ValidationException $e) {
-            $this->activeStep = 1;
+
+            // 👉 Get first error message
+            $firstError = collect($e->errors())->flatten()->first();
+
+            // 👉 Show in popup
+            $this->alertMessage = $firstError;
+            $this->alertType    = 'error';
+
+            // 👉 Move to correct step
+            if (isset($e->errors()['title']) || isset($e->errors()['description'])) {
+                $this->activeStep = 1;
+            }
+
             throw $e;
         }
 
