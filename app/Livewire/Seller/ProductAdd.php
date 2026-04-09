@@ -24,8 +24,8 @@ class ProductAdd extends Component
 
     // ── Basic Info ────────────────────────────────────────────
     public $title           = '';
-    public $description     = '';  // rich text via JS editor
-    public $brand_name      = '';  // NEW — for brand store page
+    public $description     = '';
+    public $brand_name      = '';
     public $keywords        = '';
 
     // ── Category ─────────────────────────────────────────────
@@ -42,41 +42,40 @@ class ProductAdd extends Component
     public $product_video_url   = '';
 
     // ── Pricing ───────────────────────────────────────────────
-    // price_type: 'range' (min-max) | 'fixed' | 'negotiable' | 'quote'
-    public $price_type     = 'range';
-    public $min_price      = '';
-    public $max_price      = '';
-    public $fixed_price    = '';
-    public $unit           = '';
-    public $min_order      = '';
-    public $HSN            = '';
-    public $business_type  = '';
+    public $price_type    = 'range';
+    public $min_price     = '';
+    public $max_price     = '';
+    public $fixed_price   = '';
+    public $unit          = 'Piece';
+    public $min_order     = '';
+    public $HSN           = '';
+    public $business_type = '';
 
     // ── Trade Details ─────────────────────────────────────────
-    public $supply_ability   = '';
-    public $lead_time        = '';
-    public $payment_terms    = '';
-    public $port_of_dispatch = '';
+    public $supply_ability    = '';
+    public $lead_time         = '';
+    public $payment_terms     = '';
+    public $port_of_dispatch  = '';
     public $country_of_origin = 'India';
 
     // ── Specifications ────────────────────────────────────────
-    public $certifications     = '';
-    public $packaging_details  = '';
-    public $sample_available   = 'no';
-    public $sample_price       = '';
+    public $certifications    = '';
+    public $packaging_details = '';
+    public $sample_available  = 'no';
+    public $sample_price      = '';
 
-    // ── Documents (multiple — brochure, spec sheet, etc.) ─────
-    public $documents          = [];   // uploaded file objects
-    public $new_document       = null; // temp upload slot
-    public $document_label     = '';   // e.g. "Brochure", "Spec Sheet"
-    public $document_list      = [];   // [{label, file}] collected before submit
+    // ── Documents ─────────────────────────────────────────────
+    public $documents      = [];
+    public $new_document   = null;
+    public $document_label = '';
+    public $document_list  = [];
 
     // ── SEO ───────────────────────────────────────────────────
     public $seo_title       = '';
     public $seo_description = '';
     public $seo_keywords    = '';
 
-    // ── Slug (auto-generated) ─────────────────────────────────
+    // ── Slug ──────────────────────────────────────────────────
     public $slug = '';
 
     // ── Step state ────────────────────────────────────────────
@@ -84,66 +83,204 @@ class ProductAdd extends Component
     public int $totalSteps = 4;
 
     // ── Edit mode ─────────────────────────────────────────────
-    public ?int  $editId            = null;
-    public bool  $isEditMode        = false;
-    public string $existingImagePath = '';  // saved product_img path for edit
+    public ?int   $editId            = null;
+    public bool   $isEditMode        = false;
+    public string $existingImagePath = '';
 
-    // ── Package limit ─────────────────────────────────────────
-    public bool   $limitReached = false;
-    public string $limitMessage = '';
-    public int    $productCount = 0;
-    public int    $productLimit = 0;
+    // ── Plan / Package usage (displayed in blade sidebar) ─────
+    //
+    // Populated by loadPlanInfo() during mount() so the sidebar
+    // widget is visible immediately when the page loads.
+    //
+    // ⚠️  FIELD NAME ASSUMPTIONS — update these if your DB differs:
+    //   PackagesModel columns : product_limit, service_limit, name / package_name
+    //   Service model class   : \App\Models\Service  (with customer_id + status)
+    //   Draft status value    : 3  (excluded from usage counts)
+    // ─────────────────────────────────────────────────────────
+    public string $planName         = '';
+    public int    $planProductLimit = 0;   // 0 = unlimited
+    public int    $planServiceLimit = 0;   // 0 = unlimited
+    public int    $planProductUsed  = 0;
+    public int    $planServiceUsed  = 0;
+    public bool   $planLimitBlocked = false; // true = product limit hit on CREATE
 
     // ─────────────────────────────────────────────────────────
-    // FIX: Centralised, robust customer/seller resolver.
-    // Previously submit() and saveDraft() only checked Session::get('id'),
-    // while mount() also checked 'customer_id' and auth(). That mismatch
-    // caused "Session expired" errors when session key was 'customer_id'
-    // instead of 'id', or when Laravel auth was the active guard.
+    // resolveCustomer()
+    //
+    // Checks both session keys ('id' and 'customer_id') plus the
+    // seller_email fallback.  Does NOT call auth() — this app uses
+    // manual session auth, and auth()->id() can return an Admin/
+    // Seller ID that is absent from the customers table, causing
+    // Customer::find() to return null and a false "Session expired".
     // ─────────────────────────────────────────────────────────
     private function resolveCustomer(): array
     {
-        $sellerId   = Session::get('seller_id');
+        $sellerId = Session::get('seller_id');
+
+        // Step 1: Direct customer ID from session
         $customerId = Session::get('id')
                    ?? Session::get('customer_id')
-                   ?? (auth()->check() ? auth()->id() : null);
+                   ?? Session::get('seller_customer_id')
+                   ?? null;
+        $customer   = $customerId ? Customer::find($customerId) : null;
 
-        $customer = $customerId ? Customer::find($customerId) : null;
-
-        // Fallback 1: new seller system stores email in session
+        // Step 2: Match via seller_email in session
         if (!$customer && Session::get('seller_email')) {
-            $customer   = Customer::where('email', Session::get('seller_email'))->first();
-            $customerId = $customer?->id;
-            if ($customerId) Session::put('id', $customerId);
-        }
-
-        // Fallback 2: look up via seller record email
-        if (!$customer && $sellerId) {
-            $seller = Seller::find($sellerId);
-            if ($seller?->email) {
-                $customer   = Customer::where('email', $seller->email)->first();
-                $customerId = $customer?->id;
-                if ($customerId) Session::put('id', $customerId);
+            $customer = Customer::where('email', Session::get('seller_email'))->first();
+            if ($customer) {
+                $customerId = $customer->id;
+                Session::put('id', $customerId);
             }
         }
 
-        // Fallback 3: if still no customer record in tblleads, use seller_id
-        // so products are still saved with a non-null customer_id
-        if (!$customerId && $sellerId) {
-            $customerId = $sellerId;
+        // Step 3: Match via Seller record
+        if (!$customer && $sellerId) {
+            $seller = Seller::find($sellerId);
+            if ($seller) {
+                if (!empty($seller->customer_id)) {
+                    $customer = Customer::find($seller->customer_id);
+                }
+                if (!$customer && !empty($seller->email)) {
+                    $customer = Customer::where('email', $seller->email)->first();
+                }
+                if ($customer) {
+                    $customerId = $customer->id;
+                    Session::put('id', $customerId);
+                }
+            }
         }
 
-        return [$customerId, $customer, $sellerId];
+        // Step 4 (critical fallback): use seller_id as customerId
+        // For platforms where sellers are not in the customers table.
+        // Products are linked via customer_id = seller_id.
+        if (!$customerId && $sellerId) {
+            $customerId = $sellerId;
+            $customer   = Customer::find($customerId); // may still be null — that's OK
+        }
+
+        // $isSellerOnly = true when seller_id exists but no Customer record found
+        $isSellerOnly = ($sellerId && !$customer);
+
+        return [$customerId, $customer, $sellerId, $isSellerOnly];
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // resolvePackageLimits()
+    //
+    // Returns the seller's package limits and current usage for
+    // BOTH products and services so the same data can be used for
+    // the limit check in submit() and the sidebar widget.
+    //
+    // Priority:
+    //   1. Seller → PackagesModel  (new seller system)
+    //   2. Customer->product_upload_limit  (legacy GFE system)
+    //
+    // ⚠️  Adjust column names here if your schema differs:
+    //   product_limit → PackagesModel column for product cap
+    //   service_limit → PackagesModel column for service cap
+    //   name / package_name → display name of the plan
+    // ─────────────────────────────────────────────────────────
+    private function resolvePackageLimits(?int $customerId, ?int $sellerId, ?Customer $customer): array
+    {
+        $productLimit = 0;   // 0 = unlimited
+        $serviceLimit = 0;   // 0 = unlimited
+        $packageName  = 'Standard';
+
+        if ($sellerId) {
+            $seller  = Seller::find($sellerId);
+            $package = ($seller && $seller->package_id)
+                ? PackagesModel::find($seller->package_id)
+                : null;
+
+            if ($package) {
+                // ── Package display name ──────────────────────
+                $packageName = $package->name
+                            ?? $package->package_name
+                            ?? 'Your Plan';
+
+                // ── Product slot limit ────────────────────────
+                // ⚠️  Change 'product_limit' if your column name differs
+                $rawProd      = $package->product_limit ?? null;
+                $productLimit = ($rawProd !== null && (int) $rawProd > 0)
+                    ? (int) $rawProd : 0;
+
+                // ── Service slot limit ────────────────────────
+                // ⚠️  Change 'service_limit' if your column name differs
+                $rawSvc       = $package->service_limit ?? null;
+                $serviceLimit = ($rawSvc !== null && (int) $rawSvc > 0)
+                    ? (int) $rawSvc : 0;
+            }
+        } elseif ($customer) {
+            // Legacy system: product limit stored on the customer row
+            $rawProd      = $customer->product_upload_limit ?? null;
+            $productLimit = ($rawProd !== null && (int) $rawProd > 0)
+                ? (int) $rawProd : 0;
+        }
+
+        // ── Current product usage (exclude drafts, status = 3) ───
+        $productUsed = Product::where('customer_id', $customerId)
+                              ->where('status', '!=', 3)
+                              ->count();
+
+        // ── Current service usage ─────────────────────────────────
+        // ⚠️  Change \App\Models\Service to the actual class in your app.
+        //     Common names: Service, Listing, ServiceListing, ItemsModel.
+        //     The model must have customer_id and status columns.
+        $serviceUsed = 0;
+        try {
+            if (class_exists(\App\Models\Service::class)) {
+                $serviceUsed = \App\Models\Service::where('customer_id', $customerId)
+                                                  ->where('status', '!=', 3)
+                                                  ->count();
+            }
+        } catch (\Throwable $e) {
+            $serviceUsed = 0; // model not yet available — skip silently
+        }
+
+        return compact('packageName', 'productLimit', 'serviceLimit', 'productUsed', 'serviceUsed');
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // loadPlanInfo()
+    //
+    // Fetches package limits + usage and writes them into the
+    // public $plan* properties so the blade sidebar can render
+    // a live plan-usage widget.
+    //
+    // Also sets $planLimitBlocked = true when a seller is in
+    // CREATE mode and has already hit their product limit.
+    // The blade uses this flag to disable the submit button.
+    // ─────────────────────────────────────────────────────────
+    private function loadPlanInfo(?int $customerId, ?int $sellerId, ?Customer $customer, bool $isNewProduct): void
+    {
+        if (!$customerId) return; // no session — leave plan properties at defaults
+        $limits = $this->resolvePackageLimits($customerId, $sellerId, $customer);
+
+        $this->planName         = $limits['packageName'];
+        $this->planProductLimit = $limits['productLimit'];
+        $this->planServiceLimit = $limits['serviceLimit'];
+        $this->planProductUsed  = $limits['productUsed'];
+        $this->planServiceUsed  = $limits['serviceUsed'];
+
+        // Only block when CREATING.  Editing never blocks — the slot exists.
+        $this->planLimitBlocked = $isNewProduct
+            && $limits['productLimit'] > 0
+            && $limits['productUsed'] >= $limits['productLimit'];
     }
 
     // ─────────────────────────────────────────────────────────
     public function mount(): void
     {
         $editId = request()->query('edit');
+
+        [$customerId, $customer, $sellerId, $isSellerOnly] = $this->resolveCustomer();
+
+        // Populate plan widget immediately on page load
+        $this->loadPlanInfo($customerId, $sellerId, $customer, empty($editId));
+
         if (!$editId) return;
 
-        [, $customer, ] = $this->resolveCustomer();   // use shared helper
-        $customerId = $customer?->id;
+        if (!$customerId) return; // cannot load product without session
 
         $product = Product::where('id', $editId)
             ->where('customer_id', $customerId)
@@ -151,24 +288,23 @@ class ProductAdd extends Component
 
         if (!$product) return;
 
-        $this->editId    = (int) $editId;
+        $this->editId     = (int) $editId;
         $this->isEditMode = true;
 
-        // Step 1 — Basic Info
+        // Step 1
         $this->title       = $product->title       ?? '';
         $this->description = $product->description ?? '';
         $this->brand_name  = $product->brand_name  ?? '';
         $this->keywords    = $product->keywords    ?? '';
 
-        // Step 2 — Images
-        $this->existingImagePath = $product->product_img ?? '';
+        // Step 2
+        $this->existingImagePath = $product->product_img      ?? '';
         $this->product_video_url = $product->product_video_url ?? '';
 
-        // Load existing gallery — store as string paths (not file objects)
         $gallery = Productgallery::where('product_id', $editId)->get();
         $this->gallery_images = $gallery->pluck('gallery_images')->toArray();
 
-        // Step 3 — Pricing
+        // Step 3
         if ($product->min_price && $product->max_price && $product->min_price != $product->max_price) {
             $this->price_type = 'range';
             $this->min_price  = $product->min_price;
@@ -177,28 +313,28 @@ class ProductAdd extends Component
             $this->price_type  = 'fixed';
             $this->fixed_price = $product->min_price;
         }
-        $this->unit           = $product->unit          ?? 'Piece';
-        $this->min_order      = $product->min_order     ?? '';
-        $this->HSN            = $product->HSN           ?? '';
-        $this->business_type  = $product->business_type ?? '';
-        $this->supply_ability = $product->supply_ability ?? '';
-        $this->lead_time      = $product->lead_time     ?? '';
-        $this->payment_terms  = $product->payment_terms ?? '';
+        $this->unit              = $product->unit              ?? 'Piece';
+        $this->min_order         = $product->min_order         ?? '';
+        $this->HSN               = $product->HSN               ?? '';
+        $this->business_type     = $product->business_type     ?? '';
+        $this->supply_ability    = $product->supply_ability    ?? '';
+        $this->lead_time         = $product->lead_time         ?? '';
+        $this->payment_terms     = $product->payment_terms     ?? '';
         $this->port_of_dispatch  = $product->port_of_dispatch  ?? '';
         $this->country_of_origin = $product->country_of_origin ?? 'India';
 
-        // Step 4 — Specs & SEO
+        // Step 4
         $this->certifications    = $product->certifications    ?? '';
         $this->packaging_details = $product->packaging_details ?? '';
         $this->sample_available  = $product->sample_available  ?? 'no';
         $this->sample_price      = $product->sample_price      ?? '';
         $this->seo_title         = $product->seo_title         ?? '';
         $this->seo_description   = $product->seo_description   ?? '';
-        $this->seo_keywords      = $product->seo_keywords      ?? '';
+        $this->seo_keywords      = $product->seo_keywords       ?? '';
 
         // Category
-        $this->category_id       = $product->category_id       ?? '';
-        $this->subcategory_id    = $product->subcategory_id    ?? '';
+        $this->category_id        = $product->category_id        ?? '';
+        $this->subcategory_id     = $product->subcategory_id     ?? '';
         $this->sub_subcategory_id = $product->sub_subcategory_id ?? '';
 
         if ($this->category_id) {
@@ -207,72 +343,33 @@ class ProductAdd extends Component
         if ($this->subcategory_id) {
             $this->sub_subcategories = SubSubCategory::where('subcategory_id', $this->subcategory_id)->get();
         }
-
-        // ── Package limit check ───────────────────────────────
-        // In add mode: check if limit reached and set banner
-        // In edit mode: still load counts for preview but don't block
-        $this->checkPackageLimit();
-        // In edit mode, the banner is hidden by blade @if(!$isEditMode)
-    }
-
-    // ── Package limit check ───────────────────────────────────
-    // Returns [bool $limitReached, string $message, int $count, int $limit]
-    // Called from mount() (to show banner), saveDraft(), and submit().
-    // ALWAYS skipped in edit mode — editing an existing product never consumes quota.
-    private function getPackageLimit(): array
-    {
-        [$customerId, $customer, $sellerId] = $this->resolveCustomer();
-        if (!$customerId) return [false, '', 0, 999];
-
-        // Count active products (pending=0, approved=1, draft=3) — exclude rejected
-        $existingCount = Product::where('customer_id', $customerId)
-            ->whereIn('status', [0, 1, 3])
-            ->count();
-
-        $limit = null; // null = not set (unlimited)
-
-        if ($sellerId) {
-            $seller  = Seller::find($sellerId);
-            $package = $seller?->package_id ? PackagesModel::find($seller->package_id) : null;
-            // Only enforce if package explicitly sets a product_limit > 0
-            if ($package && $package->product_limit !== null && $package->product_limit > 0) {
-                $limit = (int) $package->product_limit;
-            }
-        } elseif ($customer && !empty($customer->product_upload_limit)) {
-            $limit = (int) $customer->product_upload_limit;
-        }
-
-        if ($limit !== null && $existingCount >= $limit) {
-            return [
-                true,
-                "You have reached your plan limit of {$limit} product(s). You currently have {$existingCount} active product(s). Please upgrade your package to add more.",
-                $existingCount,
-                $limit,
-            ];
-        }
-
-        return [false, '', $existingCount, $limit ?? 999];
-    }
-
-    private function checkPackageLimit(): void
-    {
-        [$reached, $message, $count, $limit] = $this->getPackageLimit();
-        $this->limitReached = $reached;
-        $this->limitMessage = $message;
-        $this->productCount = $count;
-        $this->productLimit = $limit;
     }
 
     public function render()
     {
+        // Re-resolve customer on every render so plan usage stays live
+        [$customerId, $customer, $sellerId, $isSellerOnly] = $this->resolveCustomer();
+        if ($customerId) {
+            $this->loadPlanInfo($customerId, $sellerId, $customer, !$this->isEditMode);
+        }
+
         $categories = Category::all();
-        return view('livewire.seller.product-add', compact('categories'))
-            ->with([
-                'limitReached' => $this->limitReached,
-                'limitMessage' => $this->limitMessage,
-                'productCount' => $this->productCount,
-                'productLimit' => $this->productLimit,
-            ]);
+
+        // $limitReached is an alias for $planLimitBlocked — used in some blade versions
+        $limitReached = $this->planLimitBlocked;
+
+        return view('livewire.seller.product-add', [
+            'categories'      => $categories,
+            // Plan / package variables — passed explicitly so the blade
+            // always has them even if the public property hydration is delayed
+            'planName'         => $this->planName,
+            'planProductLimit' => $this->planProductLimit,
+            'planProductUsed'  => $this->planProductUsed,
+            'planServiceLimit' => $this->planServiceLimit,
+            'planServiceUsed'  => $this->planServiceUsed,
+            'planLimitBlocked' => $this->planLimitBlocked,
+            'limitReached'     => $limitReached,  // backward-compat alias
+        ]);
     }
 
     public function updatedCategoryId($val)
@@ -297,16 +394,24 @@ class ProductAdd extends Component
         $this->new_gallery_images = [];
     }
 
-    // ── Add document to list ──────────────────────────────────
     public function addDocument()
     {
-        if ($this->new_document && $this->document_label) {
-            $this->document_list[] = [
-                'label' => $this->document_label,
-                'file'  => $this->new_document,
-            ];
-            $this->reset(['new_document', 'document_label']);
-        }
+        // Validate before adding
+        $this->validate([
+            'document_label' => 'required|string',
+            'new_document'   => 'required|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx|max:10240',
+        ], [
+            'document_label.required' => 'Please select a document type.',
+            'new_document.required'   => 'Please select a file to upload.',
+            'new_document.mimes'      => 'Allowed formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX.',
+            'new_document.max'        => 'File must be under 10 MB.',
+        ]);
+
+        $this->document_list[] = [
+            'label' => $this->document_label,
+            'file'  => $this->new_document,
+        ];
+        $this->reset(['new_document', 'document_label']);
     }
 
     public function removeDocument(int $index): void
@@ -314,135 +419,94 @@ class ProductAdd extends Component
         array_splice($this->document_list, $index, 1);
     }
 
-    // ── Sync description from JS editor before step change ────
     public function syncDescription(string $html): void
     {
         $this->description = $html;
     }
 
-    // ── Step navigation ───────────────────────────────────────
-    public function nextStep(string $desc = '')
+    public function nextStep()
     {
-        if ($desc !== '') $this->description = $desc;
-        if ($this->activeStep < $this->totalSteps) {
-            $this->activeStep++;
-        }
+        if ($this->activeStep < $this->totalSteps) $this->activeStep++;
     }
 
-    public function prevStep(string $desc = '')
+    public function prevStep()
     {
-        if ($desc !== '') $this->description = $desc;
-        if ($this->activeStep > 1) {
-            $this->activeStep--;
-        }
+        if ($this->activeStep > 1) $this->activeStep--;
     }
 
     public function goToStep(int $step)
     {
-        if ($step >= 1 && $step <= $this->totalSteps) {
-            $this->activeStep = $step;
-        }
+        if ($step >= 1 && $step <= $this->totalSteps) $this->activeStep = $step;
     }
 
     // ── Save as Draft ─────────────────────────────────────────
-    public function saveDraft(string $desc = '')
+    // Drafts are saved with status = 3 and are NOT counted against
+    // plan limits, so no package check is performed here.
+    public function saveDraft()
     {
-        if ($desc !== '') $this->description = $desc;
         try {
-            [$customerId, $customer, $sellerId] = $this->resolveCustomer();
+            [$customerId, $customer, $sellerId, $isSellerOnly] = $this->resolveCustomer();
 
-            if (!$customer) {
+            // Block only if we have no customer ID at all (truly no session)
+            if (!$customerId) {
                 session()->flash('error', 'Session expired. Please login again.');
                 return;
             }
+            // If $customer is null but $customerId exists (seller-only session),
+            // we proceed — $customerId (= seller_id) is used as the owner ID.
 
-            // ── Package limit check (skip for edit mode) ─────────
-            if (!$this->isEditMode) {
-                [$reached, $message] = $this->getPackageLimit();
-                if ($reached) {
-                    session()->flash('error', $message);
-                    return;
-                }
-            }
-
-            // Auto-generate slug if not set
             if (empty($this->slug) && !empty($this->title)) {
                 $this->slug = Str::slug($this->title) . '-' . rand(100, 999999);
             } elseif (empty($this->slug)) {
                 $this->slug = 'draft-' . $customerId . '-' . time();
             }
 
-            // Upload main image if a new one was selected
-            $imagePath = $this->existingImagePath ?: null; // keep existing by default
+            $imagePath = null;
             if ($this->product_img && is_object($this->product_img)) {
                 $ext        = $this->product_img->getClientOriginalExtension();
                 $baseName   = Str::slug(pathinfo($this->product_img->getClientOriginalName(), PATHINFO_FILENAME));
                 $uniqueName = $baseName . '-' . rand(1000, 999999) . '.' . $ext;
                 $this->product_img->storeAs('public/uploads/product', $uniqueName, 's3');
-                $imagePath = 'uploads/product/' . $uniqueName;
+                $imagePath  = 'uploads/product/' . $uniqueName;
             }
 
-            // Determine prices
             $minPrice = $this->price_type === 'range' ? ($this->min_price ?: 0)
                       : ($this->price_type === 'fixed' ? ($this->fixed_price ?: 0) : 0);
             $maxPrice = $this->price_type === 'range' ? ($this->max_price ?: 0)
                       : ($this->price_type === 'fixed' ? ($this->fixed_price ?: 0) : 0);
 
-            $productData = [
-                'title'             => $this->title          ?: 'Untitled Draft',
-                'description'       => $this->description    ?: '',
-                'product_img'       => $imagePath            ?: '',
-                'category_id'       => $this->category_id   ?: null,
-                'subcategory_id'    => $this->subcategory_id ?: null,
+            $product = Product::create([
+                'title'             => $this->title           ?: 'Untitled Draft',
+                'description'       => $this->description     ?: '',
+                'product_img'       => $imagePath             ?: '',
+                'category_id'       => $this->category_id     ?: null,
+                'subcategory_id'    => $this->subcategory_id  ?: null,
                 'sub_subcategory_id'=> $this->sub_subcategory_id ?: null,
                 'min_price'         => $minPrice,
                 'max_price'         => $maxPrice,
-                'min_order'         => $this->min_order      ?: null,
+                'min_order'         => $this->min_order        ?: null,
                 'unit'              => $this->unit,
-                'business_type'     => $this->business_type  ?: null,
+                'business_type'     => $this->business_type   ?: null,
                 'slug'              => $this->slug,
-                'HSN'               => $this->HSN             ?: null,
+                'HSN'               => $this->HSN              ?: null,
                 'customer_id'       => $customerId,
-                'seller_id'         => $sellerId ?? null,
-                'country_id'        => $customer?->country_id ?? null,
-                'status'            => $this->isEditMode ? 3 : 3, // always draft
+                'seller_id'         => $sellerId               ?? null,
+                'country_id'        => $customer?->country_id  ?? null,
+                'status'            => 3,
                 'brand_name'        => $this->brand_name        ?: null,
-                'keywords'          => $this->keywords           ?: null,
-                'supply_ability'    => $this->supply_ability     ?: null,
-                'lead_time'         => $this->lead_time          ?: null,
-                'payment_terms'     => $this->payment_terms      ?: null,
-                'port_of_dispatch'  => $this->port_of_dispatch   ?: null,
-                'country_of_origin' => $this->country_of_origin  ?: 'India',
-                'certifications'    => $this->certifications     ?: null,
-                'packaging_details' => $this->packaging_details  ?: null,
-                'sample_available'  => $this->sample_available   ?: 'no',
-                'sample_price'      => $this->sample_price       ?: null,
-                'product_video_url' => $this->product_video_url  ?: null,
-                'seo_title'         => $this->seo_title          ?: null,
-                'seo_description'   => $this->seo_description    ?: null,
-                'seo_keywords'      => $this->seo_keywords        ?: null,
-            ];
+                'keywords'          => $this->keywords          ?: null,
+                'supply_ability'    => $this->supply_ability    ?: null,
+                'lead_time'         => $this->lead_time         ?: null,
+                'certifications'    => $this->certifications    ?: null,
+                'packaging_details' => $this->packaging_details ?: null,
+                'sample_available'  => $this->sample_available  ?: 'no',
+                'sample_price'      => $this->sample_price      ?: null,
+                'product_video_url' => $this->product_video_url ?: null,
+                'seo_title'         => $this->seo_title         ?: null,
+                'seo_description'   => $this->seo_description   ?: null,
+                'seo_keywords'      => $this->seo_keywords       ?: null,
+            ]);
 
-            // ── Edit mode: UPDATE existing product ───────────────
-            if ($this->isEditMode && $this->editId) {
-                $product = Product::where('id', $this->editId)
-                    ->where('customer_id', $customerId)
-                    ->first();
-                if ($product) {
-                    unset($productData['slug']); // preserve original slug
-                    $product->update($productData);
-                    $this->reset();
-                    return redirect()->route('my-listings')
-                        ->with('message', '📝 Product draft updated successfully.');
-                }
-                session()->flash('error', 'Product not found.');
-                return;
-            }
-
-            // ── Add mode: CREATE new product ─────────────────────
-            $product = Product::create($productData);
-
-            // Upload gallery images (new uploads only — skip string paths from edit mode)
             foreach ($this->gallery_images as $gi) {
                 if (!is_object($gi)) continue;
                 try {
@@ -467,45 +531,45 @@ class ProductAdd extends Component
         }
     }
 
-    // ── Final submit ──────────────────────────────────────────
-    public function submit(string $desc = '')
+    // ── Final Submit ──────────────────────────────────────────
+    public function submit()
     {
-        if ($desc !== '') $this->description = $desc;
+        // ── Validation ────────────────────────────────────────
         try {
             $this->validate([
-                'title'          => 'required|string|min:5|max:255',
-                'description'    => 'required|string|min:20',
-                'category_id'    => 'required',
-                'subcategory_id' => 'required',
-                'product_img'    => ($this->isEditMode && $this->existingImagePath)
-                                        ? 'nullable|image|mimes:webp,jpg,jpeg,png|max:4096'
-                                        : 'required|image|mimes:webp,jpg,jpeg,png|max:4096',
-                'price_type'     => 'required|in:range,fixed',
-                'min_price'      => 'required_if:price_type,range|nullable|numeric|min:0',
-                'max_price'      => 'required_if:price_type,range|nullable|numeric|gte:min_price',
-                'fixed_price'    => 'required_if:price_type,fixed|nullable|numeric|min:0',
-                'unit'           => 'required|string',
-                'min_order'      => 'required|string|max:100',
-                'business_type'  => 'required|string',
-                'HSN'            => 'required|string|max:20',
-                'sample_available' => 'required|in:yes,no',
-                'product_video_url'=> 'nullable|url|max:500',
-                'seo_title'      => 'nullable|string|max:255',
+                'title'             => 'required|string|min:5|max:255',
+                'description'       => 'required|string|min:20',
+                'category_id'       => 'required',
+                'subcategory_id'    => 'required',
+                'product_img'       => ($this->isEditMode && $this->existingImagePath)
+                                           ? 'nullable|image|mimes:webp,jpg,jpeg,png|max:4096'
+                                           : 'required|image|mimes:webp,jpg,jpeg,png|max:4096',
+                'price_type'        => 'required|in:range,fixed,negotiable,quote',
+                'min_price'         => 'required_if:price_type,range|nullable|numeric|min:0',
+                'max_price'         => 'required_if:price_type,range|nullable|numeric|gte:min_price',
+                'fixed_price'       => 'required_if:price_type,fixed|nullable|numeric|min:0',
+                'unit'              => 'required|string',
+                'min_order'         => 'required|string|max:100',
+                'business_type'     => 'required|string',
+                'HSN'               => 'required|string|max:20',
+                'sample_available'  => 'required|in:yes,no',
+                'product_video_url' => 'nullable|url|max:500',
+                'seo_title'         => 'nullable|string|max:255',
             ], [
-                'title.required'              => 'Product title is required.',
-                'title.min'                   => 'Title must be at least 5 characters.',
-                'description.required'        => 'Product description is required.',
-                'description.min'             => 'Description must be at least 20 characters.',
-                'category_id.required'        => 'Please select a category.',
-                'subcategory_id.required'     => 'Please select a sub category.',
-                'product_img.required'        => 'Please upload a main product image.',
-                'min_price.required_if'       => 'Min price is required for price range.',
-                'max_price.required_if'       => 'Max price is required for price range.',
-                'fixed_price.required_if'     => 'Please enter the fixed price.',
-                'unit.required'               => 'Please select a unit.',
-                'min_order.required'          => 'Minimum order quantity is required.',
-                'business_type.required'      => 'Please select your business type.',
-                'HSN.required'                => 'HSN/SAC code is required.',
+                'title.required'          => 'Product title is required.',
+                'title.min'               => 'Title must be at least 5 characters.',
+                'description.required'    => 'Product description is required.',
+                'description.min'         => 'Description must be at least 20 characters.',
+                'category_id.required'    => 'Please select a category.',
+                'subcategory_id.required' => 'Please select a sub category.',
+                'product_img.required'    => 'Please upload a main product image.',
+                'min_price.required_if'   => 'Min price is required for price range.',
+                'max_price.required_if'   => 'Max price is required for price range.',
+                'fixed_price.required_if' => 'Please enter the fixed price.',
+                'unit.required'           => 'Please select a unit.',
+                'min_order.required'      => 'Minimum order quantity is required.',
+                'business_type.required'  => 'Please select your business type.',
+                'HSN.required'            => 'HSN/SAC code is required.',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             $errors = $e->errors();
@@ -520,29 +584,74 @@ class ProductAdd extends Component
         }
 
         try {
-            // FIX: Use shared resolver — same fallbacks as mount() and saveDraft().
-            // Previously submit() only checked Session::get('id'), missing
-            // 'customer_id' and auth() fallbacks, causing null customer errors.
-            [$customerId, $customer, $sellerId] = $this->resolveCustomer();
+            [$customerId, $customer, $sellerId, $isSellerOnly] = $this->resolveCustomer();
 
-            // FIX: Guard against null customer BEFORE accessing any property.
-            // Previously $customer->country_id was used with no null check,
-            // causing "Something went wrong: country_id / null" errors.
-            if (!$customer) {
+            // Block only if we have no customer ID at all (truly no session)
+            if (!$customerId) {
                 session()->flash('error', 'Session expired. Please login again.');
                 return;
             }
+            // If $customer is null but $customerId exists (seller-only session),
+            // we proceed — $customerId (= seller_id) is used as the owner ID.
 
-            // Check product limit — skip for edit mode (already owns this product)
+            // ── Package / plan limit check ─────────────────────────
+            //
+            // CREATE mode
+            //   • Products: HARD BLOCK — cannot submit if at or over limit.
+            //   • Services: SOFT WARNING — we do not block a product save
+            //     because of service usage, but we inform the seller.
+            //
+            // EDIT mode
+            //   • Never block — the product slot already exists.
+            //   • Show a soft warning if they're over limit due to a plan
+            //     downgrade, but still save their changes.
+            // ─────────────────────────────────────────────────────────
+            $limits = $this->resolvePackageLimits($customerId, $sellerId, $customer);
+
             if (!$this->isEditMode) {
-                [$reached, $message] = $this->getPackageLimit();
-                if ($reached) {
-                    session()->flash('error', $message);
+
+                // Hard block: product limit hit on CREATE
+                if ($limits['productLimit'] > 0 && $limits['productUsed'] >= $limits['productLimit']) {
+                    session()->flash('error',
+                        "🚫 Product limit reached — your \"{$limits['packageName']}\" plan includes "
+                        . "{$limits['productLimit']} product(s) and you have already used "
+                        . "{$limits['productUsed']}. Please upgrade your plan to add more products."
+                    );
                     return;
+                }
+
+                // Soft warning: service limit also hit (informational only)
+                if ($limits['serviceLimit'] > 0 && $limits['serviceUsed'] >= $limits['serviceLimit']) {
+                    session()->flash('warning',
+                        "⚠️ Note: You have also reached your service listing limit "
+                        . "({$limits['serviceUsed']}/{$limits['serviceLimit']}) on your "
+                        . "\"{$limits['packageName']}\" plan. This product has been saved, "
+                        . "but no more services can be added without upgrading."
+                    );
+                }
+
+            } else {
+
+                // Soft warning: over product limit in edit mode (plan downgrade scenario)
+                if ($limits['productLimit'] > 0 && $limits['productUsed'] > $limits['productLimit']) {
+                    session()->flash('warning',
+                        "⚠️ Your \"{$limits['packageName']}\" plan allows {$limits['productLimit']} product(s), "
+                        . "but you currently have {$limits['productUsed']}. Your changes have been saved — "
+                        . "please upgrade your plan or remove some listings to stay within your limit."
+                    );
+                }
+
+                // Soft warning: over service limit too in edit mode
+                if ($limits['serviceLimit'] > 0 && $limits['serviceUsed'] > $limits['serviceLimit']) {
+                    session()->flash('warning',
+                        "⚠️ You are also over your service listing limit "
+                        . "({$limits['serviceUsed']}/{$limits['serviceLimit']}) on the "
+                        . "\"{$limits['packageName']}\" plan. Please upgrade or remove some service listings."
+                    );
                 }
             }
 
-            // Check for duplicate product title
+            // ── Duplicate title check ─────────────────────────────
             $dupQuery = Product::where('customer_id', $customerId)
                 ->where('title', $this->title)
                 ->where('status', '!=', 3);
@@ -552,23 +661,23 @@ class ProductAdd extends Component
                 return;
             }
 
-            // Upload new image (or keep existing in edit mode)
+            // ── Image upload ──────────────────────────────────────
             if ($this->product_img && is_object($this->product_img)) {
                 $ext        = $this->product_img->getClientOriginalExtension();
                 $baseName   = Str::slug(pathinfo($this->product_img->getClientOriginalName(), PATHINFO_FILENAME));
                 $uniqueName = $baseName . '-' . rand(1000, 999999) . '.' . $ext;
                 $this->product_img->storeAs('public/uploads/product', $uniqueName, 's3');
-                $imagePath = 'uploads/product/' . $uniqueName;
+                $imagePath  = 'uploads/product/' . $uniqueName;
             } else {
                 $imagePath = $this->existingImagePath ?: null;
             }
 
-            // Auto-generate slug
+            // ── Slug ──────────────────────────────────────────────
             $slug = $this->isEditMode
                 ? (Product::find($this->editId)?->slug ?? Str::slug($this->title) . '-' . rand(100, 999999))
                 : Str::slug($this->title) . '-' . rand(100, 999999);
 
-            // Determine price values
+            // ── Price ─────────────────────────────────────────────
             $minPrice = $this->price_type === 'range' ? $this->min_price
                       : ($this->price_type === 'fixed' ? $this->fixed_price : 0);
             $maxPrice = $this->price_type === 'range' ? $this->max_price
@@ -590,23 +699,26 @@ class ProductAdd extends Component
                 'HSN'               => $this->HSN,
                 'customer_id'       => $customerId,
                 'seller_id'         => $sellerId,
-                // FIX: null-safe access — $customer is guaranteed non-null above,
-                // but ?? null guards against the column itself being unset on model.
-                'country_id'        => $customer->country_id ?? null,
-                'status'            => 0,
-                'seo_title'         => $this->seo_title   ?: $this->title,
+                'country_id'        => $customer?->country_id ?? null,
+                // Edit: keep the existing status so a draft stays a draft,
+                // a rejected product stays rejected, etc.
+                // New products always start as 0 (pending admin review).
+                'status'            => $this->isEditMode
+                    ? (Product::where('id', $this->editId)->value('status') ?? 0)
+                    : 0,
+                'seo_title'         => $this->seo_title       ?: $this->title,
                 'seo_description'   => $this->seo_description ?: null,
-                'seo_keywords'      => $this->seo_keywords ?: $this->keywords,
+                'seo_keywords'      => $this->seo_keywords     ?: $this->keywords,
                 'brand_name'        => $this->brand_name        ?: null,
-                'keywords'          => $this->keywords           ?: null,
-                'supply_ability'    => $this->supply_ability     ?: null,
-                'lead_time'         => $this->lead_time          ?: null,
-                'payment_terms'     => $this->payment_terms      ?: null,
-                'port_of_dispatch'  => $this->port_of_dispatch   ?: null,
-                'country_of_origin' => $this->country_of_origin  ?: 'India',
-                'product_video_url' => $this->product_video_url  ?: null,
-                'certifications'    => $this->certifications     ?: null,
-                'packaging_details' => $this->packaging_details  ?: null,
+                'keywords'          => $this->keywords          ?: null,
+                'supply_ability'    => $this->supply_ability    ?: null,
+                'lead_time'         => $this->lead_time         ?: null,
+                'payment_terms'     => $this->payment_terms     ?: null,
+                'port_of_dispatch'  => $this->port_of_dispatch  ?: null,
+                'country_of_origin' => $this->country_of_origin ?: 'India',
+                'product_video_url' => $this->product_video_url ?: null,
+                'certifications'    => $this->certifications    ?: null,
+                'packaging_details' => $this->packaging_details ?: null,
                 'sample_available'  => $this->sample_available,
                 'sample_price'      => $this->sample_available === 'yes' ? ($this->sample_price ?: null) : null,
             ];
@@ -615,16 +727,14 @@ class ProductAdd extends Component
                 $product = Product::where('id', $this->editId)
                     ->where('customer_id', $customerId)
                     ->first();
-                if ($product) {
-                    $product->update($productData);
-                }
+                if ($product) $product->update($productData);
             } else {
                 $product = Product::create($productData);
             }
 
-            // Upload gallery images — skip string paths (edit mode existing images)
+            // ── Gallery ───────────────────────────────────────────
             foreach ($this->gallery_images as $gi) {
-                if (!is_object($gi)) continue; // FIX: skip string paths from edit mode
+                if (!is_object($gi)) continue;
                 $gName = Str::slug(pathinfo($gi->getClientOriginalName(), PATHINFO_FILENAME));
                 $gExt  = $gi->getClientOriginalExtension();
                 $gFile = $gName . '-' . rand(1000, 999999) . '.' . $gExt;
@@ -636,7 +746,7 @@ class ProductAdd extends Component
                 ]);
             }
 
-            // Upload documents
+            // ── Documents ─────────────────────────────────────────
             foreach ($this->document_list as $doc) {
                 if (!empty($doc['file'])) {
                     $dExt  = $doc['file']->getClientOriginalExtension();
@@ -650,17 +760,24 @@ class ProductAdd extends Component
                             'file_path'   => 'uploads/product-docs/' . $dName,
                             'file_ext'    => $dExt,
                         ]);
-                    } catch (\Exception $e) {
-                        // Table may not exist yet — skip silently
-                    }
+                    } catch (\Exception $e) { /* table may not exist yet */ }
                 }
             }
 
             $this->reset();
-            return redirect()->route('my-listings')
-                ->with('message', $this->isEditMode
-                    ? '✅ Product updated successfully!'
-                    : '✅ Product submitted for review! Goes live once approved by admin.');
+
+            // Build redirect message based on what the product's status actually is
+            // after save — a draft edit stays a draft, not 'submitted for review'.
+            $savedStatus = $this->isEditMode
+                ? (Product::where('id', $this->editId)->value('status') ?? 0)
+                : 0;
+            $redirectMsg = match(true) {
+                !$this->isEditMode                => '✅ Product submitted for review! Goes live once approved by admin.',
+                $savedStatus === 3                => '💾 Draft updated successfully. Publish it from My Listings when ready.',
+                default                           => '✅ Product updated successfully!',
+            };
+
+            return redirect()->route('my-listings')->with('message', $redirectMsg);
 
         } catch (\Exception $e) {
             session()->flash('error', 'Something went wrong: ' . $e->getMessage());

@@ -3,9 +3,9 @@
 
 namespace App\Livewire\Seller;
 
+use App\Models\PackagesModel;
 use App\Models\Product;
 use App\Models\Productgallery;
-use App\Models\Customer;
 use App\Models\Seller;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -26,6 +26,14 @@ class MyListings extends Component
     public int    $perPage      = 15;
     public array  $counts       = [];
 
+    // ── Plan usage — passed to blade so Publish button can be disabled ──
+    // Computed once per render() call via resolvePackageLimits().
+    public int    $planProductLimit  = 0;   // 0 = unlimited
+    public int    $planProductUsed   = 0;
+    public int    $planServiceLimit  = 0;   // 0 = unlimited
+    public int    $planServiceUsed   = 0;
+    public string $planName          = '';
+
     protected $queryString = [
         'activeTab'    => ['except' => 'all'],
         'statusFilter' => ['except' => 'all'],
@@ -41,45 +49,70 @@ class MyListings extends Component
         $this->loadCounts();
     }
 
-    // ── Resolve customer ID — same fallbacks as ProductAdd::resolveCustomer() ──
-    // Products/services are stored with customer_id from tblleads.
-    // New sellers log in via seller_id session; their customer_id is looked
-    // up by matching seller_email against tblleads.email.
+    // ── Resolve customer ID (same logic as ServiceAdd) ────────
     private function getCustomerId(): mixed
     {
-        // 1. Direct session keys
-        $cid = Session::get('id')
+        return Session::get('id')
             ?? Session::get('customer_id')
             ?? Session::get('user_id')
             ?? (auth()->check() ? auth()->id() : null);
+    }
 
-        if ($cid) return $cid;
-
-        // 2. New seller system: look up customer by seller_email
-        $sellerEmail = Session::get('seller_email');
-        if ($sellerEmail) {
-            $customer = \App\Models\Customer::where('email', $sellerEmail)->first();
-            if ($customer) {
-                // Cache in session so next request is instant
-                Session::put('id', $customer->id);
-                return $customer->id;
-            }
-        }
-
-        // 3. Look up via seller_id → seller email → customer
+    // ── Resolve package product + service limits ─────────────
+    // Same logic as ProductAdd::resolvePackageLimits().
+    // Returns product limit, service limit, and current usage counts.
+    //
+    // ⚠️  Adjust column names if your schema differs:
+    //   product_limit / service_limit / name / package_name
+    private function resolvePackageLimits(): array
+    {
+        $cid      = $this->getCustomerId();
         $sellerId = Session::get('seller_id');
+
+        $productLimit = 0;
+        $serviceLimit = 0;
+        $packageName  = 'Standard';
+
         if ($sellerId) {
-            $seller = \App\Models\Seller::find($sellerId);
-            if ($seller?->email) {
-                $customer = \App\Models\Customer::where('email', $seller->email)->first();
-                if ($customer) {
-                    Session::put('id', $customer->id);
-                    return $customer->id;
-                }
+            $seller  = Seller::find($sellerId);
+            $package = ($seller && $seller->package_id)
+                ? PackagesModel::find($seller->package_id)
+                : null;
+
+            if ($package) {
+                $packageName  = $package->name ?? $package->package_name ?? 'Your Plan';
+                $rawProd      = $package->product_limit ?? null;
+                $productLimit = ($rawProd !== null && (int) $rawProd > 0) ? (int) $rawProd : 0;
+                $rawSvc       = $package->service_limit ?? null;
+                $serviceLimit = ($rawSvc  !== null && (int) $rawSvc  > 0) ? (int) $rawSvc  : 0;
+            }
+        } else {
+            // Legacy: limit stored directly on customer row
+            $customer = $cid ? \App\Models\Customer::find($cid) : null;
+            if ($customer) {
+                $rawProd      = $customer->product_upload_limit ?? null;
+                $productLimit = ($rawProd !== null && (int) $rawProd > 0) ? (int) $rawProd : 0;
             }
         }
 
-        return null;
+        // Current active product count (exclude drafts, status != 3)
+        $productUsed = Product::where('customer_id', $cid)
+                              ->where('status', '!=', 3)
+                              ->count();
+
+        // Current service count
+        $serviceUsed = 0;
+        try {
+            if ($this->servicesTableExists() && class_exists(\App\Models\SellerService::class)) {
+                $serviceUsed = \App\Models\SellerService::where('customer_id', $cid)
+                                                           ->where('status', '!=', 'draft')
+                                                           ->count();
+            }
+        } catch (\Throwable $e) {
+            $serviceUsed = 0;
+        }
+
+        return compact('packageName', 'productLimit', 'serviceLimit', 'productUsed', 'serviceUsed');
     }
 
     // ── Check seller_services table exists ────────────────────
@@ -114,15 +147,6 @@ class MyListings extends Component
     private function loadCounts(): void
     {
         $cid = $this->getCustomerId();
-
-        if (!$cid) {
-            $this->counts = [
-                'all' => 0, 'products' => 0, 'services' => 0,
-                'p_pending' => 0, 'p_approved' => 0, 'p_rejected' => 0, 'p_draft' => 0,
-                's_pending' => 0, 's_approved' => 0, 's_rejected' => 0,
-            ];
-            return;
-        }
 
         // ── Product counts ────────────────────────────────────
         $pTotal    = Product::where('customer_id', $cid)->count();
@@ -163,11 +187,62 @@ class MyListings extends Component
     {
         $cid     = $this->getCustomerId();
         $product = Product::where('id', $id)->where('customer_id', $cid)->first();
-        if ($product) {
-            $product->update(['status' => 0]);
-            $this->loadCounts();
-            session()->flash('message', '✅ Product submitted for review! Goes live once approved.');
+        if (!$product) return;
+
+        // ── Package limit check ───────────────────────────────
+        // A draft has status=3 and is NOT counted in the active product
+        // count. Publishing moves it to status=0 (pending review), which
+        // WILL count against the limit. So we check before publishing.
+        // Resubmitting a rejected product (status=2) already counts, so
+        // we only block when going from draft (status=3).
+        if ((int) $product->status === 3) {
+            $limits = $this->resolvePackageLimits();
+
+            if ($limits['productLimit'] > 0 && $limits['productUsed'] >= $limits['productLimit']) {
+                session()->flash('error',
+                    '🚫 Cannot publish — your "' . $limits['packageName'] . '" plan allows '
+                    . $limits['productLimit'] . ' product(s) and you have already used '
+                    . $limits['productUsed'] . '. Please upgrade your plan or delete an '
+                    . 'existing listing before publishing this draft.'
+                );
+                return;
+            }
         }
+
+        $product->update(['status' => 0]);
+        $this->loadCounts();
+        session()->flash('message', '✅ Product submitted for review! Goes live once approved.');
+    }
+
+    public function publishService(int $id): void
+    {
+        if (!$this->servicesTableExists()) return;
+
+        $cid     = $this->getCustomerId();
+        $service = \App\Models\SellerService::where('id', $id)
+                        ->where('customer_id', $cid)
+                        ->first();
+        if (!$service) return;
+
+        // Only draft→pending consumes a new slot.
+        // Rejected services already occupy a slot, so resubmit is never blocked.
+        if ($service->status === 'draft') {
+            $limits = $this->resolvePackageLimits();
+
+            if ($limits['serviceLimit'] > 0 && $limits['serviceUsed'] >= $limits['serviceLimit']) {
+                session()->flash('error',
+                    '🚫 Cannot publish — your "' . $limits['packageName'] . '" plan allows '
+                    . $limits['serviceLimit'] . ' service(s) and you have already used '
+                    . $limits['serviceUsed'] . '. Please upgrade your plan or delete an '
+                    . 'existing listing before publishing this draft.'
+                );
+                return;
+            }
+        }
+
+        $service->update(['status' => 'pending']);
+        $this->loadCounts();
+        session()->flash('message', '✅ Service submitted for review! Goes live once approved.');
     }
 
     public function deleteProduct(int $id): void
@@ -203,16 +278,6 @@ class MyListings extends Component
     public function render()
     {
         $cid = $this->getCustomerId();
-
-        // Safety: if we can't resolve a customer, return empty listing
-        // instead of querying with null which returns ALL rows
-        if (!$cid) {
-            $listings = new \Illuminate\Pagination\LengthAwarePaginator(
-                collect(), 0, $this->perPage, 1,
-                ['path' => request()->url(), 'query' => request()->query()]
-            );
-            return view('livewire.seller.my-listings', compact('listings'));
-        }
 
         // ── Products ──────────────────────────────────────────
         $products = collect();
@@ -320,6 +385,22 @@ class MyListings extends Component
             ]
         );
 
-        return view('livewire.seller.my-listings', compact('listings'));
+        // Resolve plan limits once per render so the blade can
+        // disable the Publish button when the product limit is hit.
+        $limits = $this->resolvePackageLimits();
+        $this->planProductLimit = $limits['productLimit'];
+        $this->planProductUsed  = $limits['productUsed'];
+        $this->planName         = $limits['packageName'];
+
+        $this->planServiceLimit = $limits['serviceLimit'];
+        $this->planServiceUsed  = $limits['serviceUsed'];
+
+        $planAtProductLimit = $limits['productLimit'] > 0
+                           && $limits['productUsed'] >= $limits['productLimit'];
+
+        $planAtServiceLimit = $limits['serviceLimit'] > 0
+                           && $limits['serviceUsed'] >= $limits['serviceLimit'];
+
+        return view('livewire.seller.my-listings', compact('listings', 'planAtProductLimit', 'planAtServiceLimit'));
     }
 }

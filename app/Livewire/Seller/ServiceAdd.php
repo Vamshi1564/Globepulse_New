@@ -68,13 +68,28 @@ class ServiceAdd extends Component
     public string $existingCoverImage  = '';  // saved cover_image path
     public string $existingBrochurePath = ''; // saved brochure PDF path
 
+    // ── Plan / Package usage (shown in sidebar widget) ──────────
+    // Populated by loadPlanInfo() in mount().
+    // ⚠️  Adjust column names if your PackagesModel differs:
+    //   service_limit / product_limit / name / package_name
+    public string $planName         = '';
+    public int    $planServiceLimit = 0;   // 0 = unlimited
+    public int    $planProductLimit = 0;   // 0 = unlimited (shown for info)
+    public int    $planServiceUsed  = 0;
+    public int    $planProductUsed  = 0;
+    public bool   $planLimitBlocked = false; // true = service limit hit on CREATE
+
     // ─────────────────────────────────────────────────────────
     public function mount(): void
     {
         // Load existing service when ?edit=ID is in the URL
-        $editId = request()->query('edit');
+        $editId     = request()->query('edit');
+        $customerId = $this->resolveCustomerId();
+
+        // Populate plan widget immediately on page load
+        $this->loadPlanInfo($customerId, empty($editId));
+
         if ($editId) {
-            $customerId = $this->resolveCustomerId();
             $service    = SellerService::where('id', $editId)
                             ->where('customer_id', $customerId)
                             ->first();
@@ -218,10 +233,13 @@ class ServiceAdd extends Component
     }
 
     // ── Resolve customer ID ───────────────────────────────────
-    // Supports both old (session 'id') and new (session 'seller_id' + 'seller_email')
+    // Checks both session keys + seller_email fallback.
+    // Does NOT call auth() — this app uses manual session auth.
+    // auth()->id() can return an Admin/Seller ID absent from the
+    // customers table, causing Customer::find() to return null.
     private function resolveCustomerId(): mixed
     {
-        // New seller system
+        // New seller system: has seller_id + seller_email in session
         if (Session::get('seller_id') && Session::get('seller_email')) {
             $customer = Customer::where('email', Session::get('seller_email'))->first();
             if ($customer) {
@@ -229,9 +247,75 @@ class ServiceAdd extends Component
                 return $customer->id;
             }
         }
-        return Session::get('id')
-            ?? Session::get('customer_id')
-            ?? (auth()->check() ? auth()->id() : null);
+        return Session::get('id') ?? Session::get('customer_id');
+    }
+
+    // ── Resolve package limits (services + products) ──────────
+    // Returns limits and current usage for both entity types.
+    // Used by loadPlanInfo() and submit().
+    //
+    // ⚠️  Adjust column names if your schema differs:
+    //   service_limit / product_limit / name / package_name
+    private function resolvePackageLimits(mixed $customerId): array
+    {
+        $sellerId     = Session::get('seller_id');
+        $serviceLimit = 0;   // 0 = unlimited
+        $productLimit = 0;
+        $packageName  = 'Standard';
+
+        if ($sellerId) {
+            $seller  = Seller::find($sellerId);
+            $package = ($seller && $seller->package_id)
+                ? PackagesModel::find($seller->package_id)
+                : null;
+
+            if ($package) {
+                $packageName  = $package->name ?? $package->package_name ?? 'Your Plan';
+
+                $rawSvc       = $package->service_limit ?? null;
+                $serviceLimit = ($rawSvc !== null && (int) $rawSvc > 0) ? (int) $rawSvc : 0;
+
+                $rawProd      = $package->product_limit ?? null;
+                $productLimit = ($rawProd !== null && (int) $rawProd > 0) ? (int) $rawProd : 0;
+            }
+        } elseif ($customerId) {
+            // Legacy: no per-service limit on customer row — use product limit as proxy
+            $customer     = Customer::find($customerId);
+            $rawProd      = $customer?->product_upload_limit ?? null;
+            $productLimit = ($rawProd !== null && (int) $rawProd > 0) ? (int) $rawProd : 0;
+        }
+
+        // Current active service count (exclude drafts)
+        $serviceUsed = SellerService::where('customer_id', $customerId)
+                                    ->where('status', '!=', 'draft')
+                                    ->count();
+
+        // Current active product count (exclude drafts status=3)
+        $productUsed = \App\Models\Product::where('customer_id', $customerId)
+                                          ->where('status', '!=', 3)
+                                          ->count();
+
+        return compact('packageName', 'serviceLimit', 'productLimit', 'serviceUsed', 'productUsed');
+    }
+
+    // ── Populate plan info properties ─────────────────────────
+    // Called from mount() so the sidebar widget renders on page load.
+    // $isNewService = true on CREATE, false on EDIT.
+    private function loadPlanInfo(mixed $customerId, bool $isNewService): void
+    {
+        $limits = $this->resolvePackageLimits($customerId);
+
+        $this->planName         = $limits['packageName'];
+        $this->planServiceLimit = $limits['serviceLimit'];
+        $this->planProductLimit = $limits['productLimit'];
+        $this->planServiceUsed  = $limits['serviceUsed'];
+        $this->planProductUsed  = $limits['productUsed'];
+
+        // Block only when CREATING a new service and the service limit is set
+        // and already reached. Never block editing — the slot already exists.
+        $this->planLimitBlocked = $isNewService
+            && $limits['serviceLimit'] > 0
+            && $limits['serviceUsed'] >= $limits['serviceLimit'];
     }
 
     // ── Upload image ──────────────────────────────────────────
@@ -389,19 +473,45 @@ class ServiceAdd extends Component
             return;
         }
 
-        // ── Service limit check (skip when editing existing) ──
+        // ── Package / plan limit check ─────────────────────────────
+        //
+        // CREATE mode
+        //   • Services: HARD BLOCK — cannot submit if at or over limit.
+        //   • Products: SOFT WARNING — inform seller but don't block service.
+        //
+        // EDIT mode
+        //   • Never block — the service slot already exists.
+        //   • Soft warning if over limit after a plan downgrade.
+        // ─────────────────────────────────────────────────────────
+        $limits = $this->resolvePackageLimits($customerId);
+
         if (!$this->isEditMode) {
-            $sellerId = Session::get('seller_id');
-            if ($sellerId) {
-                $seller      = Seller::find($sellerId);
-                $package     = $seller?->package_id ? PackagesModel::find($seller->package_id) : null;
-                $serviceLimit = $package?->service_limit ?? 999;
-                $existingServices = SellerService::where('customer_id', $customerId)->count();
-                if ($serviceLimit !== 999 && $existingServices >= $serviceLimit) {
-                    $this->alertMessage = 'You have reached your plan service limit. Please upgrade your package to add more services.';
-                    $this->alertType    = 'error';
-                    return;
-                }
+            // Hard block: service limit hit on CREATE
+            if ($limits['serviceLimit'] > 0 && $limits['serviceUsed'] >= $limits['serviceLimit']) {
+                $this->alertMessage = '🚫 Service limit reached — your "' . $limits['packageName']
+                    . '" plan includes ' . $limits['serviceLimit'] . ' service(s) and you have already used '
+                    . $limits['serviceUsed'] . '. Please upgrade your plan to add more services.';
+                $this->alertType = 'error';
+                return;
+            }
+
+            // Soft warning: product limit also hit (doesn't block service save)
+            if ($limits['productLimit'] > 0 && $limits['productUsed'] >= $limits['productLimit']) {
+                $this->alertMessage = '⚠️ Note: You have also reached your product listing limit ('
+                    . $limits['productUsed'] . '/' . $limits['productLimit'] . ') on the "'
+                    . $limits['packageName'] . '" plan. This service has been saved, but no more '
+                    . 'products can be added without upgrading.';
+                $this->alertType = 'warning';
+                // Do NOT return — allow save to continue
+            }
+        } else {
+            // Soft warning in edit mode: over service limit (plan downgrade scenario)
+            if ($limits['serviceLimit'] > 0 && $limits['serviceUsed'] > $limits['serviceLimit']) {
+                $this->alertMessage = '⚠️ Your "' . $limits['packageName'] . '" plan allows '
+                    . $limits['serviceLimit'] . ' service(s) but you have ' . $limits['serviceUsed']
+                    . '. Your changes were saved — please upgrade or remove some service listings.';
+                $this->alertType = 'warning';
+                // Do NOT return — allow save to continue
             }
         }
 
@@ -427,7 +537,17 @@ class ServiceAdd extends Component
                 if ($p) $galleryPaths[] = $p;
             }
 
-            $data = $this->buildData($customerId, 'pending', $coverPath, $galleryPaths, $pdfPath);
+            // Determine status for this save:
+            //   CREATE  → 'pending' (goes to admin review)
+            //   EDIT    → preserve whatever status the service currently has
+            //             so a draft stays a draft, rejected stays rejected, etc.
+            if ($this->isEditMode && $this->editId) {
+                $existingStatus = SellerService::where('id', $this->editId)->value('status') ?? 'pending';
+            } else {
+                $existingStatus = 'pending';
+            }
+
+            $data = $this->buildData($customerId, $existingStatus, $coverPath, $galleryPaths, $pdfPath);
 
             if ($this->isEditMode && $this->editId) {
                 // UPDATE existing service
@@ -458,10 +578,13 @@ class ServiceAdd extends Component
             }
 
             $this->reset();
-            redirect()->route('my-listings')
-                ->with('message', $this->isEditMode
-                    ? '✅ Service updated successfully!'
-                    : '✅ Service submitted for review! Goes live once approved by admin.');
+            $savedStatus = $existingStatus;
+            $redirectMsg = match(true) {
+                !$this->isEditMode        => '✅ Service submitted for review! Goes live once approved by admin.',
+                $savedStatus === 'draft'  => '💾 Draft updated. Publish it from My Listings when ready.',
+                default                   => '✅ Service updated successfully!',
+            };
+            redirect()->route('my-listings')->with('message', $redirectMsg);
 
         } catch (\Illuminate\Database\QueryException $dbEx) {
             $this->alertMessage = 'Database error: ' . $dbEx->getMessage();

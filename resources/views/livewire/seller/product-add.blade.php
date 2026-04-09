@@ -170,7 +170,93 @@
   <script>setTimeout(function(){var t=document.getElementById('pa-toast-e');if(t)t.remove();},6000);</script>
   @endif
 
-  <form id="productForm" wire:submit.prevent="submit">
+  <div id="productForm">
+
+  @php
+    $__limitBlocked = $planLimitBlocked ?? false;
+    $__planName     = $planName         ?? 'Your Plan';
+    $__pLimit       = $planProductLimit ?? 0;
+    $__pUsed        = $planProductUsed  ?? 0;
+    $__sLimit       = $planServiceLimit ?? 0;
+    $__sUsed        = $planServiceUsed  ?? 0;
+    $__pPct         = $__pLimit > 0 ? min(100, round(($__pUsed / $__pLimit) * 100)) : 0;
+    $__pColor       = $__limitBlocked ? '#dc2626' : ($__pPct >= 80 ? '#d97706' : '#059669');
+  @endphp
+
+  {{-- ── PACKAGE STATUS BAR ──────────────────────────────────────── --}}
+  <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:14px 18px;
+              margin-bottom:1rem;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+    {{-- Plan icon --}}
+    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <div style="width:40px;height:40px;border-radius:11px;
+                  background:{{ $__limitBlocked ? '#fee2e2' : '#eff6ff' }};
+                  display:flex;align-items:center;justify-content:center;font-size:1.15rem;">
+        {{ $__limitBlocked ? '🚫' : '📦' }}
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Active Plan</div>
+        <div style="font-size:.9rem;font-weight:800;color:#0f172a;">{{ $__planName }}</div>
+      </div>
+    </div>
+    <div style="width:1px;height:38px;background:#e2e8f0;flex-shrink:0;"></div>
+    {{-- Products bar --}}
+    <div style="flex:1;min-width:160px;">
+      <div style="display:flex;justify-content:space-between;font-size:.74rem;font-weight:700;margin-bottom:5px;">
+        <span style="color:#374151;"><i class="bi bi-box-seam me-1" style="color:{{ $__pColor }};"></i>Products Used</span>
+        <span style="color:{{ $__pColor }};">{{ $__pUsed }} / {{ $__pLimit > 0 ? $__pLimit : '∞' }}</span>
+      </div>
+      @if($__pLimit > 0)
+      <div style="background:#f1f5f9;border-radius:20px;height:6px;overflow:hidden;">
+        <div style="width:{{ $__pPct }}%;height:100%;background:{{ $__pColor }};border-radius:20px;transition:width .4s;"></div>
+      </div>
+      <div style="font-size:.69rem;margin-top:3px;font-weight:700;color:{{ $__pColor }};">
+        @if($__limitBlocked) 🚫 Limit reached — upgrade to add more
+        @elseif($__pPct >= 80) ⚠️ {{ $__pLimit - $__pUsed }} slot(s) remaining
+        @else ✅ {{ $__pLimit - $__pUsed }} slot(s) available
+        @endif
+      </div>
+      @else
+      <div style="font-size:.69rem;margin-top:3px;font-weight:700;color:#059669;">✅ Unlimited products</div>
+      @endif
+    </div>
+    {{-- Services bar --}}
+    @if($__sLimit > 0)
+    @php $__sPct = min(100, round(($__sUsed / $__sLimit) * 100)); $__sColor = $__sUsed >= $__sLimit ? '#dc2626' : ($__sPct >= 80 ? '#d97706' : '#059669'); @endphp
+    <div style="flex:1;min-width:140px;">
+      <div style="display:flex;justify-content:space-between;font-size:.74rem;font-weight:700;margin-bottom:5px;">
+        <span style="color:#374151;"><i class="bi bi-tools me-1" style="color:{{ $__sColor }};"></i>Services</span>
+        <span style="color:{{ $__sColor }};">{{ $__sUsed }} / {{ $__sLimit }}</span>
+      </div>
+      <div style="background:#f1f5f9;border-radius:20px;height:6px;overflow:hidden;">
+        <div style="width:{{ $__sPct }}%;height:100%;background:{{ $__sColor }};border-radius:20px;"></div>
+      </div>
+    </div>
+    @endif
+    {{-- Upgrade button --}}
+    @if($__limitBlocked || ($__pLimit > 0 && $__pPct >= 80))
+    <a href="{{ route('seller.profile') }}" style="background:{{ $__limitBlocked ? '#dc2626' : '#d97706' }};color:#fff;
+       border-radius:10px;padding:.45rem 1rem;font-size:.78rem;font-weight:800;text-decoration:none;
+       display:flex;align-items:center;gap:5px;flex-shrink:0;">
+      <i class="bi bi-arrow-up-circle-fill"></i> Upgrade
+    </a>
+    @endif
+  </div>
+
+  {{-- Hard-block alert when limit hit on CREATE --}}
+  @if($__limitBlocked && !($isEditMode ?? false))
+  <div style="background:#fef2f2;border:2px solid #fca5a5;border-radius:12px;padding:14px 18px;
+              margin-bottom:1rem;display:flex;align-items:center;gap:12px;">
+    <i class="bi bi-exclamation-octagon-fill" style="color:#dc2626;font-size:1.4rem;flex-shrink:0;"></i>
+    <div>
+      <div style="font-size:.88rem;font-weight:800;color:#991b1b;">Cannot Add New Product</div>
+      <div style="font-size:.78rem;color:#b91c1c;margin-top:2px;line-height:1.5;">
+        Your <strong>{{ $__planName }}</strong> plan allows <strong>{{ $__pLimit }}</strong> product(s).
+        You have used <strong>{{ $__pUsed }}</strong>. Upgrade or remove a product to continue.
+      </div>
+    </div>
+  </div>
+  @endif
+
   <div class="row g-4">
 
     {{-- ══ LEFT: Form ══ --}}
@@ -378,23 +464,17 @@
 
           @if(!empty($gallery_images))
           <div class="gallery-grid mb-3">
-            {{-- FIX: gallery_images can be string paths (edit mode) OR
-                 Livewire TemporaryUploadedFile objects (new uploads).
-                 Previously calling ->temporaryUrl() on a string crashed
-                 with "Call to a member function temporaryUrl() on string". --}}
             @foreach($gallery_images as $gi)
             <div class="gallery-thumb">
               @if(is_string($gi))
-                {{-- Edit mode: $gi is a stored file path --}}
                 @php
-                  $giUrl = str_starts_with($gi, 'http') ? $gi
+                  $giUrl = str_starts_with($gi,'http') ? $gi
                       : (config('app.pub_aws_url')
-                          ? rtrim(config('app.pub_aws_url'), '/') . '/' . $gi
+                          ? rtrim(config('app.pub_aws_url'),'/') . '/' . $gi
                           : asset('storage/' . $gi));
                 @endphp
                 <img src="{{ $giUrl }}" onerror="this.style.display='none'">
               @else
-                {{-- New upload: use temporaryUrl() --}}
                 <img src="{{ $gi->temporaryUrl() }}">
               @endif
             </div>
@@ -650,11 +730,16 @@
               <div class="col-md-3">
                 <button type="button" class="btn btn-primary w-100 rounded-3"
                   wire:click="addDocument"
+                  wire:loading.attr="disabled"
+                  wire:target="addDocument"
                   style="background:linear-gradient(135deg,#676592,#8a88bf);border:none;font-size:.82rem;font-weight:700;padding:.52rem;">
-                  <i class="bi bi-plus-lg me-1"></i> Add Doc
+                  <span wire:loading.remove wire:target="addDocument"><i class="bi bi-plus-lg me-1"></i> Add Doc</span>
+                  <span wire:loading wire:target="addDocument"><i class="bi bi-arrow-repeat me-1"></i> Adding...</span>
                 </button>
               </div>
             </div>
+            @error('document_label')<div class="pa-err mt-2"><i class="bi bi-exclamation-circle me-1"></i>{{ $message }}</div>@enderror
+            @error('new_document')<div class="pa-err mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ $message }}</div>@enderror
           </div>
 
         </div>
@@ -714,8 +799,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0 2rem;">
         @if($activeStep > 1)
           <button type="button" class="btn-prev"
-            wire:click="prevStep"
-            onclick="paSync()">
+            wire:click="prevStep">
             ← Previous
           </button>
         @else
@@ -726,8 +810,7 @@
           <button type="button" class="btn-next"
             wire:loading.attr="disabled"
             wire:target="nextStep"
-            wire:click="nextStep"
-            onclick="paSync()">
+            wire:click="nextStep">
             <span wire:loading.remove wire:target="nextStep">Continue → Step {{ $activeStep + 1 }}</span>
             <span wire:loading wire:target="nextStep">
               <i class="bi bi-arrow-repeat me-1"></i> Moving...
@@ -740,7 +823,7 @@
             {{-- Save as Draft --}}
             <button type="button"
               class="btn-save-draft"
-              wire:click.prevent="saveDraft"
+              wire:click="saveDraft"
               wire:loading.attr="disabled"
               title="Save now — publish later from My Listings">
               <span wire:loading.remove wire:target="saveDraft">
@@ -752,13 +835,15 @@
             </button>
 
             {{-- Publish / Save Changes --}}
-            <button type="submit"
+            {{-- planLimitBlocked disables this button in CREATE mode when the product limit is hit --}}
+            <button type="button"
               class="btn-publish"
               wire:loading.attr="disabled"
               wire:target="submit"
-              wire:click="generateSlug"
-              onclick="paSync(); this.disabled=true; this.closest('form').requestSubmit();"
-              title="{{ $isEditMode ? 'Save changes' : 'Submit for admin review' }}">
+              wire:click="submit"
+              title="{{ ($planLimitBlocked ?? false) && !($isEditMode ?? false) ? 'Upgrade plan to add products' : ($isEditMode ? 'Save changes' : 'Submit for admin review') }}"
+              {{ (($planLimitBlocked ?? false) && !($isEditMode ?? false)) ? 'disabled' : '' }}
+              style="{{ (($planLimitBlocked ?? false) && !($isEditMode ?? false)) ? 'opacity:.45;cursor:not-allowed;' : '' }}">
               <span wire:loading.remove wire:target="submit">
                 @if($isEditMode)
                   <i class="bi bi-check-circle-fill"></i> Save Changes
@@ -871,6 +956,77 @@
         </div>
       </div>
 
+      {{-- Plan Usage Widget --}}
+      <div style="background:#fff;border-radius:14px;border:1px solid #e8ecf4;box-shadow:0 4px 20px rgba(0,0,0,.06);padding:18px;margin-bottom:14px;">
+        <div style="font-size:.78rem;font-weight:800;color:#374151;margin-bottom:12px;display:flex;align-items:center;gap:.4rem;">
+          <i class="bi bi-bar-chart-fill" style="color:#1d4ed8;"></i> Plan Usage — {{ $planName }}
+        </div>
+
+        {{-- Products row --}}
+        @php
+          $pLimit = $planProductLimit ?? 0;
+          $pUsed  = $planProductUsed  ?? 0;
+          $pPct   = $pLimit > 0 ? min(100, round(($pUsed / $pLimit) * 100)) : 0;
+          $pColor = $pLimit > 0 && $pUsed >= $pLimit ? '#dc2626'
+                  : ($pLimit > 0 && $pPct >= 80       ? '#d97706' : '#059669');
+        @endphp
+        <div style="margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;font-size:.73rem;font-weight:700;margin-bottom:4px;">
+            <span style="color:#374151;"><i class="bi bi-box-seam me-1" style="color:{{ $pColor }};"></i>Products</span>
+            <span style="color:{{ $pColor }};">
+              {{ $pUsed }} / {{ $pLimit > 0 ? $pLimit : '∞' }}
+            </span>
+          </div>
+          @if($pLimit > 0)
+          <div style="background:#f1f5f9;border-radius:20px;height:6px;overflow:hidden;">
+            <div style="width:{{ $pPct }}%;height:100%;background:{{ $pColor }};border-radius:20px;transition:width .4s;"></div>
+          </div>
+          @if($pUsed >= $pLimit)
+          <div style="font-size:.7rem;color:#dc2626;font-weight:700;margin-top:3px;">
+            🚫 Limit reached — upgrade to add more
+          </div>
+          @elseif($pPct >= 80)
+          <div style="font-size:.7rem;color:#d97706;font-weight:700;margin-top:3px;">
+            ⚠️ {{ $pLimit - $pUsed }} slot(s) remaining
+          </div>
+          @endif
+          @endif
+        </div>
+
+        {{-- Services row --}}
+        @php
+          $sLimit = $planServiceLimit ?? 0;
+          $sUsed  = $planServiceUsed  ?? 0;
+          $sPct   = $sLimit > 0 ? min(100, round(($sUsed / $sLimit) * 100)) : 0;
+          $sColor = $sLimit > 0 && $sUsed >= $sLimit ? '#dc2626'
+                  : ($sLimit > 0 && $sPct >= 80       ? '#d97706' : '#059669');
+        @endphp
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:.73rem;font-weight:700;margin-bottom:4px;">
+            <span style="color:#374151;"><i class="bi bi-tools me-1" style="color:{{ $sColor }};"></i>Services</span>
+            <span style="color:{{ $sColor }};">
+              {{ $sUsed }} / {{ $sLimit > 0 ? $sLimit : '∞' }}
+            </span>
+          </div>
+          @if($sLimit > 0)
+          <div style="background:#f1f5f9;border-radius:20px;height:6px;overflow:hidden;">
+            <div style="width:{{ $sPct }}%;height:100%;background:{{ $sColor }};border-radius:20px;transition:width .4s;"></div>
+          </div>
+          @if($sUsed >= $sLimit)
+          <div style="font-size:.7rem;color:#dc2626;font-weight:700;margin-top:3px;">
+            🚫 Service limit reached — upgrade to add more
+          </div>
+          @elseif($sPct >= 80)
+          <div style="font-size:.7rem;color:#d97706;font-weight:700;margin-top:3px;">
+            ⚠️ {{ $sLimit - $sUsed }} slot(s) remaining
+          </div>
+          @endif
+          @endif
+        </div>
+
+
+      </div>
+
       {{-- B2B tips --}}
       <div style="background:#0f172a;border-radius:14px;padding:18px;margin-top:14px;">
         <div style="font-size:.82rem;font-weight:800;color:#38bdf8;margin-bottom:10px;">
@@ -890,7 +1046,7 @@
     </div>
 
   </div>
-  </form>
+  </div>
 </div>
 
 <livewire:seller.layout.footer />

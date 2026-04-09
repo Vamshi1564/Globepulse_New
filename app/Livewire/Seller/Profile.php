@@ -6,6 +6,7 @@ namespace App\Livewire\Seller;
 use App\Models\Seller;
 use App\Models\SellerDetail;
 use App\Models\SellerDocument;
+use App\Models\SellerKyc;
 use App\Models\Country;
 use App\Models\PackagesModel;
 use App\Services\DocumentVerifier;
@@ -59,6 +60,49 @@ class Profile extends Component
     public $selected_package_id = null;  // stores tbl_package_membership.id
     public array $packages       = [];   // loaded in mount()
 
+    // ── Step 6: KYC ───────────────────────────────────────────────────────
+    // Tab 1: Bank Account
+    public string $kyc_account_holder_name         = '';
+    public string $kyc_account_holder_type         = 'company';
+    public string $kyc_bank_account_number         = '';
+    public string $kyc_bank_account_number_confirm = '';
+    public string $kyc_bank_ifsc_code              = '';
+    public string $kyc_bank_swift_code             = '';
+    public string $kyc_bank_name                   = '';
+    public string $kyc_bank_branch_name            = '';
+    public string $kyc_bank_account_type           = '';
+
+    // Tab 2: Tax / PAN
+    public bool   $kyc_is_gst_registered = false;
+    public string $kyc_gstin             = '';
+    public string $kyc_pan_number        = '';
+    public string $kyc_tan_number        = '';
+
+    // Tab 3: Documents (CCAvenue-specific — not already collected in Step 4)
+    public $kyc_upload_cancelled_cheque;
+    public $kyc_upload_pan_card;
+    public $kyc_upload_incorporation_cert;
+    public $kyc_upload_moa;
+
+    public string $kyc_doc_cancelled_cheque        = '';
+    public string $kyc_doc_cancelled_cheque_name   = '';
+    public string $kyc_doc_pan_card                = '';
+    public string $kyc_doc_pan_card_name           = '';
+    public string $kyc_doc_incorporation_cert      = '';
+    public string $kyc_doc_incorporation_cert_name = '';
+    public string $kyc_doc_moa                     = '';
+    public string $kyc_doc_moa_name                = '';
+
+    // Declaration
+    public bool   $kyc_declaration = false;
+
+    // KYC state
+    public int    $kycActiveTab  = 1;
+    public string $kycStatus     = 'draft';
+    public bool   $kycIsLocked   = false;
+    public array  $kycTabScores  = [];
+    // ── End Step 6 ────────────────────────────────────────────────────────
+
     // UI state
     public $successMsg  = '';
     public $errorMsg    = '';
@@ -109,7 +153,241 @@ class Profile extends Component
         $this->loadDocuments($sellerId);
 
         $savedStep        = (int)($details?->onboarding_step ?? 1);
-        $this->activeStep = min(max($savedStep, 1), 5);
+        $this->activeStep = min(max($savedStep, 1), 6);
+
+        // ── Load KYC ────────────────────────────────────────────
+        $this->loadKyc($sellerId);
+    }
+
+    // ── KYC: Load ───────────────────────────────────────────────────────────
+    private function loadKyc(string $sellerId): void
+    {
+        $kyc = SellerKyc::where('seller_id', $sellerId)->first();
+        if (!$kyc) { $this->kycTabScores = $this->computeKycTabScores(); return; }
+
+        // Bank
+        $this->kyc_account_holder_name         = $kyc->account_holder_name ?? '';
+        $this->kyc_account_holder_type         = $kyc->account_holder_type ?? 'company';
+        $this->kyc_bank_account_number         = $kyc->bank_account_number ?? '';
+        $this->kyc_bank_account_number_confirm = $kyc->bank_account_number ?? '';
+        $this->kyc_bank_ifsc_code              = $kyc->bank_ifsc_code ?? '';
+        $this->kyc_bank_swift_code             = $kyc->bank_swift_code ?? '';
+        $this->kyc_bank_name                   = $kyc->bank_name ?? '';
+        $this->kyc_bank_branch_name            = $kyc->bank_branch_name ?? '';
+        $this->kyc_bank_account_type           = $kyc->bank_account_type ?? '';
+
+        // Tax
+        $this->kyc_is_gst_registered = (bool)($kyc->is_gst_registered ?? false);
+        $this->kyc_gstin             = $kyc->gstin ?? '';
+        $this->kyc_pan_number        = $kyc->pan_number ?? '';
+        $this->kyc_tan_number        = $kyc->tan_number ?? '';
+
+        // Documents
+        $this->kyc_doc_cancelled_cheque        = $kyc->doc_cancelled_cheque ?? '';
+        $this->kyc_doc_cancelled_cheque_name   = $kyc->doc_cancelled_cheque_name ?? '';
+        $this->kyc_doc_pan_card                = $kyc->doc_pan_card ?? '';
+        $this->kyc_doc_pan_card_name           = $kyc->doc_pan_card_name ?? '';
+        $this->kyc_doc_incorporation_cert      = $kyc->doc_incorporation_cert ?? '';
+        $this->kyc_doc_incorporation_cert_name = $kyc->doc_incorporation_cert_name ?? '';
+        $this->kyc_doc_moa                     = $kyc->doc_moa ?? '';
+        $this->kyc_doc_moa_name                = $kyc->doc_moa_name ?? '';
+
+        $this->kycStatus    = $kyc->internal_status ?? 'draft';
+        $this->kycIsLocked  = in_array($this->kycStatus, ['submitted', 'approved']);
+        $this->kycTabScores = $this->computeKycTabScores();
+    }
+
+    // ── KYC: Tab scores — only 3 tabs now ──────────────────────────────────
+    private function computeKycTabScores(): array
+    {
+        return [1=>$this->kycTabScore(1), 2=>$this->kycTabScore(2), 3=>$this->kycTabScore(3)];
+    }
+
+    private function kycTabScore(int $tab): int
+    {
+        $fields = match($tab) {
+            1 => [
+                !empty($this->kyc_account_holder_name),
+                !empty($this->kyc_bank_account_number),
+                !empty($this->kyc_bank_ifsc_code),
+                !empty($this->kyc_bank_name),
+                !empty($this->kyc_bank_account_type),
+            ],
+            2 => [
+                !empty($this->kyc_pan_number),
+                !$this->kyc_is_gst_registered || !empty($this->kyc_gstin),
+            ],
+            3 => [
+                !empty($this->kyc_doc_cancelled_cheque),
+                !empty($this->kyc_doc_pan_card),
+                !empty($this->kyc_doc_incorporation_cert),
+            ],
+            default => [],
+        };
+        if (empty($fields)) return 0;
+        return (int) round(count(array_filter($fields)) / count($fields) * 100);
+    }
+
+    public function getKycOverallScoreProperty(): int
+    {
+        $s = array_map(fn($t) => $this->kycTabScore($t), [1, 2, 3]);
+        return (int) round(array_sum($s) / count($s));
+    }
+
+    // ── KYC: Navigation (enforces sequential locking) ────────────────────────
+    public function goToKycTab(int $tab): void
+    {
+        if ($this->kycIsLocked) {
+            $this->kycActiveTab = $tab; $this->successMsg = ''; $this->errorMsg = ''; return;
+        }
+        if ($tab <= $this->kycActiveTab) {
+            $this->kycActiveTab = $tab; $this->successMsg = ''; $this->errorMsg = ''; return;
+        }
+        for ($i = 1; $i < $tab; $i++) {
+            if (($this->kycTabScores[$i] ?? 0) < 100) {
+                $this->errorMsg     = 'Please complete Step ' . $i . ' before proceeding.';
+                $this->kycActiveTab = $i;
+                return;
+            }
+        }
+        $this->kycActiveTab = $tab; $this->successMsg = ''; $this->errorMsg = '';
+    }
+
+    // ── KYC: Save Tab 1 — Bank ───────────────────────────────────────────────
+    public function saveKycTab1(): void
+    {
+        $this->errorMsg = '';
+        $this->validate([
+            'kyc_account_holder_name'         => 'required|string|max:200',
+            'kyc_account_holder_type'         => 'required|in:individual,company',
+            'kyc_bank_account_number'         => 'required|string|min:9|max:20|regex:/^[0-9]+$/',
+            'kyc_bank_account_number_confirm' => 'required|same:kyc_bank_account_number',
+            'kyc_bank_ifsc_code'              => ['required','string','regex:/^[A-Z]{4}0[A-Z0-9]{6}$/i'],
+            'kyc_bank_name'                   => 'required|string|max:150',
+            'kyc_bank_account_type'           => 'required|in:savings,current,business',
+        ], [
+            'kyc_bank_account_number.regex'          => 'Account number must contain digits only.',
+            'kyc_bank_account_number_confirm.same'   => 'Account numbers do not match. Please re-enter carefully.',
+            'kyc_bank_ifsc_code.regex'               => 'Invalid IFSC format. Example: HDFC0001234',
+        ]);
+        $this->saveKycFields([
+            'account_holder_name' => trim($this->kyc_account_holder_name),
+            'account_holder_type' => $this->kyc_account_holder_type,
+            'bank_account_number' => $this->kyc_bank_account_number,
+            'bank_ifsc_code'      => strtoupper(trim($this->kyc_bank_ifsc_code)),
+            'bank_swift_code'     => $this->kyc_bank_swift_code ?: null,
+            'bank_name'           => trim($this->kyc_bank_name),
+            'bank_branch_name'    => $this->kyc_bank_branch_name ?: null,
+            'bank_account_type'   => $this->kyc_bank_account_type,
+        ]);
+        $this->successMsg   = '✅ Bank details saved.';
+        $this->kycTabScores = $this->computeKycTabScores();
+        $this->kycActiveTab = 2;
+    }
+
+    // ── KYC: Save Tab 2 — Tax ────────────────────────────────────────────────
+    public function saveKycTab2(): void
+    {
+        $this->errorMsg = '';
+        $rules = ['kyc_pan_number' => ['required','string','regex:/^[A-Z]{5}[0-9]{4}[A-Z]$/i']];
+        if ($this->kyc_is_gst_registered) {
+            $rules['kyc_gstin'] = ['required','string','regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i'];
+        }
+        $this->validate($rules, [
+            'kyc_pan_number.regex' => 'Invalid PAN. Format: 5 letters, 4 digits, 1 letter. Example: ABCDE1234F',
+            'kyc_gstin.regex'      => 'Invalid GSTIN. Must be 15 characters. Example: 22AAAAA0000A1Z5',
+        ]);
+        $this->saveKycFields([
+            'pan_number'        => strtoupper(trim($this->kyc_pan_number)),
+            'gstin'             => $this->kyc_is_gst_registered ? strtoupper(trim($this->kyc_gstin)) : null,
+            'tan_number'        => $this->kyc_tan_number ? strtoupper(trim($this->kyc_tan_number)) : null,
+            'is_gst_registered' => $this->kyc_is_gst_registered,
+        ]);
+        $this->successMsg   = '✅ Tax details saved.';
+        $this->kycTabScores = $this->computeKycTabScores();
+        $this->kycActiveTab = 3;
+    }
+
+    // ── KYC: Save Tab 3 — Documents ──────────────────────────────────────────
+    public function saveKycTab3(): void
+    {
+        $this->errorMsg = '';
+        $sellerId = Session::get('seller_id');
+
+        $rules = [];
+        foreach (['kyc_upload_cancelled_cheque','kyc_upload_pan_card','kyc_upload_incorporation_cert','kyc_upload_moa'] as $f) {
+            if ($this->$f) $rules[$f] = 'file|mimes:pdf,jpg,jpeg,png|max:5120';
+        }
+        if (!empty($rules)) {
+            $this->validate($rules, [
+                'kyc_upload_cancelled_cheque.mimes'   => 'Must be PDF or image.',
+                'kyc_upload_pan_card.mimes'           => 'Must be PDF or image.',
+                'kyc_upload_incorporation_cert.mimes' => 'Must be PDF or image.',
+                'kyc_upload_moa.mimes'                => 'Must be PDF or image.',
+                'kyc_upload_cancelled_cheque.max'     => 'Max file size is 5 MB.',
+                'kyc_upload_pan_card.max'             => 'Max file size is 5 MB.',
+                'kyc_upload_incorporation_cert.max'   => 'Max file size is 5 MB.',
+            ]);
+        }
+
+        $missing = [];
+        if (empty($this->kyc_doc_cancelled_cheque) && !$this->kyc_upload_cancelled_cheque) $missing[] = 'Cancelled Cheque / Bank Statement';
+        if (empty($this->kyc_doc_pan_card) && !$this->kyc_upload_pan_card)                 $missing[] = 'PAN Card';
+        if (empty($this->kyc_doc_incorporation_cert) && !$this->kyc_upload_incorporation_cert) $missing[] = 'Incorporation Certificate';
+        if (!empty($missing)) { $this->errorMsg = 'Please upload: ' . implode(', ', $missing) . '.'; return; }
+
+        $docMap = [
+            'kyc_upload_cancelled_cheque'   => ['doc_cancelled_cheque',   'doc_cancelled_cheque_name',   'kyc_doc_cancelled_cheque',   'kyc_doc_cancelled_cheque_name'],
+            'kyc_upload_pan_card'           => ['doc_pan_card',           'doc_pan_card_name',           'kyc_doc_pan_card',           'kyc_doc_pan_card_name'],
+            'kyc_upload_incorporation_cert' => ['doc_incorporation_cert', 'doc_incorporation_cert_name', 'kyc_doc_incorporation_cert', 'kyc_doc_incorporation_cert_name'],
+            'kyc_upload_moa'                => ['doc_moa',                'doc_moa_name',                'kyc_doc_moa',                'kyc_doc_moa_name'],
+        ];
+        $data = [];
+        foreach ($docMap as $uploadField => [$dbPath, $dbName, $localPath, $localName]) {
+            if ($this->$uploadField) {
+                $file     = $this->$uploadField;
+                $ext      = strtolower($file->getClientOriginalExtension());
+                $fileName = $sellerId . '_kyc_' . $uploadField . '_' . time() . '.' . $ext;
+                $disk     = config('filesystems.default','public') === 's3' ? ['disk'=>'s3','visibility'=>'public'] : 'public';
+                $path     = $file->storeAs('seller-kyc/' . $sellerId, $fileName, $disk);
+                $data[$dbPath] = $path;
+                $data[$dbName] = $file->getClientOriginalName();
+                $this->$localPath = $path;
+                $this->$localName = $file->getClientOriginalName();
+                $this->reset($uploadField);
+            }
+        }
+        if (!empty($data)) $this->saveKycFields($data);
+
+        $this->successMsg   = '✅ Documents saved. Please review and submit.';
+        $this->kycTabScores = $this->computeKycTabScores();
+    }
+
+
+    // ── KYC: Submit ──────────────────────────────────────────────────────────
+    public function submitKyc(): void
+    {
+        $this->errorMsg = '';
+        $this->validate(['kyc_declaration' => 'accepted'], [
+            'kyc_declaration.accepted' => 'You must confirm the declaration before submitting.',
+        ]);
+        $sellerId = Session::get('seller_id');
+        $kyc      = SellerKyc::where('seller_id', $sellerId)->first();
+        if (!$kyc || !$kyc->isCoreComplete()) {
+            $this->errorMsg = 'Some required information is missing. Go back and complete all steps.'; return;
+        }
+        $kyc->update(['internal_status' => 'submitted', 'submitted_at' => now()]);
+        $this->kycStatus    = 'submitted';
+        $this->kycIsLocked  = true;
+        $this->kycTabScores = $this->computeKycTabScores();
+        $this->successMsg   = '🎉 KYC submitted! Our team will review within 2–3 business days.';
+    }
+
+    // ── KYC: Upsert helper ───────────────────────────────────────────────────
+    private function saveKycFields(array $data): void
+    {
+        $sellerId = Session::get('seller_id');
+        SellerKyc::updateOrCreate(['seller_id' => $sellerId], array_merge($data, ['updated_at' => now()]));
     }
 
     private function resolveCountryId($seller): string
@@ -153,7 +431,7 @@ class Profile extends Component
 
     public function getStepScoreProperty(): array
     {
-        return array_combine([1,2,3,4,5], array_map([$this,'stepScore'], [1,2,3,4,5]));
+        return array_combine([1,2,3,4,5,6], array_map([$this,'stepScore'], [1,2,3,4,5,6]));
     }
 
     private function stepScore(int $step): int
@@ -163,15 +441,12 @@ class Profile extends Component
             2 => [!empty($this->legal_business_name), !empty($this->business_type),
                   !empty($this->business_address), !empty($this->city), !empty($this->num_employees),
                   $this->documents->has('business_registration')],
-            3 => [
-                !empty($this->company_description),
-                !empty($this->main_products),
-                !empty($this->export_markets),
-                !empty($this->logo_url),
-                !empty($this->video_url),
-            ],
+            3 => [!empty($this->company_description),!empty($this->main_products),
+                  !empty($this->export_markets),!empty($this->logo_url),!empty($this->video_url)],
             4 => [$this->documents->has('owner_id_passport'), $this->documents->has('tax_id')],
             5 => [!empty($this->selected_package_id)],
+            6 => [($this->kycTabScores[1]??0)===100,($this->kycTabScores[2]??0)===100,
+                  ($this->kycTabScores[3]??0)===100],
             default => [],
         };
         if (empty($fields)) return 0;
@@ -448,7 +723,7 @@ class Profile extends Component
         SellerDetail::updateOrCreate(['seller_id' => $sellerId], [
             'kyc_status'      => 'submitted',
             'submitted_at'    => now(),
-            'onboarding_step' => 5,
+            'onboarding_step' => 6,
         ]);
 
         DB::table('sellers')
@@ -461,8 +736,8 @@ class Profile extends Component
             'seller_package_id' => $this->selected_package_id,
         ]);
 
-        return redirect()->route('seller.dashboard')
-            ->with('login_success', '🎉 Profile submitted for review! We\'ll notify you within 24–48 hrs.');
+        $this->successMsg = '✅ Package selected! Please complete KYC to enable escrow payments.';
+        $this->activeStep = 6;
     }
 
     // ── Upload with basic validation ─────────────────────────
@@ -599,12 +874,17 @@ class Profile extends Component
             'packages'          => $this->packages,
             'selectedPackage'   => $selectedPackage,
             'currentPlan'       => $selectedPackage,
-            'logo_url'          => $logoFullUrl,   // full URL — same as header uses
-            'video_url'         => $videoFullUrl,  // full URL
+            'logo_url'          => $logoFullUrl,
+            'video_url'         => $videoFullUrl,
             'logo_full_url'     => $logoFullUrl,
             'video_full_url'    => $videoFullUrl,
             'successMsg'        => $this->successMsg ?? '',
             'errorMsg'          => $this->errorMsg ?? '',
+            // KYC
+            'kycTabScores'      => $this->kycTabScores,
+            'kycOverallScore'   => $this->kycOverallScore,
+            'kycStatus'         => $this->kycStatus,
+            'kycIsLocked'       => $this->kycIsLocked,
         ]);
     }
 

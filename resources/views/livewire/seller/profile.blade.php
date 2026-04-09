@@ -231,7 +231,7 @@
 
             {{-- Step navigation --}}
             <div class="step-nav">
-              @foreach([[1,'Basic Info'],[2,'Business'],[3,'Company Profile'],[4,'Verification'],[5,'Plan']] as [$n,$lbl])
+              @foreach([[1,'Basic Info'],[2,'Business'],[3,'Company Profile'],[4,'Verification'],[5,'Plan'],[6,'KYC']] as [$n,$lbl])
                 @php $sc=$stepScore[$n]; $isActive=$activeStep===$n; $isDone=$sc===100; @endphp
                 <button class="step-btn {{ $isActive?'active':'' }} {{ $isDone&&!$isActive?'sdone':'' }}"
                     wire:click="goToStep({{ $n }})">
@@ -1139,12 +1139,446 @@
                     {{ empty($selected_package_id) ? 'disabled' : '' }}>
                     <span wire:loading wire:target="saveStep5" class="spinner-border spinner-border-sm me-1"></span>
                     <span wire:loading.remove wire:target="saveStep5">
-                      <i class="fas fa-paper-plane me-1"></i> Submit for Review
+                      <i class="fas fa-arrow-right me-1"></i> Save & Continue to KYC
                     </span>
                   </button>
                 @endif
               </div>
+
+            {{-- ══════════════════════════════════════════════════════════
+                 STEP 6 — KYC VERIFICATION  (Bank · Tax · Documents)
+            ══════════════════════════════════════════════════════════ --}}
+            @elseif($activeStep===6)
+
+            <style>
+            .kyc-wrap{display:grid;grid-template-columns:200px 1fr;gap:1.2rem;align-items:start;}
+            @media(max-width:768px){.kyc-wrap{grid-template-columns:1fr;}}
+            .kyc-sb{background:#f8faff;border:1.5px solid var(--bdr);border-radius:14px;padding:1.1rem;position:sticky;top:80px;}
+            .kyc-sb-hd{font-size:.68rem;font-weight:800;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.8rem;}
+            .kyc-si{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:9px;cursor:pointer;transition:background .15s;margin-bottom:1px;}
+            .kyc-si:hover{background:#eef2ff;}
+            .kyc-si.ksi-active{background:#eef2ff;}
+            .kyc-si.ksi-locked{cursor:not-allowed;opacity:.5;}
+            .kyc-si.ksi-locked:hover{background:transparent;}
+            .kyc-si-ic{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:.72rem;flex-shrink:0;border:2px solid var(--bdr);background:#fff;color:var(--mu);transition:all .2s;}
+            .kyc-si.ksi-done .kyc-si-ic{background:var(--green);border-color:var(--green);color:#fff;}
+            .kyc-si.ksi-active .kyc-si-ic{background:var(--blue);border-color:var(--blue);color:#fff;}
+            .kyc-si-name{font-size:.79rem;font-weight:700;color:var(--tx);}
+            .kyc-si-sub{font-size:.67rem;color:var(--mu);}
+            .kyc-si.ksi-active .kyc-si-name{color:var(--blue);}
+            .kyc-si.ksi-done .kyc-si-name{color:var(--green);}
+            .kyc-si-badge{font-size:.6rem;font-weight:800;padding:1px 6px;border-radius:20px;margin-left:auto;}
+            .ksib-done{background:var(--glt);color:#065f46;}
+            .ksib-now{background:var(--blt);color:#1e40af;}
+            .kyc-conn{width:2px;height:12px;background:var(--bdr);margin:0 0 0 22px;border-radius:2px;}
+            .kyc-conn.done{background:var(--green);}
+            .kyc-prog{margin-bottom:.9rem;}
+            .kyc-prog-lbl{display:flex;justify-content:space-between;font-size:.71rem;font-weight:600;color:var(--mu);margin-bottom:3px;}
+            .kyc-prog-t{height:5px;background:#e5e9f2;border-radius:99px;overflow:hidden;}
+            .kyc-prog-f{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),#0ea5e9);transition:width .5s;}
+            .kyc-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:.74rem;font-weight:700;margin-bottom:1rem;border:1.5px solid;}
+            .kpill-draft   {background:#f1f5f9;color:#475569;border-color:#cbd5e1;}
+            .kpill-submitted{background:#fef3c7;color:#92400e;border-color:#fcd34d;}
+            .kpill-approved{background:var(--glt);color:#065f46;border-color:#6ee7b7;}
+            .kpill-rejected{background:#fee2e2;color:#991b1b;border-color:#fca5a5;}
+            .kpill-more_info{background:#e0f2fe;color:#0369a1;border-color:#7dd3fc;}
+            .kyc-panel{background:#fff;border:1.5px solid var(--bdr);border-radius:14px;overflow:hidden;}
+            .kyc-ph{padding:1.1rem 1.4rem .9rem;border-bottom:1px solid var(--bdr);}
+            .kyc-ptitle{font-family:'Sora',sans-serif;font-size:.97rem;font-weight:700;display:flex;align-items:center;gap:.45rem;margin-bottom:.15rem;}
+            .kyc-psub{font-size:.78rem;color:var(--mu);}
+            .kyc-pb{padding:1.1rem 1.4rem 1.4rem;}
+            .kfg{margin-bottom:.95rem;}
+            .kfg label{font-size:.79rem;font-weight:700;color:#374151;display:block;margin-bottom:4px;}
+            .kfg label .req{color:var(--red);margin-left:1px;}
+            .kfg label .opt{font-size:.68rem;font-weight:400;color:var(--mu);margin-left:3px;}
+            .kfc{border:1.5px solid var(--bdr);border-radius:10px;font-size:.86rem;padding:.48rem .82rem;width:100%;transition:border .2s,box-shadow .2s;background:#fff;color:var(--tx);}
+            .kfc:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.08);outline:none;}
+            .kfc:disabled{background:#f9fafb;color:#9ca3af;cursor:not-allowed;}
+            .kfc.is-err{border-color:var(--red);background:#fff8f8;}
+            .kerr{font-size:.73rem;color:var(--red);margin-top:3px;display:flex;align-items:center;gap:3px;}
+            .kg2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+            @media(max-width:600px){.kg2{grid-template-columns:1fr;}}
+            .ki{background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:.6rem .9rem;font-size:.77rem;color:#1d4ed8;display:flex;gap:.45rem;margin-bottom:1rem;line-height:1.6;}
+            .kdoc{border:1.5px dashed #d1d5db;border-radius:12px;padding:.9rem 1rem;background:#fafbfe;margin-bottom:.75rem;transition:all .2s;}
+            .kdoc:hover{border-color:#93c5fd;}
+            .kdoc.kdc-ok{border-style:solid;border-color:var(--green);background:#f0fdf9;}
+            .kdoc.kdc-miss{border-color:#fca5a5;background:#fff8f8;}
+            .kdoc-lbl{font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:.45rem;margin-bottom:.4rem;}
+            .kdoc-hint{font-size:.71rem;color:var(--mu);margin-bottom:.5rem;line-height:1.5;}
+            .kdoc-saved{display:flex;align-items:center;gap:5px;font-size:.74rem;color:var(--green);font-weight:600;margin-bottom:.35rem;background:#f0fdf9;padding:.25rem .55rem;border-radius:7px;}
+            .kup{display:inline-flex;align-items:center;gap:5px;background:var(--blt);color:var(--blue);border:none;border-radius:8px;padding:.32rem .75rem;font-size:.76rem;font-weight:700;cursor:pointer;transition:background .2s;}
+            .kup:hover{background:#c7d7fc;}
+            .kup-new{font-size:.71rem;color:var(--green);font-weight:600;display:flex;align-items:center;gap:3px;margin-left:.3rem;}
+            .req-tag{background:#fee2e2;color:var(--red);font-size:.6rem;font-weight:800;padding:1px 6px;border-radius:20px;}
+            .opt-tag{background:#f1f5f9;color:#475569;font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:20px;}
+            .ktog{display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;background:#f8faff;border:1.5px solid var(--bdr);border-radius:10px;cursor:pointer;margin-bottom:.9rem;}
+            .ktog-track{width:38px;height:21px;background:#d1d5db;border-radius:99px;position:relative;transition:background .2s;flex-shrink:0;}
+            .ktog-track.on{background:var(--blue);}
+            .ktog-thumb{width:15px;height:15px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.18);}
+            .ktog-track.on .ktog-thumb{left:20px;}
+            .ktog-lbl{font-size:.82rem;font-weight:600;color:var(--tx);}
+            .ktog-sub{font-size:.7rem;color:var(--mu);}
+            .kdecl{display:flex;align-items:flex-start;gap:.65rem;padding:.65rem .8rem;background:#f8faff;border:1.5px solid var(--bdr);border-radius:10px;cursor:pointer;margin-bottom:.5rem;transition:border .15s;}
+            .kdecl:hover{border-color:#93c5fd;}
+            .kdecl input[type=checkbox]{width:16px;height:16px;accent-color:var(--blue);flex-shrink:0;margin-top:2px;}
+            .kdecl-text{font-size:.81rem;color:var(--tx);font-weight:500;}
+            .kdecl-sub{font-size:.7rem;color:var(--mu);}
+            .krev{border:1px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:.9rem;}
+            .krev-hd{background:#f8faff;padding:.55rem .9rem;font-size:.76rem;font-weight:700;color:var(--blue);display:flex;align-items:center;gap:.45rem;border-bottom:1px solid var(--bdr);}
+            .krev-bd{padding:.65rem .9rem;}
+            .krev-row{display:flex;gap:.5rem;padding:.28rem 0;border-bottom:1px solid #f0f2f8;font-size:.78rem;}
+            .krev-row:last-child{border:none;}
+            .krev-lbl{color:var(--mu);width:140px;flex-shrink:0;font-weight:500;}
+            .krev-val{color:var(--tx);font-weight:600;word-break:break-all;}
+            .krev-val.masked{letter-spacing:.12em;color:#9ca3af;}
+            .kfoot{display:flex;justify-content:space-between;align-items:center;padding-top:1.1rem;border-top:1px solid var(--bdr);margin-top:.8rem;}
+            .kfoot-info{font-size:.73rem;color:var(--mu);display:flex;align-items:center;gap:4px;}
+            .kbtn-back{background:#fff;color:#374151;border:1.5px solid var(--bdr);border-radius:10px;padding:.48rem 1.1rem;font-weight:600;font-size:.84rem;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .2s;}
+            .kbtn-back:hover{border-color:#93c5fd;color:var(--blue);}
+            .kbtn-next{background:linear-gradient(135deg,var(--blue),#0ea5e9);color:#fff;border:none;border-radius:10px;padding:.5rem 1.4rem;font-weight:700;font-size:.84rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(26,86,219,.2);transition:all .2s;}
+            .kbtn-next:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(26,86,219,.28);}
+            .kbtn-next:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+            .kbtn-submit{background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:10px;padding:.5rem 1.6rem;font-weight:700;font-size:.84rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(5,150,105,.2);transition:all .2s;}
+            .kbtn-submit:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(5,150,105,.3);}
+            .kbtn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+            .kyc-locked{background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;padding:.65rem 1rem;font-size:.8rem;color:#92400e;display:flex;align-items:center;gap:.55rem;margin-bottom:1rem;}
+            </style>
+
+            {{-- Status pill --}}
+            @php
+                $kPills=['draft'=>['fas fa-pen','Fill in your KYC details below — required for CCAvenue escrow','kpill-draft'],
+                         'submitted'=>['fas fa-clock','Under review — we\'ll notify you within 2–3 business days','kpill-submitted'],
+                         'approved'=>['fas fa-circle-check','KYC Approved — CCAvenue escrow will be set up shortly','kpill-approved'],
+                         'rejected'=>['fas fa-circle-xmark','KYC Rejected — please update and re-submit','kpill-rejected'],
+                         'more_info'=>['fas fa-circle-info','More information required — update below','kpill-more_info']];
+                [$kPIcon,$kPText,$kPCls]=$kPills[$kycStatus]??$kPills['draft'];
+            @endphp
+            <div class="kyc-pill {{ $kPCls }}"><i class="{{ $kPIcon }}"></i>{{ $kPText }}</div>
+
+            <div class="kyc-wrap">
+              {{-- ── SIDEBAR ── --}}
+              <aside>
+                <div class="kyc-sb">
+                  <div class="kyc-prog">
+                    <div class="kyc-prog-lbl"><span>KYC Progress</span><span style="color:var(--blue);font-weight:800;">{{ $kycOverallScore }}%</span></div>
+                    <div class="kyc-prog-t"><div class="kyc-prog-f" style="width:{{ $kycOverallScore }}%"></div></div>
+                  </div>
+                  <div class="kyc-sb-hd">Steps</div>
+                  @php
+                    $kSides=[
+                      1=>['fas fa-building-columns','Bank Account','Account & IFSC details'],
+                      2=>['fas fa-file-invoice','Tax / PAN','PAN number & GSTIN'],
+                      3=>['fas fa-folder-open','Documents','Upload required proofs'],
+                    ];
+                  @endphp
+                  @foreach($kSides as $kt=>[$kic,$kname,$ksub])
+                    @php
+                      $ksc=$kycTabScores[$kt]??0;
+                      $kisDone=$ksc>=100;
+                      $kisActive=$kycActiveTab===$kt;
+                      $prevOk=$kt===1||($kycTabScores[$kt-1]??0)>=100;
+                      $kisLocked=!$kycIsLocked&&!$prevOk&&!$kisDone&&!$kisActive;
+                      $kItemCls=$kisActive?'ksi-active':($kisDone?'ksi-done':($kisLocked?'ksi-locked':''));
+                    @endphp
+                    @if($kt>1)<div class="kyc-conn {{ ($kycTabScores[$kt-1]??0)>=100?'done':'' }}"></div>@endif
+                    <div class="kyc-si {{ $kItemCls }}" @if(!$kisLocked) wire:click="goToKycTab({{ $kt }})" @endif>
+                      <div class="kyc-si-ic">
+                        @if($kisDone&&!$kisActive)<i class="fas fa-check"></i>@else<i class="{{ $kic }}"></i>@endif
+                      </div>
+                      <div style="flex:1;min-width:0;">
+                        <div class="kyc-si-name">{{ $kname }}</div>
+                        <div class="kyc-si-sub">{{ $ksub }}</div>
+                      </div>
+                      @if($kisLocked)<i class="fas fa-lock" style="font-size:.6rem;color:#94a3b8;"></i>
+                      @elseif($kisDone)<span class="kyc-si-badge ksib-done">Done</span>
+                      @elseif($kisActive)<span class="kyc-si-badge ksib-now">Now</span>@endif
+                    </div>
+                  @endforeach
+
+                  {{-- Info note --}}
+                  <div style="margin-top:1rem;background:#f0f4ff;border-radius:9px;padding:.6rem .8rem;font-size:.72rem;color:#374151;line-height:1.6;">
+                    <strong style="color:var(--blue);">Why KYC?</strong><br>
+                    Required by CCAvenue to open a secure escrow account for your payments.
+                  </div>
+                </div>
+              </aside>
+
+              {{-- ── MAIN PANEL ── --}}
+              <div class="kyc-panel">
+
+                @if($kycIsLocked&&$kycStatus==='submitted')
+                  <div class="kyc-locked" style="margin:1.1rem 1.4rem 0;">
+                    <i class="fas fa-lock"></i> KYC is under review and locked for editing. We'll notify you within 2–3 business days.
+                  </div>
+                @endif
+
+                {{-- ─── TAB 1: BANK ACCOUNT ─── --}}
+                @if($kycActiveTab===1)
+                <div class="kyc-ph">
+                  <div class="kyc-ptitle"><i class="fas fa-building-columns" style="color:var(--blue);"></i> Bank Account Details</div>
+                  <div class="kyc-psub">Used for CCAvenue escrow payouts. Must exactly match your bank records.</div>
+                </div>
+                <div class="kyc-pb">
+                  <div class="ki"><i class="fas fa-shield-halved mt-1" style="flex-shrink:0;"></i> Your account number is masked after saving and only used for regulated CCAvenue escrow settlements.</div>
+
+                  <div class="kg2">
+                    <div class="kfg">
+                      <label>Account Holder Name<span class="req">*</span></label>
+                      <input type="text" wire:model.defer="kyc_account_holder_name" class="kfc @error('kyc_account_holder_name') is-err @enderror" placeholder="Exactly as on bank records" {{ $kycIsLocked?'disabled':'' }}>
+                      @error('kyc_account_holder_name')<div class="kerr"><i class="fas fa-triangle-exclamation"></i>{{ $message }}</div>@enderror
+                    </div>
+                    <div class="kfg">
+                      <label>Account Holder Type<span class="req">*</span></label>
+                      <select wire:model.defer="kyc_account_holder_type" class="kfc" {{ $kycIsLocked?'disabled':'' }}>
+                        <option value="company">Company / Business</option>
+                        <option value="individual">Individual / Proprietor</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="kg2">
+                    <div class="kfg">
+                      <label>Bank Account Number<span class="req">*</span></label>
+                      <input type="password" wire:model.defer="kyc_bank_account_number" class="kfc @error('kyc_bank_account_number') is-err @enderror" placeholder="Enter account number" autocomplete="new-password" {{ $kycIsLocked?'disabled':'' }}>
+                      @error('kyc_bank_account_number')<div class="kerr"><i class="fas fa-triangle-exclamation"></i>{{ $message }}</div>@enderror
+                    </div>
+                    <div class="kfg">
+                      <label>Confirm Account Number<span class="req">*</span></label>
+                      <input type="text" wire:model.defer="kyc_bank_account_number_confirm" class="kfc @error('kyc_bank_account_number_confirm') is-err @enderror" placeholder="Re-enter to confirm" onpaste="return false;" {{ $kycIsLocked?'disabled':'' }}>
+                      @error('kyc_bank_account_number_confirm')<div class="kerr"><i class="fas fa-triangle-exclamation"></i>{{ $message }}</div>@enderror
+                    </div>
+                  </div>
+
+                  <div class="kg2">
+                    <div class="kfg">
+                      <label>IFSC Code<span class="req">*</span></label>
+                      <input type="text" wire:model.defer="kyc_bank_ifsc_code" class="kfc @error('kyc_bank_ifsc_code') is-err @enderror" placeholder="e.g. HDFC0001234" maxlength="11" style="text-transform:uppercase;" {{ $kycIsLocked?'disabled':'' }}>
+                      @error('kyc_bank_ifsc_code')<div class="kerr"><i class="fas fa-triangle-exclamation"></i>{{ $message }}</div>@enderror
+                    </div>
+                    <div class="kfg">
+                      <label>Account Type<span class="req">*</span></label>
+                      <select wire:model.defer="kyc_bank_account_type" class="kfc @error('kyc_bank_account_type') is-err @enderror" {{ $kycIsLocked?'disabled':'' }}>
+                        <option value="">— Select —</option>
+                        <option value="savings">Savings</option>
+                        <option value="current">Current</option>
+                        <option value="business">Business / OD</option>
+                      </select>
+                      @error('kyc_bank_account_type')<div class="kerr"><i class="fas fa-triangle-exclamation"></i>{{ $message }}</div>@enderror
+                    </div>
+                  </div>
+
+                  <div class="kg2">
+                    <div class="kfg">
+                      <label>Bank Name<span class="req">*</span></label>
+                      <input type="text" wire:model.defer="kyc_bank_name" class="kfc @error('kyc_bank_name') is-err @enderror" placeholder="e.g. HDFC Bank" {{ $kycIsLocked?'disabled':'' }}>
+                      @error('kyc_bank_name')<div class="kerr"><i class="fas fa-triangle-exclamation"></i>{{ $message }}</div>@enderror
+                    </div>
+                    <div class="kfg">
+                      <label>Branch Name<span class="opt">(optional)</span></label>
+                      <input type="text" wire:model.defer="kyc_bank_branch_name" class="kfc" placeholder="e.g. Andheri West Branch" {{ $kycIsLocked?'disabled':'' }}>
+                    </div>
+                  </div>
+
+                  <div class="kfoot">
+                    <span class="kfoot-info"><i class="fas fa-circle-info"></i> Step 1 of 3</span>
+                    @if(!$kycIsLocked)
+                    <button type="button" class="kbtn-next" wire:click="saveKycTab1" wire:loading.attr="disabled">
+                      <span wire:loading wire:target="saveKycTab1" class="spinner-border spinner-border-sm"></span>
+                      <span wire:loading.remove wire:target="saveKycTab1">Save & Continue <i class="fas fa-arrow-right"></i></span>
+                    </button>
+                    @endif
+                  </div>
+                </div>
+                @endif
+
+                {{-- ─── TAB 2: TAX / PAN ─── --}}
+                @if($kycActiveTab===2)
+                <div class="kyc-ph">
+                  <div class="kyc-ptitle"><i class="fas fa-file-invoice" style="color:var(--blue);"></i> Tax & GST Details</div>
+                  <div class="kyc-psub">Required for TDS compliance and GST settlement reports from CCAvenue.</div>
+                </div>
+                <div class="kyc-pb">
+                  <div class="kfg" style="max-width:280px;">
+                    <label>PAN Number<span class="req">*</span></label>
+                    <input type="text" wire:model.defer="kyc_pan_number" class="kfc @error('kyc_pan_number') is-err @enderror" placeholder="e.g. ABCDE1234F" maxlength="10" style="text-transform:uppercase;" {{ $kycIsLocked?'disabled':'' }}>
+                    <div style="font-size:.71rem;color:var(--mu);margin-top:3px;">10-character company or proprietor PAN</div>
+                    @error('kyc_pan_number')<div class="kerr"><i class="fas fa-triangle-exclamation"></i>{{ $message }}</div>@enderror
+                  </div>
+
+                  <label class="ktog" style="{{ $kycIsLocked?'cursor:not-allowed;opacity:.7;':'' }}">
+                    <input type="checkbox" wire:model.live="kyc_is_gst_registered" style="display:none;" {{ $kycIsLocked?'disabled':'' }}>
+                    <div class="ktog-track {{ $kyc_is_gst_registered?'on':'' }}"><div class="ktog-thumb"></div></div>
+                    <div><div class="ktog-lbl">Registered under GST</div><div class="ktog-sub">Turn on if your business has a GSTIN</div></div>
+                  </label>
+
+                  @if($kyc_is_gst_registered)
+                  <div class="kfg">
+                    <label>GSTIN<span class="req">*</span></label>
+                    <input type="text" wire:model.defer="kyc_gstin" class="kfc @error('kyc_gstin') is-err @enderror" placeholder="e.g. 22AAAAA0000A1Z5" maxlength="15" style="text-transform:uppercase;" {{ $kycIsLocked?'disabled':'' }}>
+                    @error('kyc_gstin')<div class="kerr"><i class="fas fa-triangle-exclamation"></i>{{ $message }}</div>@enderror
+                  </div>
+                  @endif
+
+                  <div class="kfg" style="max-width:280px;">
+                    <label>TAN Number<span class="opt">(optional)</span></label>
+                    <input type="text" wire:model.defer="kyc_tan_number" class="kfc" placeholder="e.g. PNEH03029F" style="text-transform:uppercase;" {{ $kycIsLocked?'disabled':'' }}>
+                    <div style="font-size:.71rem;color:var(--mu);margin-top:3px;">Only if you deduct TDS from vendor payments</div>
+                  </div>
+
+                  <div class="kfoot">
+                    <button type="button" class="kbtn-back" wire:click="goToKycTab(1)"><i class="fas fa-arrow-left"></i> Back</button>
+                    @if(!$kycIsLocked)
+                    <button type="button" class="kbtn-next" wire:click="saveKycTab2" wire:loading.attr="disabled">
+                      <span wire:loading wire:target="saveKycTab2" class="spinner-border spinner-border-sm"></span>
+                      <span wire:loading.remove wire:target="saveKycTab2">Save & Continue <i class="fas fa-arrow-right"></i></span>
+                    </button>
+                    @endif
+                  </div>
+                </div>
+                @endif
+
+                {{-- ─── TAB 3: DOCUMENTS ─── --}}
+                @if($kycActiveTab===3)
+                <div class="kyc-ph">
+                  <div class="kyc-ptitle"><i class="fas fa-folder-open" style="color:var(--blue);"></i> KYC Document Uploads</div>
+                  <div class="kyc-psub">Upload clear scans or photos. PDF, JPG, PNG · Max 5 MB each.</div>
+                </div>
+                <div class="kyc-pb">
+
+                  {{-- Cancelled Cheque --}}
+                  <div class="kdoc {{ !empty($kyc_doc_cancelled_cheque)?'kdc-ok':(!$kycIsLocked?'kdc-miss':'') }}">
+                    <div class="kdoc-lbl"><i class="fas fa-building-columns" style="color:var(--blue);"></i> Cancelled Cheque / Bank Statement <span class="req-tag">Required</span></div>
+                    <div class="kdoc-hint">A cancelled cheque leaf or 3-month bank statement showing account number + IFSC code.</div>
+                    @if(!empty($kyc_doc_cancelled_cheque_name))<div class="kdoc-saved"><i class="fas fa-circle-check"></i>{{ $kyc_doc_cancelled_cheque_name }}</div>@endif
+                    @if(!$kycIsLocked)
+                    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;">
+                      <input type="file" wire:model="kyc_upload_cancelled_cheque" accept=".pdf,.jpg,.jpeg,.png" id="kf_cheque" style="display:none;">
+                      <label for="kf_cheque" class="kup"><i class="fas fa-upload"></i>{{ empty($kyc_doc_cancelled_cheque)?'Upload File':'Replace' }}</label>
+                      @if($kyc_upload_cancelled_cheque)<span class="kup-new"><i class="fas fa-check"></i> Ready to save</span>@endif
+                    </div>
+                    @error('kyc_upload_cancelled_cheque')<div class="kerr mt-1"><i class="fas fa-triangle-exclamation"></i>{{ $message }}</div>@enderror
+                    @endif
+                  </div>
+
+                  {{-- PAN Card --}}
+                  <div class="kdoc {{ !empty($kyc_doc_pan_card)?'kdc-ok':(!$kycIsLocked?'kdc-miss':'') }}">
+                    <div class="kdoc-lbl"><i class="fas fa-id-card" style="color:var(--blue);"></i> PAN Card <span class="req-tag">Required</span></div>
+                    <div class="kdoc-hint">Clear scan of your company PAN card or sole proprietor's personal PAN card.</div>
+                    @if(!empty($kyc_doc_pan_card_name))<div class="kdoc-saved"><i class="fas fa-circle-check"></i>{{ $kyc_doc_pan_card_name }}</div>@endif
+                    @if(!$kycIsLocked)
+                    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;">
+                      <input type="file" wire:model="kyc_upload_pan_card" accept=".pdf,.jpg,.jpeg,.png" id="kf_pan" style="display:none;">
+                      <label for="kf_pan" class="kup"><i class="fas fa-upload"></i>{{ empty($kyc_doc_pan_card)?'Upload File':'Replace' }}</label>
+                      @if($kyc_upload_pan_card)<span class="kup-new"><i class="fas fa-check"></i> Ready to save</span>@endif
+                    </div>
+                    @error('kyc_upload_pan_card')<div class="kerr mt-1"><i class="fas fa-triangle-exclamation"></i>{{ $message }}</div>@enderror
+                    @endif
+                  </div>
+
+                  {{-- Certificate of Incorporation --}}
+                  <div class="kdoc {{ !empty($kyc_doc_incorporation_cert)?'kdc-ok':(!$kycIsLocked?'kdc-miss':'') }}">
+                    <div class="kdoc-lbl"><i class="fas fa-building" style="color:var(--blue);"></i> Certificate of Incorporation <span class="req-tag">Required</span></div>
+                    <div class="kdoc-hint">MCA certificate (Pvt Ltd / LLP) · Shop & Establishment cert (proprietorship) · Partnership deed (firm).</div>
+                    @if(!empty($kyc_doc_incorporation_cert_name))<div class="kdoc-saved"><i class="fas fa-circle-check"></i>{{ $kyc_doc_incorporation_cert_name }}</div>@endif
+                    @if(!$kycIsLocked)
+                    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;">
+                      <input type="file" wire:model="kyc_upload_incorporation_cert" accept=".pdf,.jpg,.jpeg,.png" id="kf_inc" style="display:none;">
+                      <label for="kf_inc" class="kup"><i class="fas fa-upload"></i>{{ empty($kyc_doc_incorporation_cert)?'Upload File':'Replace' }}</label>
+                      @if($kyc_upload_incorporation_cert)<span class="kup-new"><i class="fas fa-check"></i> Ready to save</span>@endif
+                    </div>
+                    @error('kyc_upload_incorporation_cert')<div class="kerr mt-1"><i class="fas fa-triangle-exclamation"></i>{{ $message }}</div>@enderror
+                    @endif
+                  </div>
+
+                  {{-- MoA — optional --}}
+                  <div class="kdoc {{ !empty($kyc_doc_moa)?'kdc-ok':'' }}">
+                    <div class="kdoc-lbl"><i class="fas fa-file-contract" style="color:var(--blue);"></i> Memorandum of Association <span class="opt-tag">Optional</span></div>
+                    <div class="kdoc-hint">MoA / AoA — required only for Private Limited companies. Not needed for proprietorships or LLPs.</div>
+                    @if(!empty($kyc_doc_moa_name))<div class="kdoc-saved"><i class="fas fa-circle-check"></i>{{ $kyc_doc_moa_name }}</div>@endif
+                    @if(!$kycIsLocked)
+                    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;">
+                      <input type="file" wire:model="kyc_upload_moa" accept=".pdf,.jpg,.jpeg,.png" id="kf_moa" style="display:none;">
+                      <label for="kf_moa" class="kup"><i class="fas fa-upload"></i>{{ empty($kyc_doc_moa)?'Upload File':'Replace' }}</label>
+                      @if($kyc_upload_moa)<span class="kup-new"><i class="fas fa-check"></i> Ready to save</span>@endif
+                    </div>
+                    @endif
+                  </div>
+
+                  {{-- Save docs button --}}
+                  @if(!$kycIsLocked)
+                  <div style="margin-bottom:1.2rem;">
+                    <button type="button" class="kbtn-next" wire:click="saveKycTab3" wire:loading.attr="disabled">
+                      <span wire:loading wire:target="saveKycTab3" class="spinner-border spinner-border-sm"></span>
+                      <span wire:loading.remove wire:target="saveKycTab3"><i class="fas fa-floppy-disk"></i> Save Documents</span>
+                    </button>
+                  </div>
+                  @endif
+
+                  {{-- ─── REVIEW SUMMARY + SUBMIT (shown after all 3 tabs done) ─── --}}
+                  @if(($kycTabScores[1]??0)===100 && ($kycTabScores[2]??0)===100)
+                  <div style="border-top:1.5px dashed var(--bdr);padding-top:1.2rem;margin-top:.5rem;">
+                    <div style="font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;margin-bottom:.8rem;color:var(--tx);">
+                      <i class="fas fa-clipboard-check me-1" style="color:var(--blue);"></i> Review Before Submitting
+                    </div>
+
+                    {{-- Bank summary --}}
+                    <div class="krev">
+                      <div class="krev-hd"><i class="fas fa-building-columns"></i> Bank Account</div>
+                      <div class="krev-bd">
+                        <div class="krev-row"><span class="krev-lbl">Holder Name</span><span class="krev-val">{{ $kyc_account_holder_name ?: '—' }}</span></div>
+                        <div class="krev-row"><span class="krev-lbl">Account No.</span><span class="krev-val masked">{{ $kyc_bank_account_number ? str_repeat('•',max(0,strlen($kyc_bank_account_number)-4)).substr($kyc_bank_account_number,-4) : '—' }}</span></div>
+                        <div class="krev-row"><span class="krev-lbl">IFSC / Bank</span><span class="krev-val">{{ $kyc_bank_ifsc_code }} &nbsp;·&nbsp; {{ $kyc_bank_name }}</span></div>
+                        <div class="krev-row"><span class="krev-lbl">Account Type</span><span class="krev-val">{{ ucfirst($kyc_bank_account_type) }}</span></div>
+                      </div>
+                    </div>
+
+                    {{-- Tax summary --}}
+                    <div class="krev">
+                      <div class="krev-hd"><i class="fas fa-file-invoice"></i> Tax Details</div>
+                      <div class="krev-bd">
+                        <div class="krev-row"><span class="krev-lbl">PAN</span><span class="krev-val">{{ $kyc_pan_number ?: '—' }}</span></div>
+                        <div class="krev-row"><span class="krev-lbl">GST Registered</span><span class="krev-val">{{ $kyc_is_gst_registered ? 'Yes' : 'No' }}</span></div>
+                        @if($kyc_is_gst_registered)<div class="krev-row"><span class="krev-lbl">GSTIN</span><span class="krev-val">{{ $kyc_gstin ?: '—' }}</span></div>@endif
+                      </div>
+                    </div>
+
+                    {{-- Declaration + Submit --}}
+                    @if(!$kycIsLocked)
+                    <label class="kdecl">
+                      <input type="checkbox" wire:model.live="kyc_declaration">
+                      <div><div class="kdecl-text">I confirm that all information provided is accurate and complete.</div>
+                      <div class="kdecl-sub">I understand that providing false information may result in account termination.</div></div>
+                    </label>
+                    @error('kyc_declaration')<div class="kerr" style="margin-bottom:.5rem;"><i class="fas fa-triangle-exclamation"></i>{{ $message }}</div>@enderror
+
+                    <div class="kfoot">
+                      <button type="button" class="kbtn-back" wire:click="goToKycTab(2)"><i class="fas fa-arrow-left"></i> Back</button>
+                      <button type="button" class="kbtn-submit" wire:click="submitKyc" wire:loading.attr="disabled"
+                          wire:confirm="Submit your KYC for review? You will not be able to edit it until our team reviews it."
+                          {{ empty($kyc_declaration)?'disabled':'' }}>
+                        <span wire:loading wire:target="submitKyc" class="spinner-border spinner-border-sm"></span>
+                        <span wire:loading.remove wire:target="submitKyc"><i class="fas fa-paper-plane"></i> Submit KYC for Review</span>
+                      </button>
+                    </div>
+                    @else
+                    <div style="background:var(--glt);color:#065f46;border-radius:10px;padding:.5rem 1rem;font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:6px;">
+                      <i class="fas fa-clock"></i> Submitted — Awaiting Review
+                    </div>
+                    @endif
+                  </div>
+                  @else
+                  <div class="kfoot">
+                    <button type="button" class="kbtn-back" wire:click="goToKycTab(2)"><i class="fas fa-arrow-left"></i> Back</button>
+                  </div>
+                  @endif
+
+                </div>
+                @endif
+
+              </div>{{-- /kyc-panel --}}
+            </div>{{-- /kyc-wrap --}}
             @endif
+            {{-- ── END ALL STEPS ── --}}
 
           </div>{{-- gpc --}}
         </div>{{-- right col --}}

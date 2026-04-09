@@ -55,7 +55,12 @@ class SellerDashboard extends Component
             }
         }
 
-        return view('livewire.seller.seller-dashboard', compact('PackageId', 'dashboardItems', 'seller'));
+        // ─── Approval gate ───────────────────────────────────────────────────────
+        // Adjust the string below to match your sellers.status column value for
+        // approved sellers (e.g. 'approved', 'active', 1 …).
+        $isApproved = ($seller?->status === 'approved');
+
+        return view('livewire.seller.seller-dashboard', compact('PackageId', 'dashboardItems', 'seller', 'isApproved'));
     }
 
     public $rfqs;

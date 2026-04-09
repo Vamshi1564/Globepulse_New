@@ -117,6 +117,33 @@
 .rfq-table tbody tr:hover {
     background: #f8fafc;
 }
+            /* ── Disabled / locked card ─────────────────────────── */
+            .card-disabled {
+                opacity: 0.52;
+                pointer-events: none;
+                filter: grayscale(60%);
+                position: relative;
+                user-select: none;
+            }
+
+            .card-disabled::after {
+                content: "\f023"; /* Font Awesome lock */
+                font-family: "Font Awesome 6 Free";
+                font-weight: 900;
+                position: absolute;
+                top: 8px;
+                right: 12px;
+                font-size: 0.85rem;
+                color: #adb5bd;
+            }
+
+            /* ── Approval banner ─────────────────────────────────── */
+            .approval-banner {
+                border-left: 4px solid #f59e0b;
+                background: #fffbeb;
+                border-radius: 0.5rem;
+                padding: 0.85rem 1.25rem;
+            }
         </style>
 
 
@@ -128,7 +155,21 @@
                     <li class="breadcrumb-item active fs-sm text-dark fw-bold" aria-current="page">My Dashboard</li>
                 </ol>
             </nav>
-            <!-- Dashboard Header with Background -->
+
+            {{-- ── Seller approval status banner ───────────────────────────────── --}}
+            @if (!$isApproved)
+                <div class="approval-banner d-flex align-items-center gap-3 mb-4">
+                    <i class="fas fa-clock-rotate-left fs-5 text-warning"></i>
+                    <div>
+                        <p class="mb-0 fw-semibold text-warning-emphasis">Account Pending Approval</p>
+                        <p class="mb-0 text-muted small">
+                            Your seller account is currently
+                            <strong>{{ ucfirst($seller?->status ?? 'under review') }}</strong>.
+                            Dashboard features will be unlocked once an admin approves your account.
+                        </p>
+                    </div>
+                </div>
+            @endif
             <!-- Dashboard Section -->
             <div class="dashboard-header p-4 rounded-4 shadow-sm mb-4">
                 <div
@@ -1064,7 +1105,16 @@
             <div class="row g-3 my-3">
                 @forelse ($dashboardItems as $item)
                     <div class="col-sm-6 col-md-4 col-xl-3 col-xxl-3">
-                        <div class="card h-100">
+
+                        {{-- Wrap in a tooltip span when locked so the cursor gives feedback --}}
+                        @if (!$isApproved)
+                            <span
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="Available after your account is approved">
+                        @endif
+
+                        <div class="card h-100 {{ !$isApproved ? 'card-disabled' : '' }}">
                             <div class="card-body">
                                 <div class="d-flex d-sm-block justify-content-between">
                                     <div class="border-translucent">
@@ -1072,22 +1122,30 @@
                                             <img class="w-100"
                                                 src="{{ asset('assets/img/seller-dashboard-icons/' . $item->img_link) }}"
                                                 alt="dashboard icon">
-                                            {{-- <a href="{{ Str::startsWith($item->route, ['http://', 'https://']) ? $item->route : route($item->route) }}"
-                                                target="{{ Str::startsWith($item->route, ['http://', 'https://']) ? '_blank' : '_self' }}"
-                                                class="text-info mt-2 fs-6 fw-bold mb-0 mb-sm-4">
-                                                <span
-                                                    class="fs-8 text-body lh-lg admin-text">{{ $item->item_name }}</span>
-                                            </a> --}}
-                                            <a href="{{ $item->fullRoute }}"
-                                                class="text-info mt-2 fs-6 fw-bold mb-0 mb-sm-4">
-                                                <span
-                                                    class="fs-8 text-body lh-lg admin-text">{{ $item->item_name }}</span>
-                                            </a>
+
+                                            @if ($isApproved)
+                                                {{-- Approved: normal clickable link --}}
+                                                <a href="{{ $item->fullRoute }}"
+                                                    class="text-info mt-2 fs-6 fw-bold mb-0 mb-sm-4">
+                                                    <span class="fs-8 text-body lh-lg admin-text">{{ $item->item_name }}</span>
+                                                </a>
+                                            @else
+                                                {{-- Not approved: render as plain text, card is non-interactive --}}
+                                                <span class="mt-2 fs-6 fw-bold mb-0 mb-sm-4 text-secondary">
+                                                    <span class="fs-8 lh-lg admin-text">{{ $item->item_name }}</span>
+                                                </span>
+                                            @endif
+
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        @if (!$isApproved)
+                            </span>
+                        @endif
+
                     </div>
                 @empty
                     <div class="col-12">
@@ -1240,6 +1298,11 @@
 
                     card.style.display = match || searchTerm === '' ? '' : 'none';
                 });
+            });
+
+            // Initialise Bootstrap tooltips on locked dashboard cards
+            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+                new bootstrap.Tooltip(el);
             });
         });
     </script>

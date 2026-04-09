@@ -119,6 +119,33 @@
         </a>
     </div>
 
+    {{-- Full-width plan limit banner ─────────────────────────────────────────
+         Shown ONLY in CREATE mode when the service limit is hit.
+         Placed here — above the step bar and both columns — so it is always
+         visible immediately, never hidden below the fold. --}}
+    @if($planLimitBlocked)
+    <div style="background:#fef2f2;border:2px solid #fca5a5;border-radius:14px;
+                padding:16px 20px;margin-bottom:1.25rem;
+                display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <div style="width:42px;height:42px;background:#fee2e2;border-radius:10px;flex-shrink:0;
+                    display:flex;align-items:center;justify-content:center;font-size:1.3rem;">🚫</div>
+        <div style="flex:1;min-width:220px;">
+            <div style="font-size:.9rem;font-weight:800;color:#991b1b;margin-bottom:3px;">
+                Service Limit Reached — Cannot Add New Service
+            </div>
+            <div style="font-size:.8rem;color:#b91c1c;line-height:1.5;">
+                Your <strong>{{ $planName }}</strong> plan includes
+                <strong>{{ $planServiceLimit }}</strong> service(s) and you have already used
+                <strong>{{ $planServiceUsed }}</strong>.
+                Remove an existing service or upgrade your plan to continue.
+            </div>
+        </div>
+        <a href="#" style="background:#dc2626;color:#fff;border-radius:10px;
+           padding:.5rem 1.2rem;font-size:.8rem;font-weight:800;text-decoration:none;
+           white-space:nowrap;flex-shrink:0;">⬆ Upgrade Plan</a>
+    </div>
+    @endif
+
     {{-- Step bar --}}
     <div class="pa-stepbar">
         <div class="pa-steps" style="align-items:center;">
@@ -547,9 +574,12 @@
                         onclick="saSync()">
                         <i class="bi bi-floppy"></i> Save Draft
                     </button>
+                    {{-- planLimitBlocked disables this button in CREATE mode when service limit is hit --}}
                     <button type="submit" class="btn-publish"
                         wire:loading.attr="disabled" wire:target="submit"
-                        onclick="saSync(); this.disabled=true; this.closest('form').requestSubmit();">
+                        onclick="saSync(); this.disabled=true; this.closest('form').requestSubmit();"
+                        {{ $planLimitBlocked ? 'disabled' : '' }}
+                        style="{{ $planLimitBlocked ? 'opacity:.45;cursor:not-allowed;' : '' }}">
                         <span wire:loading.remove wire:target="submit">
                             @if($isEditMode)
                                 <i class="bi bi-check-circle-fill"></i> Save Changes
@@ -598,6 +628,63 @@
                 <span class="preview-badge">🛠️ {{ $service_type }}</span>
             </div>
             @endif
+
+            {{-- Plan Usage Widget ──────────────────────────────────────────── --}}
+            <div style="background:#f8fafc;border:1px solid #e8ecf4;border-radius:12px;padding:14px;margin-bottom:14px;">
+                <div style="font-size:.74rem;font-weight:800;color:#374151;margin-bottom:10px;display:flex;align-items:center;gap:.35rem;">
+                    <i class="bi bi-bar-chart-fill" style="color:#7c3aed;"></i> Plan — {{ $planName }}
+                </div>
+
+                {{-- Services row --}}
+                @php
+                    $sLim  = $planServiceLimit;
+                    $sUsed = $planServiceUsed;
+                    $sPct  = $sLim > 0 ? min(100, round(($sUsed / $sLim) * 100)) : 0;
+                    $sCol  = $sLim > 0 && $sUsed >= $sLim ? '#dc2626'
+                           : ($sLim > 0 && $sPct >= 80    ? '#d97706' : '#059669');
+                @endphp
+                <div style="margin-bottom:8px;">
+                    <div style="display:flex;justify-content:space-between;font-size:.71rem;font-weight:700;margin-bottom:3px;">
+                        <span style="color:#374151;"><i class="bi bi-tools me-1" style="color:{{ $sCol }};"></i>Services</span>
+                        <span style="color:{{ $sCol }};">{{ $sUsed }} / {{ $sLim > 0 ? $sLim : '∞' }}</span>
+                    </div>
+                    @if($sLim > 0)
+                    <div style="background:#e2e8f0;border-radius:20px;height:5px;overflow:hidden;">
+                        <div style="width:{{ $sPct }}%;height:100%;background:{{ $sCol }};border-radius:20px;"></div>
+                    </div>
+                    @if($sUsed >= $sLim)
+                    <div style="font-size:.68rem;color:#dc2626;font-weight:700;margin-top:2px;">🚫 Limit reached — upgrade to add more</div>
+                    @elseif($sPct >= 80)
+                    <div style="font-size:.68rem;color:#d97706;font-weight:700;margin-top:2px;">⚠️ {{ $sLim - $sUsed }} slot(s) left</div>
+                    @endif
+                    @endif
+                </div>
+
+                {{-- Products row --}}
+                @php
+                    $pLim  = $planProductLimit;
+                    $pUsed = $planProductUsed;
+                    $pPct  = $pLim > 0 ? min(100, round(($pUsed / $pLim) * 100)) : 0;
+                    $pCol  = $pLim > 0 && $pUsed >= $pLim ? '#dc2626'
+                           : ($pLim > 0 && $pPct >= 80    ? '#d97706' : '#059669');
+                @endphp
+                <div>
+                    <div style="display:flex;justify-content:space-between;font-size:.71rem;font-weight:700;margin-bottom:3px;">
+                        <span style="color:#374151;"><i class="bi bi-box-seam me-1" style="color:{{ $pCol }};"></i>Products</span>
+                        <span style="color:{{ $pCol }};">{{ $pUsed }} / {{ $pLim > 0 ? $pLim : '∞' }}</span>
+                    </div>
+                    @if($pLim > 0)
+                    <div style="background:#e2e8f0;border-radius:20px;height:5px;overflow:hidden;">
+                        <div style="width:{{ $pPct }}%;height:100%;background:{{ $pCol }};border-radius:20px;"></div>
+                    </div>
+                    @if($pUsed >= $pLim)
+                    <div style="font-size:.68rem;color:#dc2626;font-weight:700;margin-top:2px;">🚫 Product limit reached</div>
+                    @elseif($pPct >= 80)
+                    <div style="font-size:.68rem;color:#d97706;font-weight:700;margin-top:2px;">⚠️ {{ $pLim - $pUsed }} slot(s) left</div>
+                    @endif
+                    @endif
+                </div>
+            </div>
 
             <div class="preview-title">{{ $title ?: 'Your Service Name' }}</div>
 
