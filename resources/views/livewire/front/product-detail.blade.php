@@ -740,6 +740,9 @@ document.addEventListener('livewire:init', () => {
     <span class="input-group-text">
         / {{ $product->unit ?? 'unit' }}
     </span>
+    @error('rfq_target_price') 
+<small class="text-danger">{{ $message }}</small> 
+@enderror
 </div>
             </div>
 
@@ -777,6 +780,9 @@ document.addEventListener('livewire:init', () => {
         <option value="60 days">60 days</option>
         <option value="90 days">90 days</option>
     </select>
+    @error('rfq_delivery_time') 
+<small class="text-danger">{{ $message }}</small> 
+@enderror
 </div>
 
                         <div class="col-md-6">
@@ -799,6 +805,9 @@ document.addEventListener('livewire:init', () => {
                     <option value="Net 30">Net 30</option>
                     <option value="Net 60">Net 60</option>
                 </select>
+                @error('rfq_destination_port') 
+<small class="text-danger">{{ $message }}</small> 
+@enderror
             </div>
 
             <!-- <div class="col-12">

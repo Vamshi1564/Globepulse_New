@@ -472,52 +472,97 @@ class ProductAdd extends Component
     {
         if ($desc !== '') $this->description = $desc;
         try {
-            $this->validate([
-                'title'          => 'required|string|min:5|max:255',
-                'description'    => 'required|string|min:20',
-                'category_id'    => 'required',
-                'subcategory_id' => 'required',
-                'product_img'    => ($this->isEditMode && $this->existingImagePath)
-                                        ? 'nullable|image|mimes:webp,jpg,jpeg,png|max:4096'
-                                        : 'required|image|mimes:webp,jpg,jpeg,png|max:4096',
-                'price_type'     => 'required|in:range,fixed',
-                'min_price'      => 'required_if:price_type,range|nullable|numeric|min:0',
-                'max_price'      => 'required_if:price_type,range|nullable|numeric|gte:min_price',
-                'fixed_price'    => 'required_if:price_type,fixed|nullable|numeric|min:0',
-                'unit'           => 'required|string',
-                'min_order'      => 'required|string|max:100',
-                'business_type'  => 'required|string',
-                'HSN'            => 'required|string|max:20',
-                'sample_available' => 'required|in:yes,no',
-                'product_video_url'=> 'nullable|url|max:500',
-                'seo_title'      => 'nullable|string|max:255',
-            ], [
-                'title.required'              => 'Product title is required.',
-                'title.min'                   => 'Title must be at least 5 characters.',
-                'description.required'        => 'Product description is required.',
-                'description.min'             => 'Description must be at least 20 characters.',
-                'category_id.required'        => 'Please select a category.',
-                'subcategory_id.required'     => 'Please select a sub category.',
-                'product_img.required'        => 'Please upload a main product image.',
-                'min_price.required_if'       => 'Min price is required for price range.',
-                'max_price.required_if'       => 'Max price is required for price range.',
-                'fixed_price.required_if'     => 'Please enter the fixed price.',
-                'unit.required'               => 'Please select a unit.',
-                'min_order.required'          => 'Minimum order quantity is required.',
-                'business_type.required'      => 'Please select your business type.',
-                'HSN.required'                => 'HSN/SAC code is required.',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $errors = $e->errors();
-            if (array_intersect_key($errors, array_flip(['title','description','category_id','subcategory_id','sub_subcategory_id']))) {
-                $this->activeStep = 1;
-            } elseif (array_intersect_key($errors, array_flip(['product_img']))) {
-                $this->activeStep = 2;
-            } elseif (array_intersect_key($errors, array_flip(['min_price','max_price','fixed_price','unit','min_order','business_type','HSN']))) {
-                $this->activeStep = 3;
-            }
-            throw $e;
-        }
+    $this->validate([
+        'title'       => ['required','string','min:5','max:255','regex:/^[a-zA-Z0-9\s\-\&\,\.]+$/'],
+        'brand_name' => [
+    'nullable',
+    'regex:/^[a-zA-Z0-9\s\&\.]+$/',
+    'not_regex:/^\d+$/'
+],
+        'description' => ['required','string','min:20','not_regex:/^\d+$/'],
+
+        'category_id'    => 'required',
+        'subcategory_id' => 'required',
+
+        'product_img' => ($this->isEditMode && $this->existingImagePath)
+            ? 'nullable|image|mimes:webp,jpg,jpeg,png|max:4096'
+            : 'required|image|mimes:webp,jpg,jpeg,png|max:4096',
+
+        'price_type'     => 'required|in:range,fixed',
+
+        'min_price'      => 'required_if:price_type,range|nullable|numeric|min:0',
+        'max_price'      => 'required_if:price_type,range|nullable|numeric|gte:min_price',
+        'fixed_price'    => 'required_if:price_type,fixed|nullable|numeric|min:0',
+
+        'unit'           => 'required|string',
+
+        // ✅ FIXED (only numbers)
+        'min_order'      => ['required','regex:/^[0-9]+$/'],
+
+        'business_type'  => ['required','regex:/^[a-zA-Z\s\/]+$/'],
+
+        // ✅ FIXED (only digits)
+        'HSN'            => ['required','regex:/^[0-9]+$/'],
+
+        'sample_available' => 'required|in:yes,no',
+
+        'product_video_url'=> 'nullable|url|max:500',
+        'seo_title'      => 'nullable|string|max:255',
+
+    ], [
+
+        // REQUIRED
+        'title.required'              => 'Product title is required.',
+        'title.min'                   => 'Title must be at least 5 characters.',
+        'description.required'        => 'Product description is required.',
+        'description.min'             => 'Description must be at least 20 characters.',
+        'category_id.required'        => 'Please select a category.',
+        'subcategory_id.required'     => 'Please select a sub category.',
+        'product_img.required'        => 'Please upload a main product image.',
+
+        // PRICE
+        'min_price.required_if'       => 'Min price is required for price range.',
+        'max_price.required_if'       => 'Max price is required for price range.',
+        'fixed_price.required_if'     => 'Please enter the fixed price.',
+
+        // OTHER REQUIRED
+        'unit.required'               => 'Please select a unit.',
+        'min_order.required'          => 'Minimum order quantity is required.',
+        'business_type.required'      => 'Please select your business type.',
+        'HSN.required'                => 'HSN/SAC code is required.',
+
+        // ✅ REGEX / SMART VALIDATION
+        'title.regex' => 'Title should not contain invalid special characters.',
+        'brand_name.regex' => 'Brand name can contain only letters, numbers, spaces, & and dot.',
+        'brand_name.not_regex' => 'Brand name cannot be only numbers.',
+        'business_type.regex' => 'Business type should contain only text.',
+        'description.not_regex' => 'Description cannot be only numbers.',
+        'min_order.regex' => 'MOQ must be only numbers.',
+        'HSN.regex' => 'HSN must contain only digits.',
+    ]);
+
+} catch (\Illuminate\Validation\ValidationException $e) {
+
+    $errors = $e->errors();
+
+    if (array_intersect_key($errors, array_flip([
+        'title','description','category_id','subcategory_id','sub_subcategory_id'
+    ]))) {
+        $this->activeStep = 1;
+
+    } elseif (array_intersect_key($errors, array_flip([
+        'product_img'
+    ]))) {
+        $this->activeStep = 2;
+
+    } elseif (array_intersect_key($errors, array_flip([
+        'min_price','max_price','fixed_price','unit','min_order','business_type','HSN'
+    ]))) {
+        $this->activeStep = 3;
+    }
+
+    throw $e;
+}
 
         try {
             // FIX: Use shared resolver — same fallbacks as mount() and saveDraft().

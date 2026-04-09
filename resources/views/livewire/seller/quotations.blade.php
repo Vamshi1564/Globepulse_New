@@ -35,7 +35,11 @@
     background: linear-gradient(#fff, #fff) padding-box,
                 linear-gradient(135deg, #ef4444, #dc2626) border-box;
 }
-
+.quote-card.cancelled {
+    border: 2px solid transparent;
+    background: linear-gradient(#fff, #fff) padding-box,
+                linear-gradient(135deg, #64748b, #475569) border-box;
+}
 /* TEXT */
 small.text-muted {
     color: #6b7280 !important;
@@ -47,11 +51,20 @@ small.text-muted {
     padding: 18px 20px;
     color: #fff;
 }
+.kpi-card h3 {
+    color: #ffffff !important;
+}
 
 .kpi-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 .kpi-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
 .kpi-success { background: linear-gradient(135deg, #22c55e, #16a34a); }
 .kpi-danger  { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.kpi-cancelled {
+    background: linear-gradient(135deg, #334155, #1e293b); /* Slate Dark */
+}
+.kpi-business {
+    background: linear-gradient(135deg, #14b8a6, #0f766e); /* Teal */
+}
 
 /* BADGE */
 .badge {
@@ -93,44 +106,53 @@ small.text-muted {
 
 <!-- KPI -->
 <div class="row g-4 mb-4">
-    <div class="col-md-3">
+
+    <div class="col-md">
         <div class="kpi-card kpi-primary">
             <small>Total Quotes</small>
             <h3>{{ $stats['total'] }}</h3>
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md">
         <div class="kpi-card kpi-warning">
             <small>Pending</small>
             <h3>{{ $stats['pending'] }}</h3>
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md">
         <div class="kpi-card kpi-success">
             <small>Accepted</small>
             <h3>{{ $stats['accepted'] }}</h3>
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md">
         <div class="kpi-card kpi-danger">
             <small>Rejected</small>
             <h3>{{ $stats['rejected'] }}</h3>
         </div>
     </div>
+
+   <div class="col-md">
+    <div class="kpi-card kpi-cancelled">
+        <small>Cancelled</small>
+        <h3>{{ $stats['cancelled'] }}</h3>
+    </div>
+</div>
+
 </div>
 
 <!-- BUSINESS -->
-<div class="card border-0 rounded-4 mb-4 p-4 business-card">
+<div class="card border-0 rounded-4 mb-4 p-4 kpi-business text-white">
     <div class="d-flex align-items-center gap-3">
         <div class="value-icon">
             <i class="bi bi-currency-rupee"></i>
         </div>
         <div>
-            <small class="text-muted">Total Business Value</small>
-            <h3 class="fw-bold text-success mb-0">
+            <small>Total Business Value</small>
+            <h3 class="fw-bold mb-0 text-white">
                 ₹ {{ number_format($stats['value']) }}
             </h3>
         </div>
@@ -157,6 +179,7 @@ small.text-muted {
     <option value="0" {{ request('statusFilter')=='0'?'selected':'' }}>Pending</option>
     <option value="1" {{ request('statusFilter')=='1'?'selected':'' }}>Accepted</option>
     <option value="2" {{ request('statusFilter')=='2'?'selected':'' }}>Rejected</option>
+    <option value="3" {{ request('statusFilter')=='3'?'selected':'' }}>Cancelled</option>
 </select>
 </div>
 
@@ -201,7 +224,8 @@ $diff = $quote->rfq->target_price ? $quote->price - $quote->rfq->target_price : 
 <div class="quote-card 
     {{ $quote->status == 0 ? 'pending' : '' }}
     {{ $quote->status == 1 ? 'accepted' : '' }}
-    {{ $quote->status == 2 ? 'rejected' : '' }}">
+    {{ $quote->status == 2 ? 'rejected' : '' }}
+    {{ $quote->status == 3 ? 'cancelled' : '' }}">
 
 <!-- HEADER -->
 <div class="d-flex justify-content-between">
@@ -224,6 +248,8 @@ $diff = $quote->rfq->target_price ? $quote->price - $quote->rfq->target_price : 
     <span class="badge bg-success px-3 py-2">🏆 Accepted</span>
 @elseif($quote->status == 2)
     <span class="badge bg-secondary px-3 py-2">❌ Rejected</span>
+@elseif($quote->status == 3)
+    <span class="badge bg-dark px-3 py-2">🔄 Cancelled</span>
 @endif
 </div>
 
@@ -232,7 +258,11 @@ $diff = $quote->rfq->target_price ? $quote->price - $quote->rfq->target_price : 
 <!-- PROGRESS BAR -->
 <div class="progress mt-2" style="height:6px;">
     <div class="progress-bar 
-        {{ $quote->status == 0 ? 'bg-warning' : ($quote->status == 1 ? 'bg-success' : 'bg-danger') }}"
+        {{ 
+    $quote->status == 0 ? 'bg-warning' : 
+    ($quote->status == 1 ? 'bg-success' : 
+    ($quote->status == 2 ? 'bg-danger' : 'bg-dark')) 
+}}"
         style="width: {{ $quote->status == 0 ? '50%' : '100%' }}">
     </div>
 </div>
@@ -298,7 +328,8 @@ $diff = $quote->rfq->target_price ? $quote->price - $quote->rfq->target_price : 
 
 <!-- MESSAGE -->
 @if($quote->message)
-<div class="small bg-white border rounded p-2 mb-2">
+<div class="small bg-white border rounded p-2 mb-2" 
+     title="{{ $quote->message }}">
     {{ Str::limit($quote->message, 80) }}
 </div>
 @endif

@@ -612,13 +612,36 @@ function openListingDetail(rowKey) {
         card.appendChild(brandWrap);
     }
 
-    if (item.description) {
-        var descDiv = document.createElement('div');
-        descDiv.style.cssText = 'margin-bottom:.75rem;';
-        descDiv.innerHTML = '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;">Description</span>' +
-            '<div style="font-size:.82rem;color:#334155;line-height:1.6;max-height:100px;overflow-y:auto;background:#fff;border-radius:7px;padding:.5rem .75rem;border:1px solid #e8ecf4;">' + item.description + '</div>';
-        card.appendChild(descDiv);
+   // ✅ helper function (ADD THIS ONCE at top or before usage)
+function stripHtml(html) {
+    let tmp = document.createElement("div");
+    tmp.innerHTML = html || '';
+    return tmp.textContent || tmp.innerText || '';
+}
+
+
+// ✅ your description block (CORRECTED)
+if (item.description) {
+
+    var descDiv = document.createElement('div');
+    descDiv.style.cssText = 'margin-bottom:.75rem;';
+
+    // ✅ clean HTML → plain text
+    var cleanDesc = stripHtml(item.description);
+
+    // ✅ optional: limit length (nice UI)
+    if (cleanDesc.length > 200) {
+        cleanDesc = cleanDesc.substring(0, 200) + '...';
     }
+
+    descDiv.innerHTML =
+        '<span style="font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;">Description</span>' +
+        '<div style="font-size:.82rem;color:#334155;line-height:1.6;max-height:100px;overflow-y:auto;background:#fff;border-radius:7px;padding:.5rem .75rem;border:1px solid #e8ecf4;">'
+        + cleanDesc +
+        '</div>';
+
+    card.appendChild(descDiv);
+}
 
     var grid = document.createElement('div');
     grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.25rem;';

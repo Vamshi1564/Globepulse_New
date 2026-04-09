@@ -31,10 +31,54 @@ class RFQQuote extends Component
 
     public function submitQuote()
 {
-    $this->validate([
-        'price' => 'required|numeric|min:1',
-        'message' => 'required|min:5',
-    ]);
+   $this->validate([
+    // 💰 PRICE
+    'price' => [
+        'required',
+        'numeric',
+        'min:1',
+        'max:99999999'
+    ],
+
+    // 🚚 DELIVERY
+    'delivery_time' => [
+        'required',
+        'string'
+    ],
+
+    // 💳 PAYMENT (optional but clean)
+    'payment_terms' => [
+        'nullable',
+        'string',
+        'max:100'
+    ],
+
+    // 📝 MESSAGE
+    'message' => [
+        'required',
+        'string',
+        'min:5',
+        'max:1000',
+        'not_regex:/^\d+$/'
+    ],
+
+], [
+
+    // 💰 PRICE MESSAGES
+    'price.required' => 'Price is required.',
+    'price.numeric'  => 'Price must be a valid number.',
+    'price.min'      => 'Price must be greater than 0.',
+    'price.max'      => 'Price is too large.',
+
+    // 🚚 DELIVERY
+    'delivery_time.required' => 'Please select delivery time.',
+
+    // 📝 MESSAGE
+    'message.required' => 'Please add quotation notes.',
+    'message.min'      => 'Message must be at least 5 characters.',
+    'message.max'      => 'Message should not exceed 1000 characters.',
+    'message.not_regex' => 'Message cannot be only numbers.',
+]);
 
     $sellerId = session('seller_id');
 

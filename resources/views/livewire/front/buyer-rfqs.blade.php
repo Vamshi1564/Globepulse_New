@@ -130,32 +130,47 @@
 
                                            <td>
 
-    @if($rfq->status == 'pending')
-        <span class="badge bg-warning text-dark">
-            ⏳ Waiting for Quotes
-        </span>
+@php
+$acceptedQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
+    ->where('status', 1)
+    ->first();
 
-    @elseif($rfq->status == 'quoted')
-        <span class="badge bg-info text-dark">
-            📩 Quotes Received
-        </span>
+$cancelledQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
+    ->where('status', 3)
+    ->where('supplier_uuid', '!=', null)
+    ->first();
+@endphp
 
-    @elseif($rfq->status == 'accepted')
-        <span class="badge bg-success">
-            🏆 Deal Finalized
-        </span>
+@if($cancelledQuote)
+    <span class="badge bg-dark">
+        🔄 Deal Cancelled
+    </span>
 
-    @elseif($rfq->status == 'rejected')
-        <span class="badge bg-danger">
-            ❌ No Deal
-        </span>
+@elseif($acceptedQuote)
+    <span class="badge bg-success">
+        🏆 Deal Finalized
+    </span>
 
-    @elseif($rfq->status == 'closed')
-        <span class="badge bg-secondary">
-            🔒 Closed
-        </span>
+@elseif($rfq->status == 'quoted')
+    <span class="badge bg-info text-dark">
+        📩 Quotes Received
+    </span>
 
-    @endif
+@elseif($rfq->status == 'pending')
+    <span class="badge bg-warning text-dark">
+        ⏳ Waiting for Quotes
+    </span>
+
+@elseif($rfq->status == 'rejected')
+    <span class="badge bg-danger">
+        ❌ No Deal
+    </span>
+
+@elseif($rfq->status == 'closed')
+    <span class="badge bg-secondary">
+        🔒 Closed
+    </span>
+@endif
 
 </td>
 

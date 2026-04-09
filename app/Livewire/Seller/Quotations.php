@@ -114,25 +114,27 @@ class Quotations extends Component
             "Content-type" => "text/csv",
             "Content-Disposition" => "attachment; filename=$fileName",
         ];
+$callback = function () use ($quotes) {
+    $file = fopen('php://output', 'w');
 
-        $callback = function () use ($quotes) {
-            $file = fopen('php://output', 'w');
+    // ✅ FIX: Add BOM for Excel
+    fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
-            fputcsv($file, ['Product', 'Buyer', 'Price', 'Quantity', 'Total', 'Status']);
+    fputcsv($file, ['Product', 'Buyer', 'Price', 'Quantity', 'Total', 'Status']);
 
-            foreach ($quotes as $q) {
-                fputcsv($file, [
-                    $q->rfq->product->title ?? '',
-                    $q->buyer->full_name ?? '',
-                    $q->price,
-                    $q->rfq->quantity,
-                    $q->price * $q->rfq->quantity,
-                    $q->status
-                ]);
-            }
+    foreach ($quotes as $q) {
+        fputcsv($file, [
+            $q->rfq->product->title ?? '',
+            $q->buyer->full_name ?? '',
+            $q->price,
+            $q->rfq->quantity,
+            $q->price * $q->rfq->quantity,
+            $q->status
+        ]);
+    }
 
-            fclose($file);
-        };
+    fclose($file);
+};
 
         return response()->stream($callback, 200, $headers);
     }
@@ -147,6 +149,7 @@ class Quotations extends Component
             'pending' => $data->where('status', 0)->count(),
             'accepted' => $data->where('status', 1)->count(),
             'rejected' => $data->where('status', 2)->count(),
+            'cancelled' => $data->where('status', 3)->count(),
             'value' => $data
                 ->where('status', 1)
                 ->sum(fn($q) => $q->price * ($q->rfq->quantity ?? 0)),

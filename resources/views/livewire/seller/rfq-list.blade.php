@@ -162,22 +162,24 @@
                                             </td>
 <!-- STATUS -->
 <td>
-         @php
-$myQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
-    ->where('supplier_uuid', session('seller_id'))
-    ->first();
-@endphp
+    @if($rfq->status == 'rejected')
+        <span class="badge bg-danger">❌ Rejected</span>
 
-@if($rfq->status === 'rejected')
-    <span class="badge bg-danger">❌ Rejected</span>
+    @elseif($rfq->status == 'accepted')
+        <span class="badge bg-success">🏆 Accepted</span>
 
-@elseif($myQuote)
-    <span class="badge bg-success">✔ Quotation Sent</span>
+    @elseif($rfq->status == 'cancelled')
+        <span class="badge bg-dark">
+            🔄 Cancelled by {{ $rfq->buyer->full_name }} <br>
+            <small>{{ $rfq->updated_at->format('d M Y') }}</small>
+        </span>
 
-@else
-    <span class="badge bg-warning text-dark">⏳ Pending</span>
-@endif
+    @elseif($rfq->status == 'quoted')
+        <span class="badge bg-primary">✔ Quoted</span>
 
+    @else
+        <span class="badge bg-warning text-dark">⏳ Pending</span>
+    @endif
 </td>
 
 <!-- DATE -->
@@ -188,69 +190,68 @@ $myQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
 <!-- ACTION -->
 <td>
 
-    <div class="d-flex gap-2">
+<div class="d-flex gap-2">
 
-        {{-- VIEW --}}
-        <a href="{{ route('seller.rfq.view', $rfq->id) }}"
-           class="btn btn-sm btn-outline-primary">
-            View
+    {{-- VIEW --}}
+    <a href="{{ route('seller.rfq.view', $rfq->id) }}"
+       class="btn btn-sm btn-outline-primary">
+        View
+    </a>
+
+    {{-- QUOTE / STATUS BUTTON --}}
+    @if($rfq->status == 'rejected')
+        <button class="btn btn-secondary btn-sm" disabled>
+            ❌ Rejected
+        </button>
+
+    @elseif($rfq->status == 'accepted')
+        <button class="btn btn-secondary btn-sm" disabled>
+            🏆 Accepted
+        </button>
+
+    @elseif($rfq->status == 'cancelled')
+        <button class="btn btn-secondary btn-sm" disabled>
+            🔄 Cancelled
+        </button>
+
+    @elseif($rfq->status == 'quoted')
+        <button class="btn btn-secondary btn-sm" disabled>
+            ✔ Quoted
+        </button>
+
+    @else
+        <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
+           class="btn btn-success btn-sm">
+            💰 Quote
         </a>
+    @endif
 
-        @php
-        $alreadyQuoted = \App\Models\Quotation::where('rfq_id', $rfq->id)
-            ->where('supplier_uuid', session('seller_id'))
-            ->exists();
 
-        $hasQuotes = \App\Models\Quotation::where('rfq_id', $rfq->id)->exists();
-        @endphp
+    {{-- DELETE BUTTON --}}
 
-        {{-- STATUS / QUOTE --}}
-        @if($rfq->status === 'rejected')
+@if(!$rfq->status || $rfq->status == 'pending')
+    <form action="{{ route('seller.rfq.delete', $rfq->id) }}" 
+          method="POST"
+          onsubmit="return confirm('Delete this RFQ?')"
+          class="d-inline">
+        @csrf
+        @method('DELETE')
 
-            <button class="btn btn-secondary btn-sm" disabled>
-                ❌ Rejected
-            </button>
+        <button class="btn btn-danger btn-sm">
+            🗑
+        </button>
+    </form>
+@else
+    <button class="btn btn-danger btn-sm" disabled title="Cannot delete after action">
+        🗑
+    </button>
+@endif
 
-        @elseif($alreadyQuoted)
-
-            <button class="btn btn-secondary btn-sm" disabled>
-                ✔ Quoted
-            </button>
-
-        @else
-
-            <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
-               class="btn btn-success btn-sm">
-                💰 Quote
-            </a>
-
-        @endif
-
-        {{-- DELETE --}}
-        @if(!$hasQuotes)
-
-            <form action="{{ route('seller.rfq.delete', $rfq->id) }}" 
-                  method="POST"
-                  onsubmit="return confirm('Delete this RFQ?')"
-                  class="d-inline">
-                @csrf
-                @method('DELETE')
-
-                <button class="btn btn-danger btn-sm">
-                    🗑
-                </button>
-            </form>
-
-        @else
-<button class="btn btn-danger btn-sm" disabled title="Has Quotes">
-   🗑
-</button>
-
-        @endif
-
-    </div>
+</div>
 
 </td>
+
+
 
 </tr>
 @endforeach

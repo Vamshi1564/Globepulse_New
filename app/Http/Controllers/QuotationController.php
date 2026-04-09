@@ -84,6 +84,7 @@ public function export()
             0 => 'Pending',
             1 => 'Accepted',
             2 => 'Rejected',
+            3 => 'Cancelled',
             default => 'Unknown'
         };
 
@@ -144,9 +145,9 @@ public function cancel($id)
 
     // Reset all quotes to pending
    Quotation::where('rfq_id', $quote->rfq_id)
-    ->update(['status' => 0]); // pending quotes
+    ->update(['status' => 3]); // pending quotes
 
-$quote->rfq->update(['status' => 'pending']); // ✅ FIXED
+$quote->rfq->update(['status' => '3']); // ✅ FIXED
 
     return redirect()->back()->with('success', 'Deal cancelled successfully.');
 }

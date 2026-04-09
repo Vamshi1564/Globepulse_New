@@ -148,17 +148,20 @@
     </div>
 
     <div>
-        @php
-$myQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
-    ->where('supplier_uuid', session('seller_id'))
-    ->first();
-@endphp
-
-@if($rfq->status === 'rejected')
+@if($rfq->status == 'rejected')
     <span class="badge bg-danger">❌ Rejected</span>
 
-@elseif($myQuote)
-    <span class="badge bg-success">✔ Quotation Sent</span>
+@elseif($rfq->status == 'accepted')
+    <span class="badge bg-success">🏆 Accepted</span>
+
+@elseif($rfq->status == 'cancelled')
+    <span class="badge bg-dark">
+        🔄 Cancelled by {{ $rfq->buyer->full_name }} <br>
+        <small>{{ $rfq->updated_at->format('d M Y') }}</small>
+    </span>
+
+@elseif($rfq->status == 'quoted')
+    <span class="badge bg-primary">✔ Quotation Sent</span>
 
 @else
     <span class="badge bg-warning text-dark">⏳ Pending</span>
@@ -302,43 +305,59 @@ $myQuote = \App\Models\Quotation::where('rfq_id', $rfq->id)
 <!-- ACTION -->
 <div class="mt-4 d-flex justify-content-between align-items-center">
 
-    {{-- LEFT SIDE --}}
-    @if($rfq->status === 'rejected')
-        <button class="btn btn-danger px-4" disabled>
-            ❌ Rejected
-        </button>
+   {{-- LEFT BUTTON --}}
 
-    @else
-        <button onclick="updateRFQStatus('rejected')" 
-                class="btn btn-outline-danger px-4">
-            ❌ Reject
-        </button>
-    @endif
+@if($rfq->status == 'cancelled')
+    <button class="btn btn-dark px-4" disabled>
+        🔄 Cancelled by Buyer
+    </button>
+
+@elseif($rfq->status == 'accepted')
+    <button class="btn btn-success px-4" disabled>
+        🏆 Accepted
+    </button>
+
+@elseif($rfq->status == 'rejected')
+    <button class="btn btn-danger px-4" disabled>
+        ❌ Rejected
+    </button>
+
+@else
+    <button onclick="updateRFQStatus('rejected')" 
+            class="btn btn-outline-danger px-4">
+        ❌ Reject
+    </button>
+@endif
 
 
     {{-- RIGHT SIDE --}}
-    @php
-    $alreadyQuoted = \App\Models\Quotation::where('rfq_id', $rfq->id)
-        ->where('supplier_uuid', session('seller_id'))
-        ->exists();
-    @endphp
 
-    @if($rfq->status === 'rejected')
-        <button class="btn btn-secondary px-4" disabled>
-            🚫 RFQ Closed
-        </button>
+@if($rfq->status == 'rejected')
+    <button class="btn btn-secondary px-4 fw-semibold" disabled>
+        ❌ Rejected
+    </button>
 
-    @elseif($alreadyQuoted)
-        <button class="btn btn-secondary px-4 fw-semibold" disabled>
-            ✔ Already Quoted
-        </button>
+@elseif($rfq->status == 'accepted')
+    <button class="btn btn-secondary px-4 fw-semibold" disabled>
+        🏆 Accepted
+    </button>
 
-    @else
-        <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
-           class="btn btn-success px-4 fw-semibold">
-            💰 Send Quotation
-        </a>
-    @endif
+@elseif($rfq->status == 'cancelled')
+    <button class="btn btn-secondary px-4 fw-semibold" disabled>
+        🔄 Cancelled
+    </button>
+
+@elseif($rfq->status == 'quoted')
+    <button class="btn btn-secondary px-4 fw-semibold" disabled>
+        ✔ Quoted
+    </button>
+
+@else
+    <a href="{{ route('seller.rfq.quote', $rfq->id) }}"
+       class="btn btn-success px-4 fw-semibold">
+        💰 Send Quotation
+    </a>
+@endif
 
 </div>
 

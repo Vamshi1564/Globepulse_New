@@ -79,7 +79,11 @@
                                    wire:model.live="price"
                                    class="form-control"
                                    placeholder="Enter price">
+                                 
                         </div>
+                          @error('price') 
+                                        <small class="text-danger">{{ $message }}</small> 
+                                    @enderror
                     </div>
 
                     {{-- DELIVERY --}}
@@ -99,6 +103,9 @@
                             <option>60 days</option>
                             <option>90 days</option>
                         </select>
+                        @error('delivery_time') 
+                            <small class="text-danger">{{ $message }}</small> 
+                        @enderror
                     </div>
 
                     {{-- PAYMENT --}}
@@ -121,6 +128,9 @@
                                   rows="4"
                                   class="form-control"
                                   placeholder="Add details..."></textarea>
+                        @error('message') 
+                            <small class="text-danger">{{ $message }}</small> 
+                        @enderror
                     </div>
 
                 </div>
