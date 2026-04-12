@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SellerStatusMail;
-use Illuminate\Support\Facades\DB;
 
 class SellerNotificationService
 {
@@ -26,15 +25,9 @@ class SellerNotificationService
         $firstName    = $this->extractFirstName($businessName);
 
         // WhatsApp notification via AiSensy
-        $settings = $this->getSettings();
+        $this->sendWhatsApp($seller, $newStatus, $firstName, $businessName);
 
-if ($settings['seller_status']['whatsapp'] ?? false) {
-    $this->sendWhatsApp($seller, $newStatus, $firstName, $businessName);
-}
-
-if ($settings['seller_status']['email'] ?? false) {
-    $this->sendEmail($seller, $newStatus, $firstName, $businessName);
-}
+        $this->sendEmail($seller, $newStatus, $firstName, $businessName);
     }
 
     // ─────────────────────────────────────────────────────────
@@ -141,15 +134,5 @@ if ($settings['seller_status']['email'] ?? false) {
     private function extractFirstName(string $businessName): string
     {
         return ucfirst(strtolower(explode(' ', trim($businessName))[0]));
-    }
-
-     // 🔽 ADD HERE (BOTTOM OF CLASS)
-    private function getSettings(): array
-    {
-        $row = \DB::table('notification_settings')->first();
-
-        if (!$row) return [];
-
-        return json_decode($row->settings, true) ?? [];
     }
 }

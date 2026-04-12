@@ -26,7 +26,18 @@ aria-haspopup="true" aria-expanded="false">
 @php
     $profileImage = asset('assets/img/default.png');
 
-    if(!empty($customer) && !empty($customer->profile_image)){
+    // SELLER IMAGE FIX
+    if(session()->has('seller_id') && !empty($customer?->details?->logo_url)){
+
+        $logo = $customer->details->logo_url;
+
+        $profileImage = Str::startsWith($logo, 'http')
+            ? $logo
+            : asset('storage/' . $logo);
+    }
+
+    // BUYER IMAGE
+    elseif(!empty($customer?->profile_image)){
         $profileImage = asset('storage/' . $customer->profile_image);
     }
 @endphp

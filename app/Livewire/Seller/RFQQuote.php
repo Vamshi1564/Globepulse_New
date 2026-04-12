@@ -7,6 +7,7 @@ use App\Models\RFQ;
 use App\Models\Quotation;
 use App\Mail\QuotationSentMail;
 use Illuminate\Support\Facades\Mail;
+use App\Services\NotificationHelper;
 
 class RFQQuote extends Component
 {
@@ -112,10 +113,10 @@ class RFQQuote extends Component
     // ✅ EMAIL
     $quotation->load(['buyer', 'rfq.product']);
 
-    if ($quotation->buyer?->email) {
-        Mail::to($quotation->buyer->email)
-            ->send(new QuotationSentMail($quotation));
-    }
+    if (NotificationHelper::canSend('quotation_sent', 'email') && $quotation->buyer?->email) {
+    Mail::to($quotation->buyer->email)
+        ->send(new QuotationSentMail($quotation));
+}
 
     session()->flash('message', 'Quotation sent successfully!');
 

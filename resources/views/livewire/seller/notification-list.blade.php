@@ -5,7 +5,7 @@
         <div class="content p-0 m-0">
             <nav class="my-5" style="--phoenix-breadcrumb-divider: '&gt;&gt;';" aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{{ route('seller') }}">My Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('seller.dashboard') }}">My Dashboard</a></li>
                     {{-- <li class="breadcrumb-item"><a href="{{ route('opportunities') }}">Opportunities</a></li> --}}
                     <li class="breadcrumb-item active" aria-current="page">Notification List</li>
                 </ol>

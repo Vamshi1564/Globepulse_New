@@ -17,30 +17,34 @@ class Header2 extends Component
     public $subcategories;
 
 
- public function logout()
+public function logout()
 {
-    // Buyer logout
-    if(Session::has('buyer_id')){
-        Session::forget(['buyer_id','buyer_email','buyer_name']);
-        return redirect()->route('buyer.login');
+    // Detect user type before clearing
+    $isBuyer = session()->has('buyer_id');
+    $isSeller = session()->has('seller_id');
+    $isCustomer = session()->has('id');
+
+    // Clear ALL session
+    session()->flush();
+
+    // Redirect based on type
+    if ($isBuyer) {
+        return redirect()->route('buyer.login')
+            ->with('login_success', 'Logged out successfully');
     }
 
-    // Seller logout
-    if(Session::has('seller_id')){
-        Session::forget(['seller_id','seller_email','seller_name']);
+    if ($isSeller) {
         return redirect()->route('seller.login')
-            ->with('login_success', 'You have been logged out successfully.');
+            ->with('login_success', 'Logged out successfully');
     }
 
-    // Customer logout
-    if(Session::has('id')){
-        Session::forget(['id']);
-        return redirect()->route('login');
+    if ($isCustomer) {
+        return redirect()->route('buyer.login')
+            ->with('login_success', 'Logged out successfully');
     }
 
-    // Fallback
-    Session::flush();
-    return redirect()->route('login');
+    // fallback
+    return redirect()->route('home');
 }
 
 
@@ -49,7 +53,7 @@ class Header2 extends Component
         $customerId = session('id');
 
         if (!$customerId) {
-            return redirect()->route('login')->with('error', 'Access Denied, You must be logged in to access.'); // Redirect to login if not authenticated
+            return redirect()->route('seller.login')->with('error', 'Access Denied, You must be logged in to access.'); // Redirect to login if not authenticated
         }
 
         // Retrieve the customer from the database using the session ID
@@ -67,27 +71,23 @@ class Header2 extends Component
 
 
 
-    public function redirectToPostByRequirement()
-    {
-
-        $customerId = session('id');
-
-        if (!$customerId) {
-            return redirect()->route('login')->with('error', 'Access Denied, You must be logged in to access.');
-        }
-
-        // Retrieve the customer from the database using the session ID
-        // $user = Customer::find($customerId);
-
-        // // Check if user is a seller
-        // if ($user && $user->user_type !== 'Seller' && $user->user_type !== "Both") {
-        //     session()->flash('error', 'You must create an account as a seller to post requirements.');
-        //     return redirect()->route('signup'); // Redirect to signup if not a seller
-        // }
-
-        // Redirect to post requirements page if user is a seller
+   public function redirectToPostByRequirement()
+{
+    // Buyer logged in → allow
+    if (session()->has('buyer_id')) {
         return redirect()->route('postbyrequirement');
     }
+
+    // Seller logged in → block or redirect
+    if (session()->has('seller_id')) {
+        return redirect()->route('buyer.login')
+            ->with('error', 'Please login as Buyer to post requirement.');
+    }
+
+    // Not logged in
+    return redirect()->route('buyer.login')
+        ->with('error', 'Please login first.');
+}
 
 
  public function mount()
