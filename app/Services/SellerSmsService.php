@@ -265,4 +265,17 @@ class SellerSmsService
         Log::warning("SellerSms: Invalid phone for WhatsApp — original={$phone} digits={$digits}");
         return null;
     }
+
+public function sendWhatsAppTemplate($phone, $campaignName, $params = [])
+{
+    $whatsappPhone = $this->formatPhoneForWhatsApp($phone);
+
+    if (!$whatsappPhone) return;
+
+    $this->sendAiSensyWhatsApp(
+        phone: $whatsappPhone,
+        campaignName: $campaignName,
+        params: $params
+    );
+}
 }

@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\BuyerOtpMail;
+use App\Services\NotificationHelper;
+use App\Services\SellerSmsService;
 
 class BuyerForgotPassword extends Component
 {
@@ -67,10 +69,24 @@ public $d4='';
             'otp_hash' => bcrypt($otp),
             'buyer_id' => $buyer->id
         ], now()->addMinutes(10));
+// 🔥 EMAIL OTP
+if (NotificationHelper::canSend('password_reset', 'email')) {
+    Mail::to($emailLower)->send(
+        new BuyerOtpMail($otp, $buyer->full_name, $emailLower)
+    );
+}
 
-        Mail::to($emailLower)->send(
-            new BuyerOtpMail($otp,$buyer->full_name,$emailLower)
-        );
+// 🔥 SMS / WHATSAPP OTP
+if (
+    NotificationHelper::canSend('password_reset', 'sms') ||
+    NotificationHelper::canSend('password_reset', 'whatsapp')
+) {
+    app(SellerSmsService::class)->sendOtpSms(
+        $buyer->phone,
+        $otp,
+        $buyer->full_name
+    );
+}
 
         $this->step = 2;
 
@@ -178,9 +194,24 @@ public $d4='';
             'buyer_id'=>$buyer->id
         ], now()->addMinutes(10));
 
-        Mail::to($emailLower)->send(
-            new BuyerOtpMail($otp,$buyer->full_name,$emailLower)
-        );
+        // 🔥 EMAIL OTP
+if (NotificationHelper::canSend('password_reset', 'email')) {
+    Mail::to($emailLower)->send(
+        new BuyerOtpMail($otp, $buyer->full_name, $emailLower)
+    );
+}
+
+// 🔥 SMS / WHATSAPP OTP
+if (
+    NotificationHelper::canSend('password_reset', 'sms') ||
+    NotificationHelper::canSend('password_reset', 'whatsapp')
+) {
+    app(SellerSmsService::class)->sendOtpSms(
+        $buyer->phone,
+        $otp,
+        $buyer->full_name
+    );
+}
 
         $this->d1 = $this->d2 = $this->d3 = $this->d4 = '';
 

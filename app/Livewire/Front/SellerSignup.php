@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use App\Services\NotificationHelper;
+
 
 class SellerSignup extends Component
 {
@@ -192,18 +194,30 @@ class SellerSignup extends Component
         ], now()->addMinutes(10));
 
         // Email OTP
-        try {
-            Mail::to($email)->send(new SellerOtpMail($otp, $name, $email));
-        } catch (\Exception $e) {
-            Log::error("SellerSignup: Email OTP failed — " . $e->getMessage());
-        }
+        // 🔥 EMAIL OTP
+if (NotificationHelper::canSend('otp_sent', 'email')) {
+    try {
+        Mail::to($email)->send(new SellerOtpMail($otp, $name, $email));
+    } catch (\Exception $e) {
+        Log::error("SellerSignup: Email OTP failed — " . $e->getMessage());
+    }
+}
 
-        // SMS + WhatsApp OTP
-        try {
-            app(SellerSmsService::class)->sendOtpSms($phone, $otp, $name, $tblCountryId);
-        } catch (\Exception $e) {
-            Log::error("SellerSignup: SMS/WA OTP failed — " . $e->getMessage());
-        }
+// 🔥 SMS / WHATSAPP OTP
+if (
+    NotificationHelper::canSend('otp_sent', 'sms') ||
+    NotificationHelper::canSend('otp_sent', 'whatsapp')
+) {
+    try {
+        app(SellerSmsService::class)->sendOtpSms(
+            $phone,
+            $otp,
+            $name
+        );
+    } catch (\Exception $e) {
+        Log::error("SellerSignup: SMS/WA OTP failed — " . $e->getMessage());
+    }
+}
     }
 
     private function generateTempPassword(): string

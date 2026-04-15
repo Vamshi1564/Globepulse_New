@@ -14,6 +14,8 @@ use App\Models\RFQ;
 use App\Mail\RFQMail;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Buyer;
+use App\Services\NotificationHelper;
+use App\Services\SellerSmsService;
 
 
 class ProductDetail extends Component
@@ -338,17 +340,73 @@ $rfq = RFQ::create([
   
         $supplier = Seller::find($this->product->seller_id);
 
-        if ($supplier?->email) {
-            Mail::to($supplier->email)->send(
-                new RFQMail($rfq, $buyer, $supplier, 'supplier')
-            );
-        }
+        // if ($supplier?->email) {
+        //     Mail::to($supplier->email)->send(
+        //         new RFQMail($rfq, $buyer, $supplier, 'supplier')
+        //     );
+        // }
 
-        if ($buyer?->email) {
-            Mail::to($buyer->email)->send(
-                new RFQMail($rfq, $buyer, $supplier, 'buyer')
-            );
-        }
+        // if ($buyer?->email) {
+        //     Mail::to($buyer->email)->send(
+        //         new RFQMail($rfq, $buyer, $supplier, 'buyer')
+        //     );
+        // }
+
+        // 🔥 EMAIL → SUPPLIER
+if (NotificationHelper::canSend('rfq_created', 'email') && $supplier?->email) {
+    Mail::to($supplier->email)->send(
+        new RFQMail($rfq, $buyer, $supplier, 'supplier')
+    );
+}
+
+// 🔥 EMAIL → BUYER
+if (NotificationHelper::canSend('rfq_created', 'email') && $buyer?->email) {
+    Mail::to($buyer->email)->send(
+        new RFQMail($rfq, $buyer, $supplier, 'buyer')
+    );
+}
+
+// 🔥 WHATSAPP → SUPPLIER
+if (NotificationHelper::canSend('rfq_created', 'whatsapp') && $supplier?->phone) {
+
+    app(SellerSmsService::class)->sendWhatsAppTemplate(
+    $supplier->phone,
+    'RFQ_CREATED',
+    [
+        $supplier->name,
+        $this->product->name,
+        $this->rfq_quantity,
+        $this->rfq_destination_port
+    ]
+);
+}
+
+// 🔥 WHATSAPP → BUYER
+if (NotificationHelper::canSend('rfq_created', 'whatsapp') && $buyer?->phone) {
+
+    app(SellerSmsService::class)->sendWhatsAppTemplate(
+        $buyer->phone,
+        'RFQ_CONFIRMATION',
+        [
+            $buyer->name,
+            $this->product->name,
+            $this->rfq_quantity
+        ]
+    );
+}
+
+// 🔥 SMS → SUPPLIER (optional)
+if (NotificationHelper::canSend('rfq_created', 'sms') && $supplier?->phone) {
+
+    app(SellerSmsService::class)->sendSmsTemplate(
+        $supplier->phone,
+        'RFQ_SMS_TEMPLATE',
+        [
+            $this->product->name,
+            $this->rfq_quantity
+        ]
+    );
+}
       
 
         // ✅ RESET

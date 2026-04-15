@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use App\Mail\BuyerOtpMail;
 use Propaganistas\LaravelPhone\Rules\Phone;
+use App\Services\NotificationHelper;
+use App\Services\SellerSmsService;
 
 class BuyerSignup extends Component
 {
@@ -159,7 +161,22 @@ if ($existingBuyer) {
         'buyer_id' => $buyerId,
     ], now()->addMinutes(10));
 
+    // 🔥 EMAIL OTP
+if (NotificationHelper::canSend('otp_sent', 'email')) {
     Mail::to($email)->send(new BuyerOtpMail($otp, $name, $email));
+}
+
+// 🔥 SMS / WHATSAPP OTP
+if (
+    NotificationHelper::canSend('otp_sent', 'sms') ||
+    NotificationHelper::canSend('otp_sent', 'whatsapp')
+) {
+    app(SellerSmsService::class)->sendOtpSms(
+        $this->phone,
+        $otp,
+        $name
+    );
+}
 }
 
     private function generateTempPassword(): string

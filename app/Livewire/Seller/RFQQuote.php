@@ -8,6 +8,8 @@ use App\Models\Quotation;
 use App\Mail\QuotationSentMail;
 use Illuminate\Support\Facades\Mail;
 use App\Services\NotificationHelper;
+use App\Services\SellerSmsService;
+
 
 class RFQQuote extends Component
 {
@@ -118,6 +120,31 @@ class RFQQuote extends Component
         ->send(new QuotationSentMail($quotation));
 }
 
+if (NotificationHelper::canSend('quotation_sent', 'whatsapp') && $quotation->buyer?->phone) {
+
+    app(SellerSmsService::class)->sendWhatsAppTemplate(
+        $quotation->buyer->phone,
+        'QUOTATION_SENT', // 🔥 AiSensy template name
+        [
+            $quotation->buyer->name,
+            $quotation->rfq->product->name,
+            $quotation->price,
+            $quotation->delivery_time
+        ]
+    );
+}
+if (NotificationHelper::canSend('quotation_sent', 'whatsapp') && session('seller_phone')) {
+
+    app(SellerSmsService::class)->sendRfQWhatsapp(
+        session('seller_phone'),
+        'QUOTATION_SUBMITTED',
+        [
+            'Seller',
+            $quotation->rfq->product->name,
+            $quotation->price
+        ]
+    );
+}
     session()->flash('message', 'Quotation sent successfully!');
 
     return redirect()->route('seller.rfqs');
