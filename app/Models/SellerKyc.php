@@ -1,6 +1,6 @@
 <?php
 // FILE: app/Models/SellerKyc.php
-
+ 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;

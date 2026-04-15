@@ -117,7 +117,7 @@ Route::get('/seller/verify-email', \App\Livewire\Front\SellerVerifyOtp::class)
 // Seller login — blank for now
 // Route::get('/seller/login', \App\Livewire\Front\SellerLogin::class)
 //     ->name('seller.login');
-
+ 
 
 Route::get('/seller/set-password', \App\Livewire\Front\SellerSetPassword::class)
     ->name('seller.set-password');

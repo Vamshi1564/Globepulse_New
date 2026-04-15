@@ -1511,7 +1511,7 @@
                       <span wire:loading wire:target="saveKycTab3" class="spinner-border spinner-border-sm"></span>
                       <span wire:loading.remove wire:target="saveKycTab3"><i class="fas fa-floppy-disk"></i> Save Documents</span>
                     </button>
-                  </div>
+                  </div>  
                   @endif
 
                   {{-- ─── REVIEW SUMMARY + SUBMIT (shown after all 3 tabs done) ─── --}}
