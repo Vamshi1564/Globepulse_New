@@ -57,6 +57,8 @@
                         </ul>
                     </div>
 
+
+
                     <!-- Get to Know Us -->
                     <div class="col-md-6 col-lg-2">
                         <h5 class="fw-bold mb-3 text-uppercase text-white">About</h5>
@@ -167,7 +169,23 @@
                             </li>
                         </ul>
                     </div>
+                     
+                   <div class="flex-grow-1 d-flex justify-content-center align-items-center">
+    <div class="d-flex flex-wrap align-items-center text-center">
+        
+        <a href="{{ route('shipping.policy') }}" class="footer-link mx-2">Shipping Policy</a>
+        <span class="text-white-50">|</span>
 
+        <a href="{{ route('terms.conditions') }}" class="footer-link mx-2">Terms & Conditions</a>
+        <span class="text-white-50">|</span>
+
+        <a href="{{ route('privacy.policy') }}" class="footer-link mx-2">Privacy Policy</a>
+        <span class="text-white-50">|</span>
+
+        <a href="{{ route('refund.policy') }}" class="footer-link mx-2">Refund Policy</a>
+
+    </div>
+</div>
                     <div class="col-md-6 d-flex justify-content-end m-0 p-0 mt-3 mt-md-0">
                         <a href="https://apps.apple.com/app/globpulse/id6742694568" target="_blank"><img
                                 style="width:130px;" class="me-3" src="../../../assets/img/Appstore.webp" alt=""></a>

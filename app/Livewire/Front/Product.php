@@ -21,6 +21,7 @@ class Product extends Component
     public $maxPrice;
     public $minOrder = 0;
     public $loadingPage = 8;
+    public $sellerId = null; // ADD THIS
 
 
 
@@ -39,7 +40,8 @@ class Product extends Component
         $this->maxPrice = Session::get('maxPrice');
         $this->minOrder = Session::get('minOrder');
         $this->selectedCountries = Session::get('selectedCountries', []);
-
+$this->searchTerm = trim(request()->query('searchTerm', ''));
+$this->sellerId = request()->query('seller_id'); // ADD THIS
         $this->countries = Country::all();  // Fetch all countries
 
 
@@ -67,8 +69,13 @@ class Product extends Component
         $query = ModelsProduct::query()->where('status', 1);
 
         if (!empty($this->searchTerm)) {
-            $query->where('title', 'like', '%' . $this->searchTerm . '%');
-        }
+    $query->where('title', 'like', '%' . $this->searchTerm . '%');
+}
+
+// ADD THIS
+if (!empty($this->sellerId)) {
+    $query->where('seller_id', $this->sellerId);
+}
 
         // Apply filters
         if (!empty($this->minPrice)) {

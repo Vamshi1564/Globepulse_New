@@ -277,4 +277,7 @@ Route::post('/store-payment', [PaymentController::class, 'storePayment'])->name(
 // Route::get('/buyer_info/{id}', BuyerInfo::class)->name('buyer.info');
 
 
-
+Route::view('/shipping-policy', 'livewire.front.layout.policies.shipping')->name('shipping.policy');
+Route::view('/terms-and-conditions', 'livewire.front.layout.policies.terms')->name('terms.conditions');
+Route::view('/privacy-policy', 'livewire.front.layout.policies.privacy')->name('privacy.policy');
+Route::view('/refund-policy', 'livewire.front.layout.policies.refund')->name('refund.policy');

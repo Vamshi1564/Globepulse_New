@@ -27,6 +27,7 @@ class ProductAdd extends Component
     public $description     = '';
     public $brand_name      = '';
     public $keywords        = '';
+    public $banError        = '';
 
     // ── Category ─────────────────────────────────────────────
     public $category_id         = '';
@@ -833,4 +834,39 @@ class ProductAdd extends Component
     {
         $this->slug = Str::slug($this->title) . '-' . rand(100, 999999999);
     }
+
+    public function updatedTitle($value)
+{
+    $this->banError = '';
+
+    $title = strtolower($value);
+
+    $banned = \App\Models\BanProduct::where(function ($query) use ($title) {
+
+        // Match product title
+        $query->whereRaw('LOWER(product_title) LIKE ?', ["%{$title}%"]);
+
+        // Match keywords
+        $query->orWhere(function ($q) use ($title) {
+            $bans = \App\Models\BanProduct::pluck('keywords');
+
+            foreach ($bans as $keywords) {
+                if (!$keywords) continue;
+
+                $words = array_map('trim', explode(',', strtolower($keywords)));
+
+                foreach ($words as $word) {
+                    if ($word && str_contains($title, $word)) {
+                        $q->orWhere('keywords', 'LIKE', "%{$word}%");
+                    }
+                }
+            }
+        });
+
+    })->exists();
+
+    if ($banned) {
+        $this->banError = '🚫 This product has been banned. Please add another product.';
+    }
+}
 }
