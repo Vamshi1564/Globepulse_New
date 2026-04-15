@@ -159,7 +159,7 @@ if ($existingBuyer) {
         'buyer_name' => $name,
         'temp_password' => $tempPassword,
         'buyer_id' => $buyerId,
-    ], now()->addMinutes(10));
+    ], now()->addMinutes(10)); 
 
     // 🔥 EMAIL OTP
 if (NotificationHelper::canSend('otp_sent', 'email')) {
